@@ -1,0 +1,96 @@
+'use client';
+
+import { useState } from 'react';
+import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { useCVStore } from '@/store/cvStore';
+import { Reference, Market } from '@/types/cv.types';
+import { MarketConfig } from '@/types/market.types';
+import StepHeader from './StepHeader';
+
+interface Props { market: Market; config: MarketConfig; }
+
+export default function ReferencesStep({ market, config }: Props) {
+  const { cv, addReference, updateReference, removeReference } = useCVStore();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const label = config.sections.references.label ?? 'References';
+
+  const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition';
+
+  return (
+    <div className="space-y-6">
+      <StepHeader title={label} description={
+        market === 'latam'
+          ? 'Incluye 2–3 referencias profesionales con sus datos de contacto.'
+          : 'Professional references who can vouch for your work.'
+      } />
+
+      <div className="space-y-3">
+        {cv.references.map((ref) => (
+          <div key={ref.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+            <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50" onClick={() => setExpandedId(expandedId === ref.id ? null : ref.id)}>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800 truncate">{ref.name || 'New Reference'}</p>
+                <p className="text-xs text-gray-500 truncate">{ref.title ? `${ref.title} at ${ref.company}` : 'Title, Company'}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={(e) => { e.stopPropagation(); removeReference(ref.id); }} className="p-1 text-gray-300 hover:text-red-500 transition-colors">
+                  <Trash2 size={14} />
+                </button>
+                {expandedId === ref.id ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+              </div>
+            </div>
+
+            {expandedId === ref.id && (
+              <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Full Name</label>
+                    <input value={ref.name} onChange={(e) => updateReference(ref.id, { name: e.target.value })} className={inputCls} placeholder="Jane Doe" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Job Title</label>
+                    <input value={ref.title} onChange={(e) => updateReference(ref.id, { title: e.target.value })} className={inputCls} placeholder="Senior Manager" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Company</label>
+                    <input value={ref.company} onChange={(e) => updateReference(ref.id, { company: e.target.value })} className={inputCls} placeholder="Acme Corp" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Relationship</label>
+                    <input value={ref.relationship} onChange={(e) => updateReference(ref.id, { relationship: e.target.value })} className={inputCls} placeholder="Direct manager" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                    <input type="email" value={ref.email ?? ''} onChange={(e) => updateReference(ref.id, { email: e.target.value })} className={inputCls} placeholder="jane@company.com" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
+                    <input value={ref.phone ?? ''} onChange={(e) => updateReference(ref.id, { phone: e.target.value })} className={inputCls} placeholder="+1 555 000 0000" />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={() => {
+          addReference({ name: '', title: '', company: '', relationship: '' });
+          setTimeout(() => {
+            const last = useCVStore.getState().cv.references.at(-1);
+            if (last) setExpandedId(last.id);
+          }, 50);
+        }}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:border-gray-400 transition-colors"
+      >
+        <Plus size={16} />
+        Add Reference
+      </button>
+    </div>
+  );
+}
