@@ -49,9 +49,8 @@ export default function AppHeader({ market, config }: Props) {
           <span className="hidden sm:inline">{config.name}</span>
         </span>
 
-        <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
-
-        {/* Color themes */}
+        {/* Divider + color themes — hidden on mobile (themes are in Template step) */}
+        <div className="hidden sm:block w-px h-5 bg-gray-200 flex-shrink-0" />
         <ThemeSelector config={config} />
 
         <div className="ml-auto flex items-center gap-2">
@@ -70,28 +69,28 @@ export default function AppHeader({ market, config }: Props) {
             ) : null}
           </div>
 
-          {/* Privacy Mode */}
+          {/* Privacy Mode — hidden on mobile, accessible via Template step */}
           <button
             onClick={togglePrivacyMode}
             title={privacyMode ? 'Privacy Mode ON — data is not saved to localStorage. Click to disable.' : 'Enable Privacy Mode — data will not be saved to localStorage'}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
               privacyMode
                 ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100'
                 : 'border-gray-200 text-gray-400 hover:text-green-600 hover:border-green-200 hover:bg-green-50'
             }`}
           >
             <ShieldCheck size={12} />
-            <span className="hidden sm:inline">{privacyMode ? 'Private' : 'Privacy'}</span>
+            <span className="hidden md:inline">{privacyMode ? 'Private' : 'Privacy'}</span>
           </button>
 
-          {/* Clear */}
+          {/* Clear — hidden on mobile */}
           <button
             onClick={() => setConfirmClear(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors"
             title="Clear all CV data"
           >
             <Trash2 size={12} />
-            <span className="hidden sm:inline">Clear</span>
+            <span className="hidden md:inline">Clear</span>
           </button>
 
           {/* Import */}
@@ -99,7 +98,8 @@ export default function AppHeader({ market, config }: Props) {
             onClick={() => setImportOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           >
-            <Sparkles size={12} /> Import
+            <Sparkles size={12} />
+            <span className="hidden sm:inline">Import</span>
           </button>
 
           {/* Share */}

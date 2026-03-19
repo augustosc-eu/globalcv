@@ -29,20 +29,23 @@ export default function PrivacyBanner() {
   if (!visible) return null;
 
   return (
-    <div className="bg-blue-50 border-b border-blue-100 px-4 py-2.5 flex items-center gap-3 text-xs text-blue-800">
-      <Shield size={14} className="flex-shrink-0 text-blue-500" />
-      <p className="flex-1">
-        <strong>Your data never leaves your browser.</strong>{' '}
-        CV data is saved in localStorage on this device only. On a shared or public computer,{' '}
-        use <strong>Clear Data</strong> before leaving or enable <strong>Privacy Mode</strong>.{' '}
-        <Link href="/privacy" className="underline hover:text-blue-900">Privacy Policy</Link>
+    <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center gap-2 text-xs text-blue-800">
+      <Shield size={13} className="flex-shrink-0 text-blue-500" />
+      <p className="flex-1 min-w-0">
+        <strong>Your data never leaves your browser.</strong>
+        <span className="hidden sm:inline">
+          {' '}CV data is saved in localStorage on this device only. On a shared computer,
+          use <strong>Clear Data</strong> before leaving.{' '}
+        </span>
+        {' '}
+        <Link href="/privacy" className="underline hover:text-blue-900 whitespace-nowrap">Privacy Policy</Link>
       </p>
       <button
         onClick={dismiss}
         aria-label="Dismiss"
         className="flex-shrink-0 p-1 rounded hover:bg-blue-100 transition-colors"
       >
-        <X size={14} />
+        <X size={13} />
       </button>
     </div>
   );

@@ -4,6 +4,7 @@ import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 import StepHeader from './StepHeader';
+import ThemeSelector from '@/components/shared/ThemeSelector';
 import { cn } from '@/lib/utils/cn';
 import { Check } from 'lucide-react';
 
@@ -27,7 +28,7 @@ export default function TemplatePickerStep({ config }: Props) {
     <div className="space-y-6">
       <StepHeader
         title="Choose a Template"
-        description="Select the layout that best fits your target role."
+        description="Select the layout and color theme that best fits your target role."
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -63,15 +64,15 @@ export default function TemplatePickerStep({ config }: Props) {
         })}
       </div>
 
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-        <p className="text-sm text-gray-600">
-          <strong>Selected:</strong>{' '}
-          {config.templates.find((t) => t.id === cv.templateId)?.name ?? 'None'}
-          {' — '}
-          {config.templates.find((t) => t.id === cv.templateId)?.description}
-        </p>
-        <p className="text-xs text-gray-400 mt-1">
-          The live preview on the right updates automatically as you fill in your information.
+      {/* Color theme — always visible here, header version is hidden on mobile */}
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-gray-700">Color Theme</p>
+          <ThemeSelector config={config} inline />
+        </div>
+        <p className="text-xs text-gray-400">
+          Selected: <strong>{config.templates.find((t) => t.id === cv.templateId)?.name ?? 'None'}</strong>
+          {' — '}{config.templates.find((t) => t.id === cv.templateId)?.description}
         </p>
       </div>
     </div>
