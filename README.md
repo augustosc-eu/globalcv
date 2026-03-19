@@ -25,13 +25,26 @@ GlobalCV generates professional CVs and resumes tailored to the conventions of f
 
 - **Market-aware fields** — US hides date of birth and photo (anti-discrimination); LATAM requires them; Japan requires a 証明写真 and 生年月日
 - **Multiple templates per market** — Classic and Modern layouts with distinct visual styles
-- **6 color themes per market** — Swap accent colors without rebuilding your CV
-- **PDF export** — Downloads a print-ready PDF matching the selected template layout
+- **6 color themes per market** — Swap accent colors in the header (desktop) or in the Template step (mobile)
+- **PDF export** — Downloads a print-ready PDF matching the selected template layout exactly
 - **CV text import** — Paste your existing CV text and the parser extracts sections automatically (supports English and Spanish)
 - **Photo upload** — Crop and embed a profile photo (shown in markets where expected)
 - **Share link** — Generates a compressed URL with your full CV data — share or bookmark it
-- **No backend** — All data stays in your browser (localStorage + URL state). Nothing is sent to a server.
-- **No account** — Open the app, fill in your details, export your PDF.
+- **Clear Data** — Wipes all CV data from your browser in one click
+- **Privacy Mode** — Disables localStorage entirely; data lives in memory only and is erased when the tab closes
+- **No backend** — All data stays in your browser (localStorage + URL state). Nothing is sent to a server
+- **No account** — Open the app, fill in your details, export your PDF
+- **Mobile-friendly** — Responsive layout; all features accessible on small screens
+
+---
+
+## Privacy
+
+> **Your CV never leaves your device.**
+
+GlobalCV is a fully client-side app. No data is collected, stored on a server, or shared with third parties. See the full [Privacy Policy](/privacy) and [Terms of Service](/terms) inside the app.
+
+Hosting is provided by [Vercel](https://vercel.com). No analytics or tracking scripts are used.
 
 ---
 
@@ -68,12 +81,14 @@ Open [http://localhost:3000](http://localhost:3000) and select a market to begin
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   └── [market]/           # Dynamic route per market (us, eu, latam, jp)
+│   ├── [market]/           # Dynamic route per market (us, eu, latam, jp)
+│   ├── privacy/            # Privacy Policy page
+│   └── terms/              # Terms of Service page
 ├── components/
 │   ├── preview/
 │   │   └── renderers/      # HTML preview renderers (one per template)
 │   ├── wizard/             # Step-by-step form wizard
-│   └── shared/             # Header, modals, theme selector
+│   └── shared/             # Header, modals, theme selector, privacy banner
 ├── hooks/
 │   └── usePDFExport.ts     # PDF generation hook
 ├── lib/
@@ -81,7 +96,7 @@ src/
 │   ├── parser/             # CV text import parser
 │   └── pdf/                # PDF layout components (@react-pdf/renderer)
 ├── store/
-│   └── cvStore.ts          # Global Zustand store
+│   └── cvStore.ts          # Global Zustand store (includes Privacy Mode)
 └── types/                  # TypeScript types
 ```
 
@@ -103,7 +118,9 @@ No environment variables required.
 
 - No user data is ever sent to a server
 - All CV data is stored in `localStorage` and/or encoded in the share URL (LZ-compressed)
-- Security headers are set in `next.config.mjs`: `X-Frame-Options`, `X-Content-Type-Options`, `Strict-Transport-Security`, `Permissions-Policy`, and a Content Security Policy
+- **Privacy Mode** keeps everything in memory — nothing written to disk
+- Security headers enforced via `next.config.mjs`: `X-Frame-Options`, `X-Content-Type-Options`, `Strict-Transport-Security`, `Permissions-Policy`, and a Content Security Policy
+- See [SECURITY.md](SECURITY.md) for the full security policy and vulnerability reporting
 
 ---
 
