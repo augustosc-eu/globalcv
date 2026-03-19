@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { Market } from '@/types/cv.types';
+import PrivacyBanner from '@/components/shared/PrivacyBanner';
 
 const validMarkets: Market[] = ['us', 'eu', 'latam', 'jp'];
 
@@ -44,5 +45,10 @@ export default async function MarketLayout({
   if (!validMarkets.includes(market as Market)) {
     notFound();
   }
-  return <>{children}</>;
+  return (
+    <>
+      <PrivacyBanner />
+      {children}
+    </>
+  );
 }

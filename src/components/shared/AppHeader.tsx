@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FileText, Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2 } from 'lucide-react';
+import { FileText, Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2, ShieldCheck } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
@@ -18,7 +18,7 @@ const marketFlags: Record<Market, string> = {
 interface Props { market: Market; config: MarketConfig }
 
 export default function AppHeader({ market, config }: Props) {
-  const { isDirty, isSaving, lastSaved, save, cv, resetCV } = useCVStore();
+  const { isDirty, isSaving, lastSaved, save, cv, resetCV, privacyMode, togglePrivacyMode } = useCVStore();
   const { exportPDF, state: pdfState, error: pdfError } = usePDFExport();
   const [importOpen, setImportOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
@@ -69,6 +69,20 @@ export default function AppHeader({ market, config }: Props) {
               </span>
             ) : null}
           </div>
+
+          {/* Privacy Mode */}
+          <button
+            onClick={togglePrivacyMode}
+            title={privacyMode ? 'Privacy Mode ON — data is not saved to localStorage. Click to disable.' : 'Enable Privacy Mode — data will not be saved to localStorage'}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+              privacyMode
+                ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100'
+                : 'border-gray-200 text-gray-400 hover:text-green-600 hover:border-green-200 hover:bg-green-50'
+            }`}
+          >
+            <ShieldCheck size={12} />
+            <span className="hidden sm:inline">{privacyMode ? 'Private' : 'Privacy'}</span>
+          </button>
 
           {/* Clear */}
           <button

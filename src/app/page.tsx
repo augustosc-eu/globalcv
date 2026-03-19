@@ -155,8 +155,12 @@ export default function HomePage() {
       </div>
 
       {/* Footer */}
-      <footer className="text-center text-sm text-gray-400 py-10 border-t border-gray-200">
-        GlobalCV — by Augusto Santa Cruz
+      <footer className="text-center text-sm text-gray-400 py-10 border-t border-gray-200 space-y-2">
+        <p>GlobalCV — by Augusto Santa Cruz</p>
+        <p className="flex items-center justify-center gap-4 text-xs">
+          <Link href="/privacy" className="hover:text-gray-600 transition-colors">Privacy Policy</Link>
+          <Link href="/terms" className="hover:text-gray-600 transition-colors">Terms of Service</Link>
+        </p>
       </footer>
     </main>
   );

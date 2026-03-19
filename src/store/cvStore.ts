@@ -57,6 +57,7 @@ interface CVStoreState {
   isDirty: boolean;
   lastSaved: string | null;
   isSaving: boolean;
+  privacyMode: boolean;
 }
 
 interface CVStoreActions {
@@ -123,6 +124,9 @@ interface CVStoreActions {
   // Persistence
   save: () => void;
   markClean: () => void;
+
+  // Privacy
+  togglePrivacyMode: () => void;
 }
 
 // ─── ID helper ────────────────────────────────────────────────────────────────
@@ -145,11 +149,12 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
       isDirty: false,
       lastSaved: null,
       isSaving: false,
+      privacyMode: false,
 
       // ── Init ──────────────────────────────────────────────────────────────
 
       initializeMarket: (market: Market) => {
-        const saved = loadCV(market);
+        const saved = get().privacyMode ? null : loadCV(market);
         if (saved) {
           set((state) => {
             state.cv = saved;
@@ -483,7 +488,8 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
       // ── Persistence ───────────────────────────────────────────────────────
 
       save: () => {
-        const { cv } = get();
+        const { cv, privacyMode } = get();
+        if (privacyMode) return;
         set((state) => {
           state.isSaving = true;
         });
@@ -505,6 +511,12 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
       markClean: () => {
         set((state) => {
           state.isDirty = false;
+        });
+      },
+
+      togglePrivacyMode: () => {
+        set((state) => {
+          state.privacyMode = !state.privacyMode;
         });
       },
     }))
