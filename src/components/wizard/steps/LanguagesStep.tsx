@@ -45,7 +45,7 @@ export default function LanguagesStep({ market, config }: Props) {
           value={newLang}
           onChange={(e) => setNewLang(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-          placeholder={market === 'jp' ? '言語名（例：英語）' : 'e.g. Spanish, French, German'}
+          placeholder={config.ui.languagePlaceholder}
           className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
         />
         <button
@@ -53,17 +53,17 @@ export default function LanguagesStep({ market, config }: Props) {
           className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
         >
           <Plus size={14} />
-          Add
+          {config.ui.addLanguage}
         </button>
       </div>
 
       {cv.languages.length === 0 && (
-        <div className="text-center py-10 text-gray-400 text-sm">No languages added yet.</div>
+        <div className="text-center py-10 text-gray-400 text-sm">{config.ui.noLanguagesYet}</div>
       )}
 
       <div className="space-y-3">
         {cv.languages.map((lang) => (
-          <LanguageRow key={lang.id} lang={lang} system={system} onUpdate={(d) => updateLanguage(lang.id, d)} onRemove={() => removeLanguage(lang.id)} />
+          <LanguageRow key={lang.id} lang={lang} system={system} nativeLabel={config.ui.nativeLabel} certLabel={config.ui.langCertLabel} certPlaceholder={config.ui.langCertPlaceholder} onUpdate={(d) => updateLanguage(lang.id, d)} onRemove={() => removeLanguage(lang.id)} />
         ))}
       </div>
 
@@ -81,9 +81,12 @@ export default function LanguagesStep({ market, config }: Props) {
   );
 }
 
-function LanguageRow({ lang, system, onUpdate, onRemove }: {
+function LanguageRow({ lang, system, nativeLabel, certLabel, certPlaceholder, onUpdate, onRemove }: {
   lang: Language;
   system: 'cefr' | 'jlpt' | 'generic';
+  nativeLabel: string;
+  certLabel: string;
+  certPlaceholder: string;
   onUpdate: (d: Partial<Language>) => void;
   onRemove: () => void;
 }) {
@@ -100,7 +103,7 @@ function LanguageRow({ lang, system, onUpdate, onRemove }: {
           onChange={(e) => onUpdate({ isNative: e.target.checked })}
           className="rounded"
         />
-        Native
+        {nativeLabel}
       </label>
 
       {!lang.isNative && (
@@ -125,7 +128,7 @@ function LanguageRow({ lang, system, onUpdate, onRemove }: {
         value={lang.certification ?? ''}
         onChange={(e) => onUpdate({ certification: e.target.value })}
         className={`${inputCls} w-36`}
-        placeholder="e.g. IELTS 7.5"
+        placeholder={certPlaceholder}
       />
 
       <button onClick={onRemove} className="p-1 text-gray-300 hover:text-red-500 transition-colors">

@@ -1,3 +1,4 @@
+import { esUI } from './ui';
 import { MarketConfig } from '@/types/market.types';
 
 export const latamConfig: MarketConfig = {
@@ -49,4 +50,5 @@ export const latamConfig: MarketConfig = {
     { id: 'latam-traditional', name: 'Tradicional', description: 'Formato clásico latinoamericano con foto y datos personales' },
     { id: 'latam-modern',      name: 'Moderno',      description: 'Diseño contemporáneo con sidebar de color' },
   ],
+  ui: esUI,
 };

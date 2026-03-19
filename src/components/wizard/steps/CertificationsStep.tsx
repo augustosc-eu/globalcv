@@ -29,8 +29,8 @@ export default function CertificationsStep({ market, config }: Props) {
           <div key={cert.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
             <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50" onClick={() => setExpandedId(expandedId === cert.id ? null : cert.id)}>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-800 truncate">{cert.name || 'New Certification'}</p>
-                <p className="text-xs text-gray-500">{cert.issuer || 'Issuing organization'}</p>
+                <p className="text-sm font-semibold text-gray-800 truncate">{cert.name || config.ui.newCertification}</p>
+                <p className="text-xs text-gray-500">{cert.issuer || config.ui.certIssuerPlaceholder}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={(e) => { e.stopPropagation(); removeCertification(cert.id); }} className="p-1 text-gray-300 hover:text-red-500 transition-colors">
@@ -45,35 +45,35 @@ export default function CertificationsStep({ market, config }: Props) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      {market === 'jp' ? '資格名・免許名' : 'Certification Name'}
+                      {config.ui.certName}
                     </label>
                     <input value={cert.name} onChange={(e) => updateCertification(cert.id, { name: e.target.value })} className={inputCls}
-                      placeholder={market === 'jp' ? '普通自動車第一種運転免許' : 'AWS Solutions Architect'} />
+                      placeholder={config.ui.certNamePlaceholder} />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      {market === 'jp' ? '発行機関' : 'Issuing Organization'}
+                      {config.ui.certIssuer}
                     </label>
                     <input value={cert.issuer} onChange={(e) => updateCertification(cert.id, { issuer: e.target.value })} className={inputCls}
-                      placeholder={market === 'jp' ? '公安委員会' : 'Amazon Web Services'} />
+                      placeholder={config.ui.certIssuerPlaceholder} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      {market === 'jp' ? '取得年月' : 'Date Issued'}
+                      {config.ui.certDate}
                     </label>
                     <input type={market === 'jp' ? 'month' : 'month'} value={cert.dateIssued ?? ''} onChange={(e) => updateCertification(cert.id, { dateIssued: e.target.value })} className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Expiry Date</label>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.certExpiry}</label>
                     <input type="month" value={cert.expiryDate ?? ''} onChange={(e) => updateCertification(cert.id, { expiryDate: e.target.value })} className={inputCls} />
                   </div>
                 </div>
                 {market !== 'jp' && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Credential ID / URL</label>
-                    <input value={cert.credentialId ?? ''} onChange={(e) => updateCertification(cert.id, { credentialId: e.target.value })} className={inputCls} placeholder="ABC123 or https://..." />
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.certCredential}</label>
+                    <input value={cert.credentialId ?? ''} onChange={(e) => updateCertification(cert.id, { credentialId: e.target.value })} className={inputCls} placeholder={config.ui.certCredentialPlaceholder} />
                   </div>
                 )}
               </div>
@@ -93,7 +93,7 @@ export default function CertificationsStep({ market, config }: Props) {
         className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:border-gray-400 transition-colors"
       >
         <Plus size={16} />
-        Add {market === 'jp' ? '免許・資格' : 'Certification'}
+        {config.ui.addCertification}
       </button>
     </div>
   );

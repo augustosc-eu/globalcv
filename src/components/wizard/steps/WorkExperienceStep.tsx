@@ -52,6 +52,7 @@ export default function WorkExperienceStep({ market, config }: Props) {
                 key={exp.id}
                 exp={exp}
                 market={market}
+                config={config}
                 expanded={expandedId === exp.id}
                 onToggle={() => setExpandedId(expandedId === exp.id ? null : exp.id)}
                 onUpdate={(data) => updateWorkExperience(exp.id, data)}
@@ -73,14 +74,14 @@ export default function WorkExperienceStep({ market, config }: Props) {
         className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:border-gray-400 hover:text-gray-800 transition-colors"
       >
         <Plus size={16} />
-        Add {market === 'jp' ? '職歴' : 'Work Experience'}
+        {config.ui.addWork}
       </button>
     </div>
   );
 }
 
 interface CardProps {
-  exp: WorkExperience; market: Market; expanded: boolean;
+  exp: WorkExperience; market: Market; config: MarketConfig; expanded: boolean;
   onToggle: () => void; onUpdate: (d: Partial<WorkExperience>) => void; onRemove: () => void;
 }
 
@@ -90,7 +91,7 @@ function SortableExperienceCard(props: CardProps) {
   return <div ref={setNodeRef} style={style}><ExperienceCard {...props} dragHandleProps={{ ...attributes, ...listeners }} /></div>;
 }
 
-function ExperienceCard({ exp, market, expanded, onToggle, onUpdate, onRemove, dragHandleProps }: CardProps & { dragHandleProps?: object }) {
+function ExperienceCard({ exp, market, config, expanded, onToggle, onUpdate, onRemove, dragHandleProps }: CardProps & { dragHandleProps?: object }) {
   const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition';
 
   return (
@@ -100,8 +101,8 @@ function ExperienceCard({ exp, market, expanded, onToggle, onUpdate, onRemove, d
           <GripVertical size={16} />
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 truncate">{exp.title || 'New Position'}</p>
-          <p className="text-xs text-gray-500 truncate">{exp.company || 'Company name'}{exp.location ? ` · ${exp.location}` : ''}</p>
+          <p className="text-sm font-semibold text-gray-800 truncate">{exp.title || config.ui.newPosition}</p>
+          <p className="text-xs text-gray-500 truncate">{exp.company || config.ui.newCompany}{exp.location ? ` · ${exp.location}` : ''}</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="p-1 text-gray-400 hover:text-red-500 transition-colors rounded">
@@ -115,28 +116,28 @@ function ExperienceCard({ exp, market, expanded, onToggle, onUpdate, onRemove, d
         <div className="px-4 pb-4 space-y-4 border-t border-gray-100">
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Job Title {market === 'jp' ? '/ 役職' : ''}</label>
-              <input value={exp.title} onChange={(e) => onUpdate({ title: e.target.value })} className={inputCls} placeholder={market === 'jp' ? 'エンジニア' : 'Software Engineer'} />
+              <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.workJobTitle}</label>
+              <input value={exp.title} onChange={(e) => onUpdate({ title: e.target.value })} className={inputCls} placeholder={config.ui.workJobTitlePlaceholder} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Company {market === 'jp' ? '/ 会社名' : ''}</label>
-              <input value={exp.company} onChange={(e) => onUpdate({ company: e.target.value })} className={inputCls} placeholder={market === 'jp' ? '株式会社〇〇' : 'Acme Corp'} />
+              <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.workCompany}</label>
+              <input value={exp.company} onChange={(e) => onUpdate({ company: e.target.value })} className={inputCls} placeholder={config.ui.workCompanyPlaceholder} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
-              <input value={exp.location ?? ''} onChange={(e) => onUpdate({ location: e.target.value })} className={inputCls} placeholder={market === 'jp' ? '東京都渋谷区' : 'New York, NY'} />
+              <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.workLocation}</label>
+              <input value={exp.location ?? ''} onChange={(e) => onUpdate({ location: e.target.value })} className={inputCls} placeholder={config.ui.workLocationPlaceholder} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Employment Type</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.workEmploymentType}</label>
               <select value={exp.employmentType ?? 'full_time'} onChange={(e) => onUpdate({ employmentType: e.target.value as WorkExperience['employmentType'] })} className={inputCls}>
-                <option value="full_time">{market === 'jp' ? '正社員' : 'Full-time'}</option>
-                <option value="part_time">{market === 'jp' ? 'パート・アルバイト' : 'Part-time'}</option>
-                <option value="contract">{market === 'jp' ? '契約社員' : 'Contract'}</option>
-                <option value="freelance">Freelance</option>
-                <option value="internship">{market === 'jp' ? 'インターン' : 'Internship'}</option>
+                <option value="full_time">{config.ui.employmentTypes.fullTime}</option>
+                <option value="part_time">{config.ui.employmentTypes.partTime}</option>
+                <option value="contract">{config.ui.employmentTypes.contract}</option>
+                <option value="freelance">{config.ui.employmentTypes.freelance}</option>
+                <option value="internship">{config.ui.employmentTypes.internship}</option>
               </select>
             </div>
           </div>
@@ -155,12 +156,12 @@ function ExperienceCard({ exp, market, expanded, onToggle, onUpdate, onRemove, d
 
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              {market === 'jp' ? '業務内容' : market === 'latam' ? 'Descripción' : 'Description'}
+              {config.ui.workDescription}
             </label>
             <textarea
               value={exp.description} onChange={(e) => onUpdate({ description: e.target.value })}
               rows={4} className={cn(inputCls, 'resize-none')}
-              placeholder={market === 'us' ? '• Led development of microservices that reduced latency by 40%\n• Mentored team of 5 engineers' : ''}
+              placeholder={config.ui.workDescPlaceholder}
             />
           </div>
 

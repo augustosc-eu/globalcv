@@ -39,8 +39,8 @@ export default function PersonalInfoStep({ config }: Props) {
   return (
     <div className="space-y-6">
       <StepHeader
-        title="Personal Information"
-        description="Your contact details and basic information."
+        title={config.ui.personalInfoTitle}
+        description={config.ui.personalInfoDesc}
       />
 
       {/* Photo upload */}
@@ -79,50 +79,50 @@ export default function PersonalInfoStep({ config }: Props) {
 
       {/* Name */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="First Name" required>
-          <input {...register('firstName')} className={inputCls} placeholder="John" />
+        <Field label={config.ui.firstName} required>
+          <input {...register('firstName')} className={inputCls} placeholder={config.ui.firstNamePlaceholder} />
         </Field>
-        <Field label="Last Name" required>
-          <input {...register('lastName')} className={inputCls} placeholder="Smith" />
+        <Field label={config.ui.lastName} required>
+          <input {...register('lastName')} className={inputCls} placeholder={config.ui.lastNamePlaceholder} />
         </Field>
       </div>
 
       {/* Email & Phone */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Email" required>
-          <input {...register('email')} type="email" className={inputCls} placeholder="john@example.com" />
+        <Field label={config.ui.email} required>
+          <input {...register('email')} type="email" className={inputCls} placeholder={config.ui.emailPlaceholder} />
         </Field>
-        <Field label="Phone" required>
-          <input {...register('phone')} type="tel" className={inputCls} placeholder="+1 555 000 0000" />
+        <Field label={config.ui.phone} required>
+          <input {...register('phone')} type="tel" className={inputCls} placeholder={config.ui.phonePlaceholder} />
         </Field>
       </div>
 
       {/* LinkedIn & Website */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="LinkedIn URL">
+        <Field label={config.ui.linkedIn}>
           <input {...register('linkedIn')} className={inputCls} placeholder="linkedin.com/in/username" />
         </Field>
-        <Field label="Website / Portfolio">
+        <Field label={config.ui.website}>
           <input {...register('website')} className={inputCls} placeholder="yoursite.com" />
         </Field>
       </div>
 
       {/* Location */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="City" required>
+        <Field label={config.ui.city} required>
           <input
             onChange={(e) => setPersonalInfo({ address: { ...cv.personalInfo.address, city: e.target.value, country: cv.personalInfo.address?.country ?? '' } })}
             defaultValue={cv.personalInfo.address?.city ?? ''}
             className={inputCls}
-            placeholder="New York"
+            placeholder={config.ui.cityPlaceholder}
           />
         </Field>
-        <Field label="Country">
+        <Field label={config.ui.country}>
           <input
             onChange={(e) => setPersonalInfo({ address: { ...cv.personalInfo.address, country: e.target.value, city: cv.personalInfo.address?.city ?? '' } })}
             defaultValue={cv.personalInfo.address?.country ?? ''}
             className={inputCls}
-            placeholder="United States"
+            placeholder={config.ui.countryPlaceholder}
           />
         </Field>
       </div>
@@ -156,12 +156,12 @@ export default function PersonalInfoStep({ config }: Props) {
           required={req(f.maritalStatus)}
         >
           <select {...register('maritalStatus')} className={inputCls}>
-            <option value="">Select…</option>
-            <option value="single">Single / Soltero/a</option>
-            <option value="married">Married / Casado/a</option>
-            <option value="divorced">Divorced / Divorciado/a</option>
-            <option value="widowed">Widowed / Viudo/a</option>
-            <option value="prefer_not">Prefer not to say</option>
+            <option value="">{config.ui.maritalSelect}</option>
+            <option value="single">{config.ui.maritalSingle}</option>
+            <option value="married">{config.ui.maritalMarried}</option>
+            <option value="divorced">{config.ui.maritalDivorced}</option>
+            <option value="widowed">{config.ui.maritalWidowed}</option>
+            <option value="prefer_not">{config.ui.maritalPreferNot}</option>
           </select>
         </Field>
       )}

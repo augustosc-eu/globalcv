@@ -44,13 +44,13 @@ export default function SkillsStep({ market, config }: Props) {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-          placeholder={market === 'jp' ? 'スキル名（例：Python）' : 'e.g. Python, Project Management'}
+          placeholder={config.ui.skillPlaceholder}
           className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
         />
         <input
           value={newCategory}
           onChange={(e) => setNewCategory(e.target.value)}
-          placeholder="Category (optional)"
+          placeholder={config.ui.skillCategoryPlaceholder}
           className="w-40 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
         />
         <button
@@ -58,7 +58,7 @@ export default function SkillsStep({ market, config }: Props) {
           className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
         >
           <Plus size={14} />
-          Add
+          {config.ui.addSkill}
         </button>
       </div>
 
@@ -68,7 +68,7 @@ export default function SkillsStep({ market, config }: Props) {
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{category}</p>
           <div className="flex flex-wrap gap-2">
             {skills.map((skill) => (
-              <SkillPill key={skill.id} skill={skill} onUpdate={(d) => updateSkill(skill.id, d)} onRemove={() => removeSkill(skill.id)} />
+              <SkillPill key={skill.id} skill={skill} skillLevels={config.ui.skillLevels} onUpdate={(d) => updateSkill(skill.id, d)} onRemove={() => removeSkill(skill.id)} />
             ))}
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function SkillsStep({ market, config }: Props) {
 
       {cv.skills.length === 0 && (
         <div className="text-center py-10 text-gray-400 text-sm">
-          No skills added yet. Type a skill above and press Enter.
+          {config.ui.noSkillsYet}
         </div>
       )}
 
@@ -90,9 +90,9 @@ export default function SkillsStep({ market, config }: Props) {
   );
 }
 
-function SkillPill({ skill, onUpdate, onRemove }: { skill: Skill; onUpdate: (d: Partial<Skill>) => void; onRemove: () => void }) {
+function SkillPill({ skill, skillLevels, onUpdate, onRemove }: { skill: Skill; skillLevels: [string, string, string, string, string]; onUpdate: (d: Partial<Skill>) => void; onRemove: () => void }) {
   const levels: SkillLevel[] = [1, 2, 3, 4, 5];
-  const levelLabels = ['Beginner', 'Basic', 'Intermediate', 'Advanced', 'Expert'];
+  const levelLabels = skillLevels;
 
   return (
     <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-3 py-1.5">

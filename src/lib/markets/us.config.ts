@@ -1,3 +1,4 @@
+import { enUI } from './ui';
 import { MarketConfig } from '@/types/market.types';
 
 export const usConfig: MarketConfig = {
@@ -48,4 +49,5 @@ export const usConfig: MarketConfig = {
     { id: 'us-classic', name: 'Classic', description: 'Traditional ATS-friendly single-column format' },
     { id: 'us-modern',  name: 'Modern',  description: 'Clean two-column layout with accent sidebar' },
   ],
+  ui: enUI,
 };

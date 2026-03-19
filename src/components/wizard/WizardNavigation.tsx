@@ -32,7 +32,7 @@ export default function WizardNavigation({ steps, currentStep, config }: Props) 
         )}
       >
         <ArrowLeft size={16} />
-        Back
+        {config.ui.back}
       </button>
 
       <span className="text-sm text-gray-400">
@@ -48,13 +48,13 @@ export default function WizardNavigation({ steps, currentStep, config }: Props) 
             style={{ backgroundColor: pdfState === 'error' ? '#dc2626' : config.color }}
           >
             {pdfState === 'generating' ? (
-              <><Loader2 size={16} className="animate-spin" /> Generating…</>
+              <><Loader2 size={16} className="animate-spin" /> {config.ui.generating}</>
             ) : pdfState === 'done' ? (
-              <><CheckCircle size={16} /> Done!</>
+              <><CheckCircle size={16} /> {config.ui.done}</>
             ) : pdfState === 'error' ? (
-              <><AlertCircle size={16} /> Failed</>
+              <><AlertCircle size={16} /> {config.ui.failed}</>
             ) : (
-              <><Download size={16} /> Export PDF</>
+              <><Download size={16} /> {config.ui.exportPDF}</>
             )}
           </button>
           {pdfState === 'error' && pdfError && (
@@ -67,7 +67,7 @@ export default function WizardNavigation({ steps, currentStep, config }: Props) 
           className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors"
           style={{ backgroundColor: config.color }}
         >
-          Next
+          {config.ui.next}
           <ArrowRight size={16} />
         </button>
       )}

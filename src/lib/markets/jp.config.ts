@@ -1,3 +1,4 @@
+import { jaUI } from './ui';
 import { MarketConfig } from '@/types/market.types';
 
 export const jpConfig: MarketConfig = {
@@ -47,4 +48,5 @@ export const jpConfig: MarketConfig = {
     { id: 'jp-rirekisho', name: '履歴書', description: '日本の公式履歴書フォーマット（JIS規格準拠）' },
     { id: 'jp-shokumu',   name: '職務経歴書', description: '職務経歴書形式（キャリア採用向け）' },
   ],
+  ui: jaUI,
 };

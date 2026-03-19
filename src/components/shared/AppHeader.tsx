@@ -57,14 +57,14 @@ export default function AppHeader({ market, config }: Props) {
           {/* Save status */}
           <div className="hidden sm:flex items-center gap-1.5 text-xs">
             {isSaving ? (
-              <span className="text-gray-400">Saving…</span>
+              <span className="text-gray-400">{config.ui.saving}</span>
             ) : isDirty ? (
               <button onClick={save} className="flex items-center gap-1 text-gray-500 hover:text-gray-800 transition-colors">
-                <Save size={12} /> Save
+                <Save size={12} /> {config.ui.save}
               </button>
             ) : savedTime ? (
               <span className="flex items-center gap-1 text-green-600">
-                <CheckCircle size={12} /> Saved {savedTime}
+                <CheckCircle size={12} /> {config.ui.saved} {savedTime}
               </span>
             ) : null}
           </div>
@@ -72,7 +72,7 @@ export default function AppHeader({ market, config }: Props) {
           {/* Privacy Mode — hidden on mobile, accessible via Template step */}
           <button
             onClick={togglePrivacyMode}
-            title={privacyMode ? 'Privacy Mode ON — data is not saved to localStorage. Click to disable.' : 'Enable Privacy Mode — data will not be saved to localStorage'}
+            title={privacyMode ? config.ui.privacyOn : config.ui.privacyOff}
             className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
               privacyMode
                 ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100'
@@ -80,17 +80,17 @@ export default function AppHeader({ market, config }: Props) {
             }`}
           >
             <ShieldCheck size={12} />
-            <span className="hidden md:inline">{privacyMode ? 'Private' : 'Privacy'}</span>
+            <span className="hidden md:inline">{privacyMode ? config.ui.privacyOn : config.ui.privacyOff}</span>
           </button>
 
           {/* Clear — hidden on mobile */}
           <button
             onClick={() => setConfirmClear(true)}
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors"
-            title="Clear all CV data"
+            title={config.ui.clearConfirmTitle}
           >
             <Trash2 size={12} />
-            <span className="hidden md:inline">Clear</span>
+            <span className="hidden md:inline">{config.ui.clear}</span>
           </button>
 
           {/* Import */}
@@ -99,7 +99,7 @@ export default function AppHeader({ market, config }: Props) {
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           >
             <Sparkles size={12} />
-            <span className="hidden sm:inline">Import</span>
+            <span className="hidden sm:inline">{config.ui.import}</span>
           </button>
 
           {/* Share */}
@@ -115,19 +115,19 @@ export default function AppHeader({ market, config }: Props) {
               style={{ backgroundColor: pdfState === 'error' ? '#dc2626' : config.color }}
             >
               {pdfState === 'generating' ? (
-                <><Loader2 size={12} className="animate-spin" /> Generating…</>
+                <><Loader2 size={12} className="animate-spin" /> {config.ui.generating}</>
               ) : pdfState === 'done' ? (
-                <><CheckCircle size={12} /> Done!</>
+                <><CheckCircle size={12} /> {config.ui.done}</>
               ) : pdfState === 'error' ? (
-                <><AlertCircle size={12} /> Failed</>
+                <><AlertCircle size={12} /> {config.ui.failed}</>
               ) : (
-                <><Download size={12} /> Export PDF</>
+                <><Download size={12} /> {config.ui.exportPDF}</>
               )}
             </button>
           </div>
 
           <Link href="/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors hidden md:inline">
-            ← Markets
+            {config.ui.markets}
           </Link>
         </div>
       </header>
@@ -137,20 +137,20 @@ export default function AppHeader({ market, config }: Props) {
       {confirmClear && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl shadow-xl p-6 w-80 mx-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-2">Clear all data?</h2>
-            <p className="text-xs text-gray-500 mb-5">This will erase everything on this CV. This action cannot be undone.</p>
+            <h2 className="text-sm font-semibold text-gray-900 mb-2">{config.ui.clearConfirmTitle}</h2>
+            <p className="text-xs text-gray-500 mb-5">{config.ui.clearConfirmBody}</p>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setConfirmClear(false)}
                 className="px-4 py-2 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
               >
-                Cancel
+                {config.ui.cancel}
               </button>
               <button
                 onClick={handleClear}
                 className="px-4 py-2 text-xs font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
-                Clear
+                {config.ui.clear}
               </button>
             </div>
           </div>

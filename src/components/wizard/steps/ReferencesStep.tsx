@@ -29,7 +29,7 @@ export default function ReferencesStep({ market, config }: Props) {
           <div key={ref.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
             <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50" onClick={() => setExpandedId(expandedId === ref.id ? null : ref.id)}>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-800 truncate">{ref.name || 'New Reference'}</p>
+                <p className="text-sm font-semibold text-gray-800 truncate">{ref.name || config.ui.newReference}</p>
                 <p className="text-xs text-gray-500 truncate">{ref.title ? `${ref.title} at ${ref.company}` : 'Title, Company'}</p>
               </div>
               <div className="flex items-center gap-2">
@@ -44,22 +44,22 @@ export default function ReferencesStep({ market, config }: Props) {
               <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Full Name</label>
-                    <input value={ref.name} onChange={(e) => updateReference(ref.id, { name: e.target.value })} className={inputCls} placeholder="Jane Doe" />
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.refName}</label>
+                    <input value={ref.name} onChange={(e) => updateReference(ref.id, { name: e.target.value })} className={inputCls} placeholder={config.ui.refNamePlaceholder} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Job Title</label>
-                    <input value={ref.title} onChange={(e) => updateReference(ref.id, { title: e.target.value })} className={inputCls} placeholder="Senior Manager" />
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.refJobTitle}</label>
+                    <input value={ref.title} onChange={(e) => updateReference(ref.id, { title: e.target.value })} className={inputCls} placeholder={config.ui.refJobTitlePlaceholder} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Company</label>
-                    <input value={ref.company} onChange={(e) => updateReference(ref.id, { company: e.target.value })} className={inputCls} placeholder="Acme Corp" />
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.refCompany}</label>
+                    <input value={ref.company} onChange={(e) => updateReference(ref.id, { company: e.target.value })} className={inputCls} placeholder={config.ui.refCompanyPlaceholder} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Relationship</label>
-                    <input value={ref.relationship} onChange={(e) => updateReference(ref.id, { relationship: e.target.value })} className={inputCls} placeholder="Direct manager" />
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.refRelationship}</label>
+                    <input value={ref.relationship} onChange={(e) => updateReference(ref.id, { relationship: e.target.value })} className={inputCls} placeholder={config.ui.refRelationshipPlaceholder} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -89,7 +89,7 @@ export default function ReferencesStep({ market, config }: Props) {
         className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:border-gray-400 transition-colors"
       >
         <Plus size={16} />
-        Add Reference
+        {config.ui.addReference}
       </button>
     </div>
   );

@@ -5,6 +5,7 @@ import { X, Upload, Sparkles, AlertCircle } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { parseRawCV } from '@/lib/parser/cvParser';
+import { getMarketConfig } from '@/lib/markets';
 
 interface Props {
   market: Market;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function PasteImportModal({ market, open, onClose }: Props) {
+  const config = getMarketConfig(market);
   const [text, setText] = useState('');
   const [step, setStep] = useState<'paste' | 'preview' | 'done'>('paste');
   const [preview, setPreview] = useState<ReturnType<typeof parseRawCV> | null>(null);
@@ -57,7 +59,7 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <Sparkles size={18} className="text-violet-600" />
-            <h2 className="font-bold text-gray-900">Import from Existing CV</h2>
+            <h2 className="font-bold text-gray-900">{config.ui.importTitle}</h2>
           </div>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
             <X size={18} />
@@ -69,18 +71,18 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
           {step === 'paste' && (
             <>
               <p className="text-sm text-gray-600">
-                Paste your existing CV/resume as plain text. We&apos;ll extract your information and fill in the form automatically.
+                {config.ui.importDesc}
               </p>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2">
                 <AlertCircle size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-700">
-                  Parsing is heuristic — review and correct the extracted data before exporting. Photos are not imported.
+                  {config.ui.importWarning}
                 </p>
               </div>
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder={`Paste your CV text here…\n\nExample:\nJohn Smith\njohn@email.com · +1 555 000 0000\n\nWork Experience\nSoftware Engineer · Acme Corp\nJan 2020 – Present\n• Built microservices…\n\nEducation\nBS Computer Science · MIT\n2016 – 2020`}
+                placeholder={config.ui.importPlaceholder}
                 rows={16}
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500 transition resize-none"
               />
@@ -90,34 +92,34 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
           {step === 'preview' && preview && (
             <>
               <p className="text-sm text-gray-600">
-                Review what was extracted. Click <strong>Apply</strong> to import into the builder.
+                {config.ui.importSuccessDesc}
               </p>
               <div className="space-y-3 text-sm">
-                <PreviewRow label="Name" value={`${preview.personalInfo?.firstName ?? ''} ${preview.personalInfo?.lastName ?? ''}`} />
-                <PreviewRow label="Email" value={preview.personalInfo?.email} />
-                <PreviewRow label="Phone" value={preview.personalInfo?.phone} />
-                <PreviewRow label="LinkedIn" value={preview.personalInfo?.linkedIn} />
-                {preview.objective && <PreviewRow label="Summary" value={preview.objective.slice(0, 120) + (preview.objective.length > 120 ? '…' : '')} />}
-                <PreviewRow label="Work Experience" value={`${preview.workExperience?.length ?? 0} entries extracted`} />
-                <PreviewRow label="Education" value={`${preview.education?.length ?? 0} entries extracted`} />
-                <PreviewRow label="Skills" value={preview.skills?.slice(0, 8).map((s) => s.name).join(', ')} />
-                <PreviewRow label="Languages" value={preview.languages?.map((l) => l.language).join(', ')} />
-                <PreviewRow label="Certifications" value={`${preview.certifications?.length ?? 0} entries extracted`} />
+                <PreviewRow label={config.ui.previewLabels.name} value={`${preview.personalInfo?.firstName ?? ''} ${preview.personalInfo?.lastName ?? ''}`} notFoundLabel={config.ui.previewLabels.notFound} />
+                <PreviewRow label={config.ui.previewLabels.email} value={preview.personalInfo?.email} notFoundLabel={config.ui.previewLabels.notFound} />
+                <PreviewRow label={config.ui.previewLabels.phone} value={preview.personalInfo?.phone} notFoundLabel={config.ui.previewLabels.notFound} />
+                <PreviewRow label={config.ui.previewLabels.linkedin} value={preview.personalInfo?.linkedIn} notFoundLabel={config.ui.previewLabels.notFound} />
+                {preview.objective && <PreviewRow label={config.ui.previewLabels.summary} value={preview.objective.slice(0, 120) + (preview.objective.length > 120 ? '…' : '')} notFoundLabel={config.ui.previewLabels.notFound} />}
+                <PreviewRow label={config.ui.previewLabels.workExperience} value={`${preview.workExperience?.length ?? 0} ${config.ui.previewLabels.entries}`} notFoundLabel={config.ui.previewLabels.notFound} />
+                <PreviewRow label={config.ui.previewLabels.education} value={`${preview.education?.length ?? 0} ${config.ui.previewLabels.entries}`} notFoundLabel={config.ui.previewLabels.notFound} />
+                <PreviewRow label={config.ui.previewLabels.skills} value={preview.skills?.slice(0, 8).map((s) => s.name).join(', ')} notFoundLabel={config.ui.previewLabels.notFound} />
+                <PreviewRow label={config.ui.previewLabels.languages} value={preview.languages?.map((l) => l.language).join(', ')} notFoundLabel={config.ui.previewLabels.notFound} />
+                <PreviewRow label={config.ui.previewLabels.certifications} value={`${preview.certifications?.length ?? 0} ${config.ui.previewLabels.entries}`} notFoundLabel={config.ui.previewLabels.notFound} />
               </div>
 
               {/* Work experience detail */}
               {(preview.workExperience?.length ?? 0) > 0 && (
                 <div className="border border-gray-200 rounded-xl p-4 space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Work Experience Preview</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{config.ui.previewLabels.workPreview}</p>
                   {preview.workExperience?.slice(0, 3).map((e, i) => (
                     <div key={i} className="text-sm">
-                      <span className="font-medium">{e.title || '(no title)'}</span>
+                      <span className="font-medium">{e.title || config.ui.previewLabels.noTitle}</span>
                       {e.company ? <span className="text-gray-500"> · {e.company}</span> : null}
                       {e.startDate ? <span className="text-gray-400 ml-2 text-xs">{e.startDate}</span> : null}
                     </div>
                   ))}
                   {(preview.workExperience?.length ?? 0) > 3 && (
-                    <p className="text-xs text-gray-400">+{(preview.workExperience?.length ?? 0) - 3} more…</p>
+                    <p className="text-xs text-gray-400">+{(preview.workExperience?.length ?? 0) - 3} {config.ui.previewLabels.moreSuffix}</p>
                   )}
                 </div>
               )}
@@ -129,8 +131,8 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                 <Sparkles size={22} className="text-green-600" />
               </div>
-              <p className="font-semibold text-gray-900">Imported successfully!</p>
-              <p className="text-sm text-gray-500">Review and complete the missing fields in the builder.</p>
+              <p className="font-semibold text-gray-900">{config.ui.importSuccess}</p>
+              <p className="text-sm text-gray-500">{config.ui.importSuccessDesc}</p>
             </div>
           )}
         </div>
@@ -143,11 +145,11 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
                 onClick={() => setStep('paste')}
                 className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                ← Edit text
+                {config.ui.editText}
               </button>
             )}
             <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors">
-              Cancel
+              {config.ui.cancel}
             </button>
             {step === 'paste' && (
               <button
@@ -156,7 +158,7 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
                 className="flex items-center gap-2 px-5 py-2 bg-violet-600 text-white text-sm font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <Sparkles size={14} />
-                Parse CV
+                {config.ui.parseCV}
               </button>
             )}
             {step === 'preview' && (
@@ -165,7 +167,7 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
                 className="flex items-center gap-2 px-5 py-2 bg-violet-600 text-white text-sm font-semibold rounded-lg hover:bg-violet-700 transition-colors"
               >
                 <Upload size={14} />
-                Apply to Builder
+                {config.ui.applyToBuilder}
               </button>
             )}
           </div>
@@ -175,11 +177,11 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
   );
 }
 
-function PreviewRow({ label, value }: { label: string; value?: string | null }) {
+function PreviewRow({ label, value, notFoundLabel }: { label: string; value?: string | null; notFoundLabel?: string }) {
   return (
     <div className="flex gap-3">
       <span className="text-gray-500 w-36 flex-shrink-0 text-xs pt-0.5">{label}</span>
-      <span className="text-gray-800 font-medium text-xs">{value || <span className="text-gray-300 italic">not found</span>}</span>
+      <span className="text-gray-800 font-medium text-xs">{value || <span className="text-gray-300 italic">{notFoundLabel ?? 'not found'}</span>}</span>
     </div>
   );
 }
