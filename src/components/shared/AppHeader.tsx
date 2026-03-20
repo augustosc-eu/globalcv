@@ -14,6 +14,7 @@ import CopyToMarketModal from './CopyToMarketModal';
 
 const marketFlags: Record<Market, string> = {
   us: '🇺🇸', eu: '🇪🇺', latam: '🌎', jp: '🇯🇵',
+  gb: '🇬🇧', au: '🇦🇺', in: '🇮🇳', br: '🇧🇷',
 };
 
 interface Props { market: Market; config: MarketConfig }

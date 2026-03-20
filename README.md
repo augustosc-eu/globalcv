@@ -8,16 +8,33 @@ Built by [Augusto Santa Cruz](https://github.com/augustosc-eu). No account requi
 
 ## What it does
 
-GlobalCV generates professional CVs and resumes tailored to the conventions of four major job markets. Each market has its own templates, fields, labels, and formatting rules — so your CV looks like it was built by someone who knows the local standards, not a generic online tool.
+GlobalCV generates professional CVs and resumes tailored to the conventions of eight major job markets. Each market has its own templates, fields, labels, and formatting rules — so your CV looks like it was built by someone who knows the local standards, not a generic online tool.
 
 **Supported markets:**
 
 | Market | Page size | Templates | Language |
 |---|---|---|---|
 | 🇺🇸 United States | Letter | Classic, Modern | English |
+| 🇬🇧 United Kingdom | A4 | Classic CV, Modern CV | English |
+| 🇦🇺 Australia & NZ | A4 | Classic, Modern | English |
+| 🇮🇳 India | A4 | Classic CV, Modern CV | English |
 | 🇪🇺 European Union | A4 | Europass, Modern | English |
 | 🌎 Latin America | Letter | Traditional, Modern | Spanish |
+| 🇧🇷 Brasil | A4 | Tradicional, Moderno | Portuguese |
 | 🇯🇵 Japan | A4 | 履歴書 (Rirekisho), 職務経歴書 (Shokumu) | Japanese |
+
+**Market conventions enforced per locale:**
+
+| Market | Photo | DOB | Nationality | Marital status | Page limit |
+|---|---|---|---|---|---|
+| 🇺🇸 US | Hidden (discrimination law) | Hidden | Hidden | Hidden | 1 |
+| 🇬🇧 GB | Hidden (equality law) | Hidden | Hidden | Hidden | 2 |
+| 🇦🇺 AU | Hidden | Hidden | Hidden | Hidden | 3 |
+| 🇮🇳 IN | Optional | Optional | Optional | Optional | 2 |
+| 🇪🇺 EU | Optional | Optional | Optional | Hidden | 2 |
+| 🌎 LATAM | Required | Required | Required | Required | 2 |
+| 🇧🇷 BR | Optional | Optional | Optional | Optional | 2 |
+| 🇯🇵 JP | Required | Required | Required | Optional | — |
 
 ---
 

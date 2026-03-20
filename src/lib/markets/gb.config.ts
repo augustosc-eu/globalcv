@@ -1,0 +1,54 @@
+import { gbUI } from './ui';
+import { MarketConfig } from '@/types/market.types';
+
+export const gbConfig: MarketConfig = {
+  market: 'gb',
+  name: 'United Kingdom',
+  locale: 'en-GB',
+  pageSize: 'A4',
+  direction: 'ltr',
+  color: '#1d4ed8',
+  accentColor: '#1e40af',
+  themes: [
+    { id: 'gb-navy',   name: 'Navy',        primary: '#1d4ed8', accent: '#1e40af', light: '#dbeafe' },
+    { id: 'gb-slate',  name: 'Slate',        primary: '#475569', accent: '#334155', light: '#f1f5f9' },
+    { id: 'gb-teal',   name: 'Teal',         primary: '#0d9488', accent: '#0f766e', light: '#ccfbf1' },
+    { id: 'gb-green',  name: 'Forest',       primary: '#15803d', accent: '#166534', light: '#dcfce7' },
+    { id: 'gb-violet', name: 'Violet',       primary: '#7c3aed', accent: '#6d28d9', light: '#ede9fe' },
+    { id: 'gb-mono',   name: 'Monochrome',   primary: '#111827', accent: '#374151', light: '#f3f4f6' },
+  ],
+  fields: {
+    // UK equality law discourages photo, DOB, nationality, gender, marital status
+    photo:            { visibility: 'hidden' },
+    dateOfBirth:      { visibility: 'hidden' },
+    nationality:      { visibility: 'hidden' },
+    maritalStatus:    { visibility: 'hidden' },
+    idNumber:         { visibility: 'hidden' },
+    furigana:         { visibility: 'hidden' },
+    gender:           { visibility: 'hidden' },
+    nearestStation:   { visibility: 'hidden' },
+    commuteTime:      { visibility: 'hidden' },
+    emergencyContact: { visibility: 'hidden' },
+    personalSeal:     { visibility: 'hidden' },
+  },
+  sections: {
+    objective:            { enabled: true,  required: false, order: 0, label: 'Personal Profile' },
+    workExperience:       { enabled: true,  required: true,  order: 1, label: 'Work Experience' },
+    education:            { enabled: true,  required: true,  order: 2, label: 'Education' },
+    skills:               { enabled: true,  required: false, order: 3, label: 'Key Skills' },
+    languages:            { enabled: true,  required: false, order: 4, label: 'Languages' },
+    certifications:       { enabled: true,  required: false, order: 5, label: 'Qualifications & Certifications' },
+    references:           { enabled: true,  required: false, order: 6, label: 'References' },
+    selfPromotion:        { enabled: false, required: false, order: 7 },
+    reasonForApplication: { enabled: false, required: false, order: 8 },
+  },
+  pageLimitSuggestion: 2,
+  languageLevelSystem: 'cefr',
+  dateFormat: 'MMM yyyy',
+  enableATSSuggestions: false,
+  templates: [
+    { id: 'gb-classic', name: 'Classic CV',  description: 'Clean single-column format — standard UK two-page CV' },
+    { id: 'gb-modern',  name: 'Modern CV',   description: 'Contemporary two-column layout with colour accent' },
+  ],
+  ui: gbUI,
+};

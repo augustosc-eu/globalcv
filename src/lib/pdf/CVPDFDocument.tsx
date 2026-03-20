@@ -1013,15 +1013,16 @@ export function CVPDFDocument({ cv, config }: Props) {
     page = <JapanRirekishoPDF cv={cv} />;
   } else if (tpl === 'jp-shokumu') {
     page = <JapanShokumuPDF cv={cv} />;
-  } else if (tpl === 'us-modern') {
+  } else if (tpl === 'us-modern' || tpl === 'gb-modern' || tpl === 'au-modern' || tpl === 'in-modern') {
     page = <ModernPDF cv={cv} accent={accent} />;
   } else if (tpl === 'eu-modern') {
     page = <EUModernPDF cv={cv} accent={accent} />;
-  } else if (tpl === 'latam-modern') {
+  } else if (tpl === 'latam-modern' || tpl === 'br-modern') {
     page = <ModernPDF cv={cv} accent={accent} isLatam />;
   } else if (tpl === 'eu-europass') {
     page = <EuropassPDF cv={cv} accent={accent} />;
   } else {
+    // gb-classic, au-classic, in-classic, br-classic, us-classic, latam-traditional → ClassicPDF
     page = <ClassicPDF cv={cv} accent={accent} />;
   }
 

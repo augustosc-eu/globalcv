@@ -4,7 +4,7 @@ import { Market } from '@/types/cv.types';
 import PrivacyBanner from '@/components/shared/PrivacyBanner';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 
-const validMarkets: Market[] = ['us', 'eu', 'latam', 'jp'];
+const validMarkets: Market[] = ['us', 'eu', 'latam', 'jp', 'gb', 'au', 'in', 'br'];
 
 const marketMeta: Record<Market, { title: string; description: string }> = {
   us: {
@@ -22,6 +22,22 @@ const marketMeta: Record<Market, { title: string; description: string }> = {
   jp: {
     title: '履歴書・職務経歴書ビルダー — Japan CV',
     description: '日本の採用基準に準じた履歴書・職務経歴書を作成します。',
+  },
+  gb: {
+    title: 'UK CV Builder — British CV Format',
+    description: 'Build a professional CV following UK conventions — A4, no photo, 2 pages.',
+  },
+  au: {
+    title: 'Australian Resume Builder',
+    description: 'Create a resume tailored for the Australian and New Zealand job market.',
+  },
+  in: {
+    title: 'India CV Builder',
+    description: 'Build a professional CV tailored for the Indian job market.',
+  },
+  br: {
+    title: 'Criador de Currículo — Brasil',
+    description: 'Crie um currículo profissional no padrão brasileiro.',
   },
 };
 

@@ -160,6 +160,133 @@ export const esUI: MarketUI = {
   noItemsYet: 'Aún no hay elementos añadidos.',
 };
 
+// GB — British English (same keys as enUI, British placeholders & conventions)
+export const gbUI: MarketUI = {
+  ...enUI,
+  phonePlaceholder: '+44 7700 900000',
+  city: 'Town / City', cityPlaceholder: 'London',
+  country: 'Country', countryPlaceholder: 'United Kingdom',
+  workLocationPlaceholder: 'London, UK',
+  institutionPlaceholder: 'University of Oxford',
+  locationPlaceholder: 'Oxford, UK',
+  templateTitle: 'Choose a Template',
+  templateDesc: 'Select the layout and colour theme that best fits your target role.',
+  firstNamePlaceholder: 'James',
+  lastNamePlaceholder: 'Williams',
+  emailPlaceholder: 'james@example.co.uk',
+};
+
+// AU — Australian English
+export const auUI: MarketUI = {
+  ...enUI,
+  phonePlaceholder: '+61 4 0000 0000',
+  city: 'Suburb / City', cityPlaceholder: 'Sydney',
+  country: 'Country', countryPlaceholder: 'Australia',
+  workLocationPlaceholder: 'Sydney, NSW',
+  institutionPlaceholder: 'University of Melbourne',
+  locationPlaceholder: 'Melbourne, VIC',
+  firstNamePlaceholder: 'Liam',
+  lastNamePlaceholder: 'Johnson',
+  emailPlaceholder: 'liam@example.com.au',
+};
+
+// IN — Indian English
+export const inUI: MarketUI = {
+  ...enUI,
+  phonePlaceholder: '+91 98765 43210',
+  city: 'City', cityPlaceholder: 'Mumbai',
+  country: 'Country', countryPlaceholder: 'India',
+  workLocationPlaceholder: 'Mumbai, Maharashtra',
+  institutionPlaceholder: 'Indian Institute of Technology',
+  locationPlaceholder: 'Mumbai, Maharashtra',
+  firstNamePlaceholder: 'Rahul',
+  lastNamePlaceholder: 'Sharma',
+  emailPlaceholder: 'rahul@example.com',
+  workJobTitlePlaceholder: 'Software Engineer',
+  workCompanyPlaceholder: 'Infosys / TCS / Wipro',
+};
+
+// PT-BR — Brazilian Portuguese
+export const ptBrUI: MarketUI = {
+  back: 'Voltar', next: 'Próximo', save: 'Salvar', saving: 'Salvando…', saved: 'Salvo',
+  clear: 'Limpar', clearConfirmTitle: 'Limpar todos os dados?',
+  clearConfirmBody: 'Isso apagará todo o conteúdo deste currículo. Esta ação não pode ser desfeita.',
+  import: 'Importar', exportPDF: 'Exportar PDF', generating: 'Gerando…',
+  done: 'Pronto!', failed: 'Erro', cancel: 'Cancelar', add: 'Adicionar', apply: 'Aplicar',
+  markets: '← Mercados', privacyOn: 'Privado', privacyOff: 'Privacidade',
+
+  personalInfoTitle: 'Informações Pessoais',
+  personalInfoDesc: 'Seus dados de contato e informações básicas.',
+  firstName: 'Nome', firstNamePlaceholder: 'João',
+  lastName: 'Sobrenome', lastNamePlaceholder: 'Silva',
+  email: 'E-mail', emailPlaceholder: 'joao@exemplo.com',
+  phone: 'Telefone', phonePlaceholder: '+55 11 90000-0000',
+  city: 'Cidade', cityPlaceholder: 'São Paulo',
+  country: 'País', countryPlaceholder: 'Brasil',
+  linkedIn: 'URL do LinkedIn', website: 'Site / Portfólio',
+
+  maritalSelect: 'Selecionar', maritalSingle: 'Solteiro/a',
+  maritalMarried: 'Casado/a', maritalDivorced: 'Divorciado/a',
+  maritalWidowed: 'Viúvo/a', maritalPreferNot: 'Prefiro não informar',
+
+  workJobTitle: 'Cargo', workJobTitlePlaceholder: 'Engenheiro de Software',
+  workCompany: 'Empresa', workCompanyPlaceholder: 'Empresa Ltda.',
+  workLocation: 'Localização', workLocationPlaceholder: 'São Paulo, SP',
+  workEmploymentType: 'Tipo de Vínculo',
+  workDescription: 'Descrição', workDescPlaceholder: '• Liderei o desenvolvimento de…',
+  addWork: 'Adicionar Experiência Profissional', newPosition: 'Novo Cargo', newCompany: 'Nome da empresa',
+  employmentTypes: { fullTime: 'CLT / Integral', partTime: 'Meio Período', contract: 'PJ / Contrato', freelance: 'Freelance', internship: 'Estágio' },
+
+  addEducation: 'Adicionar Formação', newDegree: 'Nova Formação', newInstitution: 'Instituição',
+  degree: 'Grau', degreePlaceholder: 'Bacharelado em Ciências',
+  fieldOfStudy: 'Área de Formação', fieldOfStudyPlaceholder: 'Ciência da Computação',
+  institution: 'Instituição', institutionPlaceholder: 'Universidade de São Paulo',
+  location: 'Localização', locationPlaceholder: 'São Paulo, SP',
+  gpa: 'CRA / CR (opcional)', honors: 'Honras / Prêmios',
+
+  addSkill: 'Adicionar', skillPlaceholder: 'ex: Python, Gestão de Projetos',
+  skillCategory: 'Categoria (opcional)', skillCategoryPlaceholder: 'Geral',
+  noSkillsYet: 'Nenhuma habilidade adicionada. Digite acima e pressione Enter.',
+  skillLevels: ['Iniciante', 'Básico', 'Intermediário', 'Avançado', 'Especialista'],
+
+  addLanguage: 'Adicionar', languagePlaceholder: 'ex: Inglês, Espanhol',
+  noLanguagesYet: 'Nenhum idioma adicionado ainda.',
+  nativeLabel: 'Nativo/a', langCertLabel: 'Certificação / Pontuação', langCertPlaceholder: 'ex: TOEFL 100',
+
+  addCertification: 'Adicionar Certificação', newCertification: 'Nova Certificação',
+  certName: 'Nome da Certificação', certNamePlaceholder: 'AWS Solutions Architect',
+  certIssuer: 'Organização Emissora', certIssuerPlaceholder: 'Amazon Web Services',
+  certDate: 'Data de Emissão', certExpiry: 'Data de Validade',
+  certCredential: 'ID da Credencial / URL', certCredentialPlaceholder: 'ABC123 ou https://…',
+
+  addReference: 'Adicionar Referência', newReference: 'Nova Referência', newReferenceSubtitle: 'Cargo, Empresa',
+  refName: 'Nome Completo', refNamePlaceholder: 'Maria Silva',
+  refJobTitle: 'Cargo', refJobTitlePlaceholder: 'Gerente Sênior',
+  refCompany: 'Empresa', refCompanyPlaceholder: 'Empresa Ltda.',
+  refRelationship: 'Relação', refRelationshipPlaceholder: 'Gestor direto',
+
+  templateTitle: 'Escolher Modelo',
+  templateDesc: 'Selecione o layout e tema de cor que melhor se adequam ao seu perfil.',
+  colorTheme: 'Tema de Cor', selectedLabel: 'Selecionado:',
+
+  importTitle: 'Importar Currículo Existente',
+  importDesc: 'Cole seu currículo em texto simples. Extrairemos suas informações automaticamente.',
+  importWarning: 'A análise é heurística — revise os dados extraídos antes de exportar. Fotos não são importadas.',
+  importPlaceholder: 'Cole seu currículo aqui…',
+  parseCV: 'Analisar Currículo', applyToBuilder: 'Aplicar ao Editor', editText: '← Editar texto',
+  importSuccess: 'Importado com sucesso!',
+  importSuccessDesc: 'Revise e complete os campos ausentes no editor.',
+  previewLabels: {
+    name: 'Nome', email: 'E-mail', phone: 'Telefone', linkedin: 'LinkedIn',
+    summary: 'Resumo', workExperience: 'Experiência Profissional', entries: 'entradas extraídas',
+    education: 'Formação', skills: 'Habilidades', languages: 'Idiomas', certifications: 'Certificações',
+    workPreview: 'Prévia da Experiência', noTitle: '(sem cargo)', notFound: 'não encontrado', moreSuffix: 'mais…',
+  },
+
+  characters: 'caracteres',
+  noItemsYet: 'Nenhum item adicionado ainda.',
+};
+
 export const jaUI: MarketUI = {
   back: '戻る', next: '次へ', save: '保存', saving: '保存中…', saved: '保存済み',
   clear: 'クリア', clearConfirmTitle: 'すべてのデータをクリアしますか？',

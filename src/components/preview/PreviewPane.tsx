@@ -44,6 +44,18 @@ const renderers: Record<string, React.ComponentType<{ cv: CVData; config: Market
   'latam-modern': LatamModernRenderer,
   'jp-rirekisho': JapanRirekishoRenderer,
   'jp-shokumu': JapanShokumuRenderer,
+  // GB — no photo, clean two-column layout
+  'gb-classic': USClassicRenderer,
+  'gb-modern': USModernRenderer,
+  // AU — same clean layout as US/GB
+  'au-classic': USClassicRenderer,
+  'au-modern': USModernRenderer,
+  // IN — photo-optional, uses LATAM renderers which support photo in sidebar
+  'in-classic': LatamTraditionalRenderer,
+  'in-modern': LatamModernRenderer,
+  // BR — photo-optional, LATAM-style renderers
+  'br-classic': LatamTraditionalRenderer,
+  'br-modern': LatamModernRenderer,
 };
 
 const DEFAULT_ZOOM = 0.85;

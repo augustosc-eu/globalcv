@@ -8,7 +8,6 @@ const markets = [
     id: 'us',
     name: 'United States',
     flag: '🇺🇸',
-    color: 'blue',
     gradient: 'from-blue-600 to-blue-800',
     border: 'border-blue-200 hover:border-blue-400',
     badge: 'bg-blue-100 text-blue-700',
@@ -24,7 +23,6 @@ const markets = [
     id: 'eu',
     name: 'European Union',
     flag: '🇪🇺',
-    color: 'indigo',
     gradient: 'from-indigo-600 to-indigo-800',
     border: 'border-indigo-200 hover:border-indigo-400',
     badge: 'bg-indigo-100 text-indigo-700',
@@ -37,10 +35,39 @@ const markets = [
     ],
   },
   {
+    id: 'gb',
+    name: 'United Kingdom',
+    flag: '🇬🇧',
+    gradient: 'from-blue-700 to-blue-900',
+    border: 'border-blue-200 hover:border-blue-500',
+    badge: 'bg-blue-100 text-blue-800',
+    format: 'CV',
+    highlights: [
+      'A4 format, 2-page standard',
+      'No photo, DOB, or nationality (equality law)',
+      'Personal Profile section',
+      'References on request convention',
+    ],
+  },
+  {
+    id: 'au',
+    name: 'Australia & NZ',
+    flag: '🇦🇺',
+    gradient: 'from-sky-500 to-sky-700',
+    border: 'border-sky-200 hover:border-sky-400',
+    badge: 'bg-sky-100 text-sky-700',
+    format: 'Resume',
+    highlights: [
+      'A4, 2–3 pages acceptable',
+      'No photo convention',
+      'Referees section expected',
+      'Career Objective section',
+    ],
+  },
+  {
     id: 'latam',
     name: 'Latin America',
     flag: '🌎',
-    color: 'orange',
     gradient: 'from-orange-500 to-orange-700',
     border: 'border-orange-200 hover:border-orange-400',
     badge: 'bg-orange-100 text-orange-700',
@@ -53,10 +80,39 @@ const markets = [
     ],
   },
   {
+    id: 'br',
+    name: 'Brasil',
+    flag: '🇧🇷',
+    gradient: 'from-green-600 to-green-800',
+    border: 'border-green-200 hover:border-green-500',
+    badge: 'bg-green-100 text-green-700',
+    format: 'Currículo',
+    highlights: [
+      'Portuguese (pt-BR) interface',
+      'Photo & personal details block',
+      'Objetivo Profissional required',
+      'CLT / PJ employment types',
+    ],
+  },
+  {
+    id: 'in',
+    name: 'India',
+    flag: '🇮🇳',
+    gradient: 'from-amber-600 to-amber-800',
+    border: 'border-amber-200 hover:border-amber-400',
+    badge: 'bg-amber-100 text-amber-700',
+    format: 'CV / Resume',
+    highlights: [
+      'Career Objective required',
+      'Photo, DOB, marital status optional',
+      'Technical Skills section highlighted',
+      'A4, up to 2 pages',
+    ],
+  },
+  {
     id: 'jp',
     name: '日本 / Japan',
     flag: '🇯🇵',
-    color: 'red',
     gradient: 'from-red-600 to-red-800',
     border: 'border-red-200 hover:border-red-400',
     badge: 'bg-red-100 text-red-700',
@@ -96,7 +152,7 @@ export default function HomePage() {
               <FileText size={16} /> Professional templates
             </span>
             <span className="flex items-center gap-1.5">
-              <Globe size={16} /> 4 global markets
+              <Globe size={16} /> 8 global markets
             </span>
             <span className="flex items-center gap-1.5">
               <ArrowRight size={16} /> PDF export
@@ -114,7 +170,7 @@ export default function HomePage() {
           The builder adapts its fields, templates, and conventions to each market automatically.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {markets.map((market) => (
             <Link
               key={market.id}

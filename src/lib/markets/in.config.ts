@@ -1,0 +1,55 @@
+import { inUI } from './ui';
+import { MarketConfig } from '@/types/market.types';
+
+export const inConfig: MarketConfig = {
+  market: 'in',
+  name: 'India',
+  locale: 'en-IN',
+  pageSize: 'A4',
+  direction: 'ltr',
+  color: '#b45309',
+  accentColor: '#92400e',
+  themes: [
+    { id: 'in-saffron', name: 'Saffron',    primary: '#b45309', accent: '#92400e', light: '#fef3c7' },
+    { id: 'in-navy',    name: 'Navy',        primary: '#1d4ed8', accent: '#1e40af', light: '#dbeafe' },
+    { id: 'in-teal',    name: 'Teal',        primary: '#0d9488', accent: '#0f766e', light: '#ccfbf1' },
+    { id: 'in-green',   name: 'Forest',      primary: '#15803d', accent: '#166534', light: '#dcfce7' },
+    { id: 'in-violet',  name: 'Violet',      primary: '#7c3aed', accent: '#6d28d9', light: '#ede9fe' },
+    { id: 'in-mono',    name: 'Monochrome',  primary: '#111827', accent: '#374151', light: '#f3f4f6' },
+  ],
+  fields: {
+    // Indian CVs commonly include photo, DOB, nationality, marital status
+    photo:            { visibility: 'optional', label: 'Profile Photo',  helpText: 'A professional photo is commonly expected on Indian CVs.' },
+    dateOfBirth:      { visibility: 'optional', label: 'Date of Birth',  helpText: 'Commonly included on Indian CVs.' },
+    nationality:      { visibility: 'optional', label: 'Nationality',    helpText: 'Typically "Indian" — include if applying abroad.' },
+    maritalStatus:    { visibility: 'optional', label: 'Marital Status', helpText: 'Often requested on Indian job applications.' },
+    idNumber:         { visibility: 'hidden' },
+    furigana:         { visibility: 'hidden' },
+    gender:           { visibility: 'optional', label: 'Gender' },
+    nearestStation:   { visibility: 'hidden' },
+    commuteTime:      { visibility: 'hidden' },
+    emergencyContact: { visibility: 'hidden' },
+    personalSeal:     { visibility: 'hidden' },
+  },
+  sections: {
+    objective:            { enabled: true,  required: true,  order: 0, label: 'Career Objective' },
+    workExperience:       { enabled: true,  required: true,  order: 1, label: 'Work Experience' },
+    education:            { enabled: true,  required: true,  order: 2, label: 'Education' },
+    skills:               { enabled: true,  required: true,  order: 3, label: 'Technical Skills' },
+    languages:            { enabled: true,  required: false, order: 4, label: 'Languages Known' },
+    certifications:       { enabled: true,  required: false, order: 5, label: 'Certifications & Training' },
+    references:           { enabled: true,  required: false, order: 6, label: 'References' },
+    selfPromotion:        { enabled: false, required: false, order: 7 },
+    reasonForApplication: { enabled: false, required: false, order: 8 },
+  },
+  pageLimitSuggestion: 2,
+  languageLevelSystem: 'generic',
+  dateFormat: 'MMM yyyy',
+  enableATSSuggestions: false,
+  photoAspectRatio: 0.75,
+  templates: [
+    { id: 'in-classic', name: 'Classic CV',  description: 'Traditional Indian CV format with personal details block' },
+    { id: 'in-modern',  name: 'Modern CV',   description: 'Contemporary design with photo sidebar and skills panel' },
+  ],
+  ui: inUI,
+};

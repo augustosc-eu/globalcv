@@ -1,4 +1,4 @@
-export type Market = 'us' | 'eu' | 'latam' | 'jp';
+export type Market = 'us' | 'eu' | 'latam' | 'jp' | 'gb' | 'au' | 'in' | 'br';
 export type PageSize = 'A4' | 'Letter';
 export type MaritalStatus = 'single' | 'married' | 'divorced' | 'widowed' | 'prefer_not';
 export type EmploymentType = 'full_time' | 'part_time' | 'contract' | 'freelance' | 'internship';

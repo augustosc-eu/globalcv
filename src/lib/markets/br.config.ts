@@ -1,0 +1,55 @@
+import { ptBrUI } from './ui';
+import { MarketConfig } from '@/types/market.types';
+
+export const brConfig: MarketConfig = {
+  market: 'br',
+  name: 'Brasil',
+  locale: 'pt-BR',
+  pageSize: 'A4',
+  direction: 'ltr',
+  color: '#16a34a',
+  accentColor: '#15803d',
+  themes: [
+    { id: 'br-green',  name: 'Verde',        primary: '#16a34a', accent: '#15803d', light: '#dcfce7' },
+    { id: 'br-teal',   name: 'Petróleo',     primary: '#0d9488', accent: '#0f766e', light: '#ccfbf1' },
+    { id: 'br-blue',   name: 'Azul',         primary: '#2563eb', accent: '#1d4ed8', light: '#dbeafe' },
+    { id: 'br-violet', name: 'Violeta',      primary: '#7c3aed', accent: '#6d28d9', light: '#ede9fe' },
+    { id: 'br-orange', name: 'Laranja',      primary: '#ea580c', accent: '#c2410c', light: '#ffedd5' },
+    { id: 'br-mono',   name: 'Monocromático', primary: '#111827', accent: '#374151', light: '#f3f4f6' },
+  ],
+  fields: {
+    // Brazilian CVs (Currículo) commonly include photo, DOB, nationality, marital status
+    photo:            { visibility: 'optional', label: 'Foto',            helpText: 'Foto profissional 3×4 é comumente esperada no Brasil.' },
+    dateOfBirth:      { visibility: 'optional', label: 'Data de Nascimento', helpText: 'Comumente incluída em currículos brasileiros.' },
+    nationality:      { visibility: 'optional', label: 'Nacionalidade' },
+    maritalStatus:    { visibility: 'optional', label: 'Estado Civil' },
+    idNumber:         { visibility: 'optional', label: 'CPF (opcional)',  helpText: 'Número de CPF — opcional neste momento.' },
+    furigana:         { visibility: 'hidden' },
+    gender:           { visibility: 'optional', label: 'Gênero' },
+    nearestStation:   { visibility: 'hidden' },
+    commuteTime:      { visibility: 'hidden' },
+    emergencyContact: { visibility: 'hidden' },
+    personalSeal:     { visibility: 'hidden' },
+  },
+  sections: {
+    objective:            { enabled: true,  required: true,  order: 0, label: 'Objetivo Profissional' },
+    workExperience:       { enabled: true,  required: true,  order: 1, label: 'Experiência Profissional' },
+    education:            { enabled: true,  required: true,  order: 2, label: 'Formação Acadêmica' },
+    skills:               { enabled: true,  required: false, order: 3, label: 'Habilidades' },
+    languages:            { enabled: true,  required: false, order: 4, label: 'Idiomas' },
+    certifications:       { enabled: true,  required: false, order: 5, label: 'Certificações e Cursos' },
+    references:           { enabled: true,  required: true,  order: 6, label: 'Referências' },
+    selfPromotion:        { enabled: false, required: false, order: 7 },
+    reasonForApplication: { enabled: false, required: false, order: 8 },
+  },
+  pageLimitSuggestion: 2,
+  languageLevelSystem: 'generic',
+  dateFormat: 'MMM yyyy',
+  enableATSSuggestions: false,
+  photoAspectRatio: 0.75,
+  templates: [
+    { id: 'br-classic', name: 'Tradicional', description: 'Formato clássico brasileiro com dados pessoais e foto' },
+    { id: 'br-modern',  name: 'Moderno',     description: 'Design contemporâneo com sidebar colorido' },
+  ],
+  ui: ptBrUI,
+};

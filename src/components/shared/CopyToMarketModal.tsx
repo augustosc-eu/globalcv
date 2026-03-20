@@ -14,10 +14,11 @@ interface Props {
   onClose: () => void;
 }
 
-const ALL_MARKETS: Market[] = ['us', 'eu', 'latam', 'jp'];
+const ALL_MARKETS: Market[] = ['us', 'eu', 'latam', 'jp', 'gb', 'au', 'in', 'br'];
 
 const marketFlags: Record<Market, string> = {
   us: '🇺🇸', eu: '🇪🇺', latam: '🌎', jp: '🇯🇵',
+  gb: '🇬🇧', au: '🇦🇺', in: '🇮🇳', br: '🇧🇷',
 };
 
 export default function CopyToMarketModal({ cv, currentMarket, open, onClose }: Props) {
