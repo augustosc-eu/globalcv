@@ -17,24 +17,45 @@ GlobalCV generates professional CVs and resumes tailored to the conventions of f
 | 🇺🇸 United States | Letter | Classic, Modern | English |
 | 🇪🇺 European Union | A4 | Europass, Modern | English |
 | 🌎 Latin America | Letter | Traditional, Modern | Spanish |
-| 🇯🇵 Japan | A4 | 履歴書 (Rirekisho) | Japanese |
+| 🇯🇵 Japan | A4 | 履歴書 (Rirekisho), 職務経歴書 (Shokumu) | Japanese |
 
 ---
 
 ## Features
 
-- **Market-aware fields** — US hides date of birth and photo (anti-discrimination); LATAM requires them; Japan requires a 証明写真 and 生年月日
-- **Multiple templates per market** — Classic and Modern layouts with distinct visual styles
+### Editing
+- **Market-aware fields** — US hides date of birth and photo (anti-discrimination); Latam requires them; Japan requires a 証明写真, 生年月日, 通勤時間, and more
+- **Multiple templates per market** — 2 layouts per market with distinct visual styles
 - **6 color themes per market** — Swap accent colors in the header (desktop) or in the Template step (mobile)
-- **PDF export** — Downloads a print-ready PDF matching the selected template layout exactly
-- **CV text import** — Paste your existing CV text and the parser extracts sections automatically (supports English and Spanish)
-- **Photo upload** — Crop and embed a profile photo (shown in markets where expected)
-- **Share link** — Generates a compressed URL with your full CV data — share or bookmark it
-- **Clear Data** — Wipes all CV data from your browser in one click
-- **Privacy Mode** — Disables localStorage entirely; data lives in memory only and is erased when the tab closes
+- **Undo / Redo** — 20-snapshot history with Cmd/Ctrl+Z / Y keyboard shortcuts; history is preserved for 2 seconds after each change
+- **Inline form validation** — Required fields, email format, and date range errors shown on blur
+
+### Preview & Export
+- **Live preview** — Zoomable (40–150%) side panel with page-count estimate
+- **Page limit warning** — Amber badge when content is estimated to exceed the market's recommended page count
+- **PDF export** — Downloads a print-ready PDF matching the selected template exactly, with correct page breaks and multi-page sidebars
+- **Mobile preview** — Full-screen preview modal accessible on small screens via a floating button
+
+### Import & Backup
+- **CV text import** — Paste any CV text (English or Spanish); the parser detects sections, dates, name, email, phone, and LinkedIn automatically
+- **Import warnings** — Shows which fields weren't detected and warns if the 30-skill cap is hit
+- **JSON backup** — Download your full CV as a `.json` file; restore it later with the Restore button
+- **Copy to market** — Copy all CV content to a different market's slot (preserves target market's template and theme defaults)
+
+### Sharing & Sync
+- **Share link** — Generates a compressed URL with your full CV data (photo excluded) — share or bookmark it
+- **Long-URL warning** — Warns before copying a link over 2,000 characters with a character count and privacy notice
+- **Cross-tab sync** — If another browser tab saves the same market's CV, a banner prompts you to reload
+
+### Privacy & Safety
+- **Privacy Mode** — Blurs all PII fields in the UI; toggle in the header
+- **Photo compression** — Uploaded photos are automatically resized to 800 px max (JPEG 85%) before storage; files over 8 MB are rejected
+- **Error boundary** — Catches render crashes with a "Reload page" fallback so a broken CV doesn't leave you stuck
 - **No backend** — All data stays in your browser (localStorage + URL state). Nothing is sent to a server
 - **No account** — Open the app, fill in your details, export your PDF
-- **Mobile-friendly** — Responsive layout; all features accessible on small screens
+
+### ATS (US market)
+- **ATS suggestions panel** — 10-point checklist (name, email, phone, LinkedIn, summary length, work entries, description length, quantified achievements, education, skills count) with a score bar and per-check tips
 
 ---
 
@@ -46,28 +67,35 @@ GlobalCV is a fully client-side app. No data is collected, stored on a server, o
 
 Hosting is provided by [Vercel](https://vercel.com). No analytics or tracking scripts are used.
 
+The share link embeds CV content (except photos) as LZ-compressed plain text in the URL — anyone with the link can read your data. You are warned before copying.
+
 ---
 
-## Tech stack
+## Tech Stack
 
 | | |
 |---|---|
 | Framework | Next.js 16 (App Router, Turbopack) |
-| UI | React 19, Tailwind CSS, Radix UI |
+| UI | React 19, Tailwind CSS 3, Radix UI |
 | State | Zustand 4 + Immer |
+| Forms | react-hook-form 7 |
+| Drag & drop | @dnd-kit/core + sortable |
 | PDF generation | @react-pdf/renderer 4 |
-| Validation | Zod 3 |
+| Share URL compression | lz-string |
+| Icons | lucide-react |
 | Language | TypeScript 5.9 |
 
 ---
 
-## Getting started
+## Getting Started
 
 ```bash
 git clone https://github.com/augustosc-eu/globalcv.git
 cd globalcv
 npm install
-npm run dev
+npm run dev      # http://localhost:3000
+npm run build    # production build
+npm run lint     # ESLint
 ```
 
 Open [http://localhost:3000](http://localhost:3000) and select a market to begin.
@@ -76,29 +104,131 @@ Open [http://localhost:3000](http://localhost:3000) and select a market to begin
 
 ---
 
-## Project structure
+## Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── [market]/           # Dynamic route per market (us, eu, latam, jp)
-│   ├── privacy/            # Privacy Policy page
-│   └── terms/              # Terms of Service page
-├── components/
-│   ├── preview/
-│   │   └── renderers/      # HTML preview renderers (one per template)
-│   ├── wizard/             # Step-by-step form wizard
-│   └── shared/             # Header, modals, theme selector, privacy banner
-├── hooks/
-│   └── usePDFExport.ts     # PDF generation hook
+├── app/
+│   ├── page.tsx                  # Market selector landing page
+│   ├── [market]/
+│   │   ├── layout.tsx            # Market validation + ErrorBoundary + PrivacyBanner
+│   │   └── page.tsx              # Renders WizardShell for the market
+│   ├── privacy/page.tsx
+│   └── terms/page.tsx
+│
+├── types/
+│   ├── cv.types.ts               # CVData, PersonalInfo, WorkExperience, …
+│   └── market.types.ts           # MarketConfig shape
+│
 ├── lib/
-│   ├── markets/            # Per-market config (fields, templates, themes, labels)
-│   ├── parser/             # CV text import parser
-│   └── pdf/                # PDF layout components (@react-pdf/renderer)
+│   ├── markets/
+│   │   ├── us.config.ts          # US market config
+│   │   ├── eu.config.ts          # EU market config
+│   │   ├── latam.config.ts       # Latam market config
+│   │   ├── jp.config.ts          # Japan market config
+│   │   ├── ui.ts                 # Shared UI label helpers
+│   │   └── index.ts              # getMarketConfig(), isValidMarket()
+│   ├── parser/
+│   │   └── cvParser.ts           # Paste-import parser → ParseResult { data, warnings }
+│   ├── pdf/
+│   │   └── CVPDFDocument.tsx     # All PDF layouts (Classic, Modern, Europass, Shokumu, …)
+│   ├── sharing/
+│   │   └── shareUrl.ts           # encodeCVToURL / decodeCVFromURL (lz-string)
+│   ├── storage/
+│   │   └── localStorage.ts       # saveCV / loadCV / clearCV — versioned + migration
+│   └── utils/
+│       ├── cn.ts                 # Tailwind class merge helper
+│       ├── dateFormat.ts         # Wareki + locale date formatting
+│       └── theme.ts              # Color theme utilities
+│
 ├── store/
-│   └── cvStore.ts          # Global Zustand store (includes Privacy Mode)
-└── types/                  # TypeScript types
+│   └── cvStore.ts                # Zustand store — state, autosave, undo/redo, restoreCV
+│
+├── hooks/
+│   └── usePDFExport.ts           # PDF generation state machine (idle/generating/done/error)
+│
+└── components/
+    ├── form-fields/
+    │   ├── DateRangePicker.tsx   # Start/end date + "present" toggle + validation
+    │   └── PhotoUpload.tsx       # Canvas compression + 8 MB limit
+    │
+    ├── preview/
+    │   ├── PreviewPane.tsx       # Zoomable preview with page-count warning
+    │   └── renderers/
+    │       ├── USClassicRenderer.tsx
+    │       ├── USModernRenderer.tsx
+    │       ├── EUEuropassRenderer.tsx
+    │       ├── EUModernRenderer.tsx
+    │       ├── LatamTraditionalRenderer.tsx
+    │       ├── LatamModernRenderer.tsx
+    │       ├── JapanRirekishoRenderer.tsx
+    │       └── JapanShokumuRenderer.tsx
+    │
+    ├── shared/
+    │   ├── AppHeader.tsx            # Save status, undo/redo, import, share, backup, PDF export
+    │   ├── ATSSuggestionsPanel.tsx  # 10-point ATS score with tips (US market)
+    │   ├── CopyToMarketModal.tsx    # Copy CV content to another market
+    │   ├── CrossTabSyncBanner.tsx   # Reload prompt when another tab saves the same market
+    │   ├── ErrorBoundary.tsx        # React error boundary with reload fallback
+    │   ├── PasteImportModal.tsx     # 3-step paste → preview → apply import flow
+    │   ├── PrivacyBanner.tsx        # Top-of-page privacy notice
+    │   ├── ShareButton.tsx          # Copy share link with long-URL warning modal
+    │   └── ThemeSelector.tsx        # Color theme picker
+    │
+    └── wizard/
+        ├── WizardShell.tsx          # Main layout: sidebar nav + form area + preview pane
+        ├── WizardProgress.tsx       # Step list with completion indicators
+        ├── WizardNavigation.tsx     # Prev / Next buttons
+        ├── StepRouter.tsx           # Maps step key → step component
+        └── steps/
+            ├── PersonalInfoStep.tsx    # Name, contact, photo, address (validated)
+            ├── ObjectiveStep.tsx       # Summary / objective text
+            ├── WorkExperienceStep.tsx  # DnD-sortable work entries
+            ├── EducationStep.tsx       # DnD-sortable education entries
+            ├── SkillsStep.tsx          # Tag-based skills with proficiency level
+            ├── LanguagesStep.tsx       # Language + CEFR proficiency
+            ├── CertificationsStep.tsx
+            ├── ReferencesStep.tsx
+            ├── TemplatePickerStep.tsx  # Template + theme picker + ATS panel (US)
+            ├── JapanSpecificStep.tsx   # 通勤時間, 扶養家族, 配偶者, 自己PR, 志望動機
+            └── StepHeader.tsx          # Shared step title/description
 ```
+
+---
+
+## Architecture Notes
+
+### Config-over-code
+Every market's wizard steps, fields, validation rules, UI labels, and PDF layout are driven by `MarketConfig`. Components read the config at runtime — no market-specific `if` branches in shared components. To change what a market shows, edit its config file.
+
+### Data model
+`CVData` is a single flat object shared across all markets. Market-specific optional fields (`nearestStation`, `commuteTime`, `selfPromotion`, `reasonForApplication`, etc.) are declared as optional on the shared type. The config controls which fields are rendered.
+
+### Storage
+CV data is stored in `localStorage` under versioned keys (`cv_maker_v1_{market}`). A migration function handles schema upgrades. The store autosaves on every change (debounced) and tracks `lastSaved`.
+
+### Undo / Redo
+A Zustand subscriber (outside React) captures CV snapshots every 2 seconds when the store is dirty. History is capped at 20 entries. The redo future is dropped on any new edit.
+
+### PDF generation
+`@react-pdf/renderer` v4 runs in a Web Worker. `wrap={false}` on entry `<View>`s prevents mid-entry page breaks. The ModernPDF sidebar uses `minHeight: '100%'` on the outer flex row with `backgroundColor` directly on the sidebar `<View>` so it extends correctly across multiple pages.
+
+### Import parser
+`parseRawCV(text, market)` returns `{ data: Partial<CVData>, warnings: string[] }`. It detects sections by heading patterns, extracts contact info from the first 15 lines, and parses date ranges in many formats: ISO `YYYY-MM`, `MMM YYYY`, `MMM-YYYY`, `MM/YYYY`, Spanish month names, and plain year. Skills are capped at 30 with a warning.
+
+### Share URL
+CV data (minus the photo) is JSON-serialized, LZ-compressed, and base64-encoded into the URL query string. URLs over 2,000 characters trigger a warning modal before copying.
+
+---
+
+## Adding a New Market
+
+1. Create `src/lib/markets/{market}.config.ts` implementing `MarketConfig`
+2. Register it in `src/lib/markets/index.ts`
+3. Add the market to the `Market` union in `src/types/cv.types.ts`
+4. Add HTML preview renderers to `src/components/preview/renderers/`
+5. Add PDF components to `src/lib/pdf/CVPDFDocument.tsx`
+6. Add the market to `validMarkets` in `src/app/[market]/layout.tsx`
 
 ---
 
@@ -107,7 +237,7 @@ src/
 The app is fully static-compatible. Deploy on [Vercel](https://vercel.com) with zero configuration:
 
 1. Fork or clone the repo
-2. Import into Vercel → auto-detects Next.js
+2. Import into Vercel — auto-detects Next.js
 3. Deploy
 
 No environment variables required.
