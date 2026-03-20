@@ -16,8 +16,9 @@ interface Props {
 
 export default function PersonalInfoStep({ config }: Props) {
   const { cv, setPersonalInfo } = useCVStore();
-  const { register, watch, setValue, reset } = useForm<PersonalInfo>({
+  const { register, watch, reset, formState: { errors } } = useForm<PersonalInfo>({
     defaultValues: cv.personalInfo,
+    mode: 'onBlur',
   });
 
   useEffect(() => {
@@ -79,21 +80,29 @@ export default function PersonalInfoStep({ config }: Props) {
 
       {/* Name */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label={config.ui.firstName} required>
-          <input {...register('firstName')} className={inputCls} placeholder={config.ui.firstNamePlaceholder} />
+        <Field label={config.ui.firstName} required error={errors.firstName?.message}>
+          <input {...register('firstName', { required: 'First name is required' })} className={inputCls + (errors.firstName ? ' border-red-400 focus:ring-red-400' : '')} placeholder={config.ui.firstNamePlaceholder} />
         </Field>
-        <Field label={config.ui.lastName} required>
-          <input {...register('lastName')} className={inputCls} placeholder={config.ui.lastNamePlaceholder} />
+        <Field label={config.ui.lastName} required error={errors.lastName?.message}>
+          <input {...register('lastName', { required: 'Last name is required' })} className={inputCls + (errors.lastName ? ' border-red-400 focus:ring-red-400' : '')} placeholder={config.ui.lastNamePlaceholder} />
         </Field>
       </div>
 
       {/* Email & Phone */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label={config.ui.email} required>
-          <input {...register('email')} type="email" className={inputCls} placeholder={config.ui.emailPlaceholder} />
+        <Field label={config.ui.email} required error={errors.email?.message}>
+          <input
+            {...register('email', {
+              required: 'Email is required',
+              pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Enter a valid email address' },
+            })}
+            type="email"
+            className={inputCls + (errors.email ? ' border-red-400 focus:ring-red-400' : '')}
+            placeholder={config.ui.emailPlaceholder}
+          />
         </Field>
-        <Field label={config.ui.phone} required>
-          <input {...register('phone')} type="tel" className={inputCls} placeholder={config.ui.phonePlaceholder} />
+        <Field label={config.ui.phone} required error={errors.phone?.message}>
+          <input {...register('phone', { required: 'Phone is required' })} type="tel" className={inputCls + (errors.phone ? ' border-red-400 focus:ring-red-400' : '')} placeholder={config.ui.phonePlaceholder} />
         </Field>
       </div>
 
@@ -342,11 +351,13 @@ function Field({
   label,
   required,
   helpText,
+  error,
   children,
 }: {
   label: string;
   required?: boolean;
   helpText?: string;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -357,6 +368,7 @@ function Field({
       </label>
       {helpText && <p className="text-xs text-gray-500 mb-1">{helpText}</p>}
       {children}
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
   );
 }

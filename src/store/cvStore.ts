@@ -58,12 +58,16 @@ interface CVStoreState {
   lastSaved: string | null;
   isSaving: boolean;
   privacyMode: boolean;
+  // Undo/redo history
+  history: CVData[];
+  historyIndex: number;
 }
 
 interface CVStoreActions {
   // Initialization
   initializeMarket: (market: Market) => void;
   resetCV: (market: Market) => void;
+  restoreCV: (data: CVData) => void;
 
   // Personal info
   setPersonalInfo: (info: Partial<PersonalInfo>) => void;
@@ -127,6 +131,10 @@ interface CVStoreActions {
 
   // Privacy
   togglePrivacyMode: () => void;
+
+  // Undo/redo
+  undo: () => void;
+  redo: () => void;
 }
 
 // ─── ID helper ────────────────────────────────────────────────────────────────
@@ -150,6 +158,8 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
       lastSaved: null,
       isSaving: false,
       privacyMode: false,
+      history: [],
+      historyIndex: -1,
 
       // ── Init ──────────────────────────────────────────────────────────────
 
@@ -175,6 +185,13 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
           state.cv = createEmptyCVData(market);
           state.isDirty = false;
           state.lastSaved = null;
+        });
+      },
+
+      restoreCV: (data: CVData) => {
+        set((state) => {
+          state.cv = data;
+          state.isDirty = true;
         });
       },
 
@@ -519,6 +536,28 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
           state.privacyMode = !state.privacyMode;
         });
       },
+
+      undo: () => {
+        const { history, historyIndex } = get();
+        if (historyIndex <= 0) return;
+        const newIndex = historyIndex - 1;
+        set((state) => {
+          state.cv = JSON.parse(JSON.stringify(history[newIndex]));
+          state.historyIndex = newIndex;
+          state.isDirty = true;
+        });
+      },
+
+      redo: () => {
+        const { history, historyIndex } = get();
+        if (historyIndex >= history.length - 1) return;
+        const newIndex = historyIndex + 1;
+        set((state) => {
+          state.cv = JSON.parse(JSON.stringify(history[newIndex]));
+          state.historyIndex = newIndex;
+          state.isDirty = true;
+        });
+      },
     }))
   )
 );
@@ -535,5 +574,29 @@ useCVStore.subscribe(
     autosaveTimer = setTimeout(() => {
       useCVStore.getState().save();
     }, 1500);
+  }
+);
+
+// ── History subscription (undo/redo snapshots, debounced 2s, max 20) ─────────
+
+const MAX_HISTORY = 20;
+let historyTimer: ReturnType<typeof setTimeout> | null = null;
+
+useCVStore.subscribe(
+  (state) => state.isDirty,
+  (isDirty) => {
+    if (!isDirty) return;
+    if (historyTimer) clearTimeout(historyTimer);
+    historyTimer = setTimeout(() => {
+      const store = useCVStore.getState();
+      const snapshot: CVData = JSON.parse(JSON.stringify(store.cv));
+      useCVStore.setState((state) => {
+        // Drop any redo future when a new change comes in
+        const base = state.history.slice(0, state.historyIndex + 1);
+        const next = [...base, snapshot].slice(-MAX_HISTORY);
+        state.history = next;
+        state.historyIndex = next.length - 1;
+      });
+    }, 2000);
   }
 );

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Eye, X } from 'lucide-react';
 import { Market } from '@/types/cv.types';
 import { getMarketConfig } from '@/lib/markets';
 import { useCVStore } from '@/store/cvStore';
@@ -10,12 +11,14 @@ import WizardProgress from './WizardProgress';
 import WizardNavigation from './WizardNavigation';
 import StepRouter from './StepRouter';
 import PreviewPane from '@/components/preview/PreviewPane';
+import CrossTabSyncBanner from '@/components/shared/CrossTabSyncBanner';
 
 interface WizardShellProps { market: Market }
 export interface WizardStep { key: string; label: string }
 
 export default function WizardShell({ market }: WizardShellProps) {
   const config = getMarketConfig(market);
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
   const { initializeMarket, setSteps, wizard, cv, setPersonalInfo, setObjective,
           addWorkExperience, addEducation, addSkill, addLanguage, addCertification,
           setTemplate, setColorTheme, setPageSize } = useCVStore();
@@ -97,6 +100,38 @@ export default function WizardShell({ market }: WizardShellProps) {
           <PreviewPane cv={cv} config={config} />
         </aside>
       </div>
+
+      {/* Mobile preview button — hidden on xl where the sidebar is visible */}
+      <button
+        onClick={() => setShowMobilePreview(true)}
+        className="xl:hidden fixed bottom-20 right-4 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full text-white text-sm font-medium shadow-lg transition-transform active:scale-95"
+        style={{ backgroundColor: config.color }}
+        aria-label="Preview CV"
+      >
+        <Eye size={16} />
+        <span className="hidden sm:inline">Preview</span>
+      </button>
+
+      <CrossTabSyncBanner market={market} />
+
+      {/* Mobile preview modal */}
+      {showMobilePreview && (
+        <div className="xl:hidden fixed inset-0 z-50 flex flex-col bg-white">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
+            <span className="text-sm font-semibold text-gray-800">CV Preview</span>
+            <button
+              onClick={() => setShowMobilePreview(false)}
+              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="Close preview"
+            >
+              <X size={18} className="text-gray-600" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto">
+            <PreviewPane cv={cv} config={config} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

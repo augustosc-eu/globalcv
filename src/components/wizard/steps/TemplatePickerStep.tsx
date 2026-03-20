@@ -5,6 +5,7 @@ import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 import StepHeader from './StepHeader';
 import ThemeSelector from '@/components/shared/ThemeSelector';
+import ATSSuggestionsPanel from '@/components/shared/ATSSuggestionsPanel';
 import { cn } from '@/lib/utils/cn';
 import { Check } from 'lucide-react';
 
@@ -23,6 +24,7 @@ const templatePreviews: Record<string, string> = {
 
 export default function TemplatePickerStep({ config }: Props) {
   const { cv, setTemplate } = useCVStore();
+  const showATS = config.enableATSSuggestions;
 
   return (
     <div className="space-y-6">
@@ -75,6 +77,9 @@ export default function TemplatePickerStep({ config }: Props) {
           {' — '}{config.templates.find((t) => t.id === cv.templateId)?.description}
         </p>
       </div>
+
+      {/* ATS readiness checklist — US only */}
+      {showATS && <ATSSuggestionsPanel cv={cv} />}
     </div>
   );
 }

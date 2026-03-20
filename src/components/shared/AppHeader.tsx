@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FileText, Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2, ShieldCheck } from 'lucide-react';
+import { FileText, Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2, ShieldCheck, Undo2, Redo2, HardDriveDownload, FolderOpen, Copy } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
@@ -10,6 +10,7 @@ import { usePDFExport } from '@/hooks/usePDFExport';
 import ShareButton from './ShareButton';
 import ThemeSelector from './ThemeSelector';
 import PasteImportModal from './PasteImportModal';
+import CopyToMarketModal from './CopyToMarketModal';
 
 const marketFlags: Record<Market, string> = {
   us: '🇺🇸', eu: '🇪🇺', latam: '🌎', jp: '🇯🇵',
@@ -18,14 +19,57 @@ const marketFlags: Record<Market, string> = {
 interface Props { market: Market; config: MarketConfig }
 
 export default function AppHeader({ market, config }: Props) {
-  const { isDirty, isSaving, lastSaved, save, cv, resetCV, privacyMode, togglePrivacyMode } = useCVStore();
+  const { isDirty, isSaving, lastSaved, save, cv, resetCV, restoreCV, privacyMode, togglePrivacyMode, undo, redo, history, historyIndex } = useCVStore();
   const { exportPDF, state: pdfState, error: pdfError } = usePDFExport();
   const [importOpen, setImportOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [copyOpen, setCopyOpen] = useState(false);
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      if ((e.key === 'y') || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [undo, redo]);
 
   function handleClear() {
     resetCV(market);
     setConfirmClear(false);
+  }
+
+  function handleBackupJSON() {
+    const blob = new Blob([JSON.stringify(cv, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cv-backup-${market}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleRestoreJSON(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string);
+        if (data && typeof data === 'object' && data.personalInfo) {
+          restoreCV(data);
+        }
+      } catch {
+        // silently ignore corrupt files
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   }
 
   const savedTime = lastSaved
@@ -69,6 +113,26 @@ export default function AppHeader({ market, config }: Props) {
             ) : null}
           </div>
 
+          {/* Undo / Redo */}
+          <div className="hidden sm:flex items-center gap-0.5">
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              title="Undo (⌘Z)"
+              className="p-1.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-25 disabled:cursor-default transition-colors"
+            >
+              <Undo2 size={13} />
+            </button>
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              title="Redo (⌘Y)"
+              className="p-1.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-25 disabled:cursor-default transition-colors"
+            >
+              <Redo2 size={13} />
+            </button>
+          </div>
+
           {/* Privacy Mode — hidden on mobile, accessible via Template step */}
           <button
             onClick={togglePrivacyMode}
@@ -102,6 +166,34 @@ export default function AppHeader({ market, config }: Props) {
             <span className="hidden sm:inline">{config.ui.import}</span>
           </button>
 
+          {/* Copy to another market — hidden on mobile */}
+          <button
+            onClick={() => setCopyOpen(true)}
+            title="Copy CV to another market"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+          >
+            <Copy size={12} />
+            <span className="hidden md:inline">Copy to</span>
+          </button>
+
+          {/* JSON Backup / Restore — hidden on mobile */}
+          <button
+            onClick={handleBackupJSON}
+            title="Download CV as JSON backup"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+          >
+            <HardDriveDownload size={12} />
+            <span className="hidden md:inline">Backup</span>
+          </button>
+          <label
+            title="Restore CV from JSON backup"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors cursor-pointer"
+          >
+            <FolderOpen size={12} />
+            <span className="hidden md:inline">Restore</span>
+            <input type="file" accept=".json" className="sr-only" onChange={handleRestoreJSON} />
+          </label>
+
           {/* Share */}
           <ShareButton cv={cv} />
 
@@ -133,6 +225,7 @@ export default function AppHeader({ market, config }: Props) {
       </header>
 
       <PasteImportModal market={market} open={importOpen} onClose={() => setImportOpen(false)} />
+      <CopyToMarketModal cv={cv} currentMarket={market} open={copyOpen} onClose={() => setCopyOpen(false)} />
 
       {confirmClear && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">

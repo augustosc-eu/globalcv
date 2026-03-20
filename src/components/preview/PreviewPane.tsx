@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { ZoomIn, ZoomOut, AlertTriangle } from 'lucide-react';
 import { CVData } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
+
 import USClassicRenderer from './renderers/USClassicRenderer';
 import USModernRenderer from './renderers/USModernRenderer';
 import EUEuropassRenderer from './renderers/EUEuropassRenderer';
@@ -11,6 +12,23 @@ import EUModernRenderer from './renderers/EUModernRenderer';
 import LatamTraditionalRenderer from './renderers/LatamTraditionalRenderer';
 import LatamModernRenderer from './renderers/LatamModernRenderer';
 import JapanRirekishoRenderer from './renderers/JapanRirekishoRenderer';
+import JapanShokumuRenderer from './renderers/JapanShokumuRenderer';
+
+// Rough content-length heuristic: sum weighted units and compare to page budget.
+function estimatePages(cv: CVData, config: MarketConfig): number {
+  const UNITS_PER_PAGE = config.pageSize === 'A4' ? 52 : 46;
+  let units = 6; // header
+  if (cv.objective) units += Math.ceil(cv.objective.length / 90) + 1;
+  for (const e of cv.workExperience) {
+    units += 2 + (e.description ? Math.ceil(e.description.length / 80) : 0);
+  }
+  units += cv.education.length * 1.5;
+  units += Math.ceil(cv.skills.length / 6);
+  units += Math.ceil(cv.languages.length / 3);
+  units += cv.certifications.length;
+  units += cv.references.length * 1.5;
+  return Math.max(1, Math.ceil(units / UNITS_PER_PAGE));
+}
 
 interface Props {
   cv: CVData;
@@ -25,7 +43,7 @@ const renderers: Record<string, React.ComponentType<{ cv: CVData; config: Market
   'latam-traditional': LatamTraditionalRenderer,
   'latam-modern': LatamModernRenderer,
   'jp-rirekisho': JapanRirekishoRenderer,
-  'jp-shokumu': JapanRirekishoRenderer,
+  'jp-shokumu': JapanShokumuRenderer,
 };
 
 const DEFAULT_ZOOM = 0.85;
@@ -37,10 +55,22 @@ export default function PreviewPane({ cv, config }: Props) {
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const Renderer = renderers[cv.templateId] ?? USClassicRenderer;
 
+  const estimatedPages = estimatePages(cv, config);
+  const pageLimit = config.pageLimitSuggestion;
+  const overLimit = pageLimit != null && estimatedPages > pageLimit;
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Preview</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Preview</span>
+          {overLimit && (
+            <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-full text-xs text-amber-700 font-medium">
+              <AlertTriangle size={11} />
+              ~{estimatedPages}p · limit {pageLimit}
+            </span>
+          )}
+        </div>
 
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">

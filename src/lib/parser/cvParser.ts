@@ -1,6 +1,11 @@
 import { CVData, WorkExperience, Education, Skill, Language, Market } from '@/types/cv.types';
 import { createEmptyCVData } from '@/store/cvStore';
 
+export interface ParseResult {
+  data: Partial<CVData>;
+  warnings: string[];
+}
+
 // ─── Section heading detection ────────────────────────────────────────────────
 
 const SECTION_PATTERNS: Record<string, RegExp> = {
@@ -50,23 +55,57 @@ const PHONE_RE = /(\+?[\d\s\-().]{7,20})/;
 const LINKEDIN_RE = /linkedin\.com\/in\/[\w-]+/i;
 const URL_RE = /https?:\/\/[^\s]+/i;
 
-// Matches: "YYYY - YYYY", "MMM YYYY - MMM YYYY", "MM/YYYY - MM/YYYY", mixed
-const DATE_RANGE_RE = /(\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december|\d{1,2}\/\d{4}|\d{4})[^\n]*?(?:–|—|-|to)\s*(?:present|current|now|actualidad|actual|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{1,2}\/\d{4}|\d{4})[\w\s,\/]*))/i;
+// Matches: "YYYY - YYYY", "MMM YYYY - MMM YYYY", "MM/YYYY - MM/YYYY", "YYYY-MM - YYYY-MM", mixed
+const MONTH_NAMES = 'jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december|ene|abr|ago|dic|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre';
+const DATE_TOKEN = `(?:${MONTH_NAMES}|\\d{1,2}\\/\\d{4}|\\d{4}-\\d{2}|\\d{4})`;
+const DATE_RANGE_RE = new RegExp(
+  `(\\b(?:${MONTH_NAMES}|\\d{1,2}\\/\\d{4}|\\d{4}-\\d{2}|\\d{4})[^\\n]*?(?:–|—|-|to)\\s*(?:present|current|now|actualidad|actual|hoy|\\b${DATE_TOKEN}[\\w\\s,\\/]*))`,
+  'i'
+);
+
+const MONTH_MAP: Record<string, string> = {
+  // English full & abbreviated
+  jan: '01', january: '01',
+  feb: '02', february: '02',
+  mar: '03', march: '03',
+  apr: '04', april: '04',
+  may: '05',
+  jun: '06', june: '06',
+  jul: '07', july: '07',
+  aug: '08', august: '08',
+  sep: '09', sept: '09', september: '09',
+  oct: '10', october: '10',
+  nov: '11', november: '11',
+  dec: '12', december: '12',
+  // Spanish full & abbreviated
+  ene: '01', enero: '01',
+  febrero: '02',
+  marzo: '03',
+  abr: '04', abril: '04',
+  mayo: '05',
+  junio: '06',
+  julio: '07',
+  ago: '08', agosto: '08',
+  septiembre: '09',
+  octubre: '10',
+  noviembre: '11',
+  dic: '12', diciembre: '12',
+};
 
 function parseDateToYM(str: string): string {
-  const monthMap: Record<string, string> = {
-    jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
-    jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12',
-    january: '01', february: '02', march: '03', april: '04', june: '06',
-    july: '07', august: '08', september: '09', october: '10', november: '11', december: '12',
-  };
   const s = str.trim().toLowerCase();
   // "MM/YYYY" or "M/YYYY"
   const slash = s.match(/^(\d{1,2})\/(\d{4})$/);
   if (slash) return `${slash[2]}-${slash[1].padStart(2, '0')}`;
-  // "MMM YYYY"
-  const mY = s.match(/^([a-z]+)\s+(\d{4})$/);
-  if (mY) return `${mY[2]}-${monthMap[mY[1]] ?? '01'}`;
+  // "YYYY-MM" (ISO partial)
+  const isoYM = s.match(/^(\d{4})-(\d{2})$/);
+  if (isoYM) return `${isoYM[1]}-${isoYM[2]}`;
+  // "MMM YYYY" or "MMM-YYYY" or "MMM. YYYY"
+  const mY = s.match(/^([a-záéíóúñ]+)[.\s\-]+(\d{4})$/);
+  if (mY) return `${mY[2]}-${MONTH_MAP[mY[1]] ?? '01'}`;
+  // "YYYY MMM" (reversed)
+  const Ym = s.match(/^(\d{4})[.\s\-]+([a-záéíóúñ]+)$/);
+  if (Ym) return `${Ym[1]}-${MONTH_MAP[Ym[2]] ?? '01'}`;
   // "YYYY"
   const y = s.match(/^(\d{4})$/);
   if (y) return `${y[1]}-01`;
@@ -87,9 +126,10 @@ function parseDateRange(str: string): { startDate: string; endDate: string; isPr
 
 // ─── Main parser ──────────────────────────────────────────────────────────────
 
-export function parseRawCV(text: string, market: Market): Partial<CVData> {
+export function parseRawCV(text: string, market: Market): ParseResult {
   const lines = text.split('\n').map((l) => l.trimEnd());
   const result = createEmptyCVData(market);
+  const warnings: string[] = [];
 
   // 1. Extract contact info from the top block (first 15 lines)
   const topBlock = lines.slice(0, 15).join('\n');
@@ -110,11 +150,19 @@ export function parseRawCV(text: string, market: Market): Partial<CVData> {
   for (const line of lines.slice(0, 5)) {
     const clean = stripLeadingSymbols(line.trim());
     if (!clean) continue;
-    if (EMAIL_RE.test(clean) || PHONE_RE.test(clean)) continue;
-    if (clean.split(' ').length >= 2 && clean.length < 60) {
+    if (EMAIL_RE.test(clean) || PHONE_RE.test(clean) || URL_RE.test(clean)) continue;
+    // Reject lines that look like section headers or job titles (all-caps multi-word)
+    if (detectSection(clean)) continue;
+    if (clean.length < 60) {
       const parts = clean.split(/\s+/);
-      result.personalInfo.firstName = parts[0] ?? '';
-      result.personalInfo.lastName = parts.slice(1).join(' ') ?? '';
+      if (parts.length >= 2) {
+        result.personalInfo.firstName = parts[0] ?? '';
+        result.personalInfo.lastName = parts.slice(1).join(' ') ?? '';
+      } else {
+        // Single-name (e.g. some Indonesian/Icelandic names)
+        result.personalInfo.firstName = clean;
+        result.personalInfo.lastName = '';
+      }
       break;
     }
   }
@@ -179,17 +227,26 @@ export function parseRawCV(text: string, market: Market): Partial<CVData> {
     }
   }
 
+  const SKILL_CAP = 30;
   if (allSkills.length > 0) {
     const seen = new Set<string>();
-    result.skills = allSkills.filter((s) => {
+    const deduped = allSkills.filter((s) => {
       const key = s.name.toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    }).slice(0, 30);
+    });
+    if (deduped.length > SKILL_CAP) {
+      warnings.push(`${deduped.length} skills found — only the first ${SKILL_CAP} were imported.`);
+    }
+    result.skills = deduped.slice(0, SKILL_CAP);
   }
 
-  return result;
+  if (!result.personalInfo.firstName && !result.personalInfo.lastName) {
+    warnings.push('Name not detected — please fill it in manually.');
+  }
+
+  return { data: result, warnings };
 }
 
 // ─── Section parsers ──────────────────────────────────────────────────────────

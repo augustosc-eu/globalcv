@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { Market } from '@/types/cv.types';
 import PrivacyBanner from '@/components/shared/PrivacyBanner';
+import ErrorBoundary from '@/components/shared/ErrorBoundary';
 
 const validMarkets: Market[] = ['us', 'eu', 'latam', 'jp'];
 
@@ -46,9 +47,9 @@ export default async function MarketLayout({
     notFound();
   }
   return (
-    <>
+    <ErrorBoundary>
       <PrivacyBanner />
       {children}
-    </>
+    </ErrorBoundary>
   );
 }

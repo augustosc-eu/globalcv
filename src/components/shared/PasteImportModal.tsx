@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { X, Upload, Sparkles, AlertCircle } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
-import { parseRawCV } from '@/lib/parser/cvParser';
+import { parseRawCV, ParseResult } from '@/lib/parser/cvParser';
 import { getMarketConfig } from '@/lib/markets';
 
 interface Props {
@@ -17,23 +17,23 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
   const config = getMarketConfig(market);
   const [text, setText] = useState('');
   const [step, setStep] = useState<'paste' | 'preview' | 'done'>('paste');
-  const [preview, setPreview] = useState<ReturnType<typeof parseRawCV> | null>(null);
-  const { cv, setPersonalInfo, setObjective, addWorkExperience, addEducation,
+  const [result, setResult] = useState<ParseResult | null>(null);
+  const { setPersonalInfo, setObjective, addWorkExperience, addEducation,
           addSkill, addLanguage, addCertification, resetCV } = useCVStore();
 
   if (!open) return null;
 
+  const preview = result?.data ?? null;
+
   const handleParse = () => {
     if (!text.trim()) return;
-    const parsed = parseRawCV(text, market);
-    setPreview(parsed);
+    setResult(parseRawCV(text, market));
     setStep('preview');
   };
 
   const handleApply = () => {
     if (!preview) return;
 
-    // Reset then apply
     resetCV(market);
     if (preview.personalInfo) setPersonalInfo(preview.personalInfo);
     if (preview.objective) setObjective(preview.objective);
@@ -48,7 +48,7 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
       onClose();
       setStep('paste');
       setText('');
-      setPreview(null);
+      setResult(null);
     }, 1500);
   };
 
@@ -94,8 +94,21 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
               <p className="text-sm text-gray-600">
                 {config.ui.importSuccessDesc}
               </p>
+
+              {/* Parser warnings */}
+              {(result?.warnings.length ?? 0) > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
+                  {result!.warnings.map((w, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <AlertCircle size={13} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-700">{w}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="space-y-3 text-sm">
-                <PreviewRow label={config.ui.previewLabels.name} value={`${preview.personalInfo?.firstName ?? ''} ${preview.personalInfo?.lastName ?? ''}`} notFoundLabel={config.ui.previewLabels.notFound} />
+                <PreviewRow label={config.ui.previewLabels.name} value={`${preview.personalInfo?.firstName ?? ''} ${preview.personalInfo?.lastName ?? ''}`.trim()} notFoundLabel={config.ui.previewLabels.notFound} />
                 <PreviewRow label={config.ui.previewLabels.email} value={preview.personalInfo?.email} notFoundLabel={config.ui.previewLabels.notFound} />
                 <PreviewRow label={config.ui.previewLabels.phone} value={preview.personalInfo?.phone} notFoundLabel={config.ui.previewLabels.notFound} />
                 <PreviewRow label={config.ui.previewLabels.linkedin} value={preview.personalInfo?.linkedIn} notFoundLabel={config.ui.previewLabels.notFound} />
