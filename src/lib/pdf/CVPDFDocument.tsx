@@ -1,12 +1,12 @@
 import { Document, Font, Image, Page, Text, View } from '@react-pdf/renderer';
 
-// ─── Japanese font (Noto Sans JP via Google Fonts CDN — TTF) ─────────────────
-// Loaded once and cached by the PDF renderer on first Japanese export.
+// ─── Japanese font (Noto Sans JP — self-hosted in /public/fonts) ─────────────
+// Self-hosted to avoid runtime requests to Google Fonts CDN (GDPR compliance).
 Font.register({
   family: 'JP',
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/notosansjp/v56/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFBEj35TS1g.ttf', fontWeight: 'normal' },
-    { src: 'https://fonts.gstatic.com/s/notosansjp/v56/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFPYk35TS1g.ttf', fontWeight: 'bold' },
+    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 'normal' },
+    { src: '/fonts/NotoSansJP-Bold.ttf', fontWeight: 'bold' },
   ],
 });
 import { CVData } from '@/types/cv.types';

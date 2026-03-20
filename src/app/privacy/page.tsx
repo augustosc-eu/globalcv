@@ -23,9 +23,10 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">The short version</h2>
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 space-y-2">
-              <p className="font-medium text-blue-900">We do not store your CV data.</p>
+              <p className="font-medium text-blue-900">We do not store your CV data on any server.</p>
               <p className="font-medium text-blue-900">All data is processed locally in your browser.</p>
               <p className="font-medium text-blue-900">We do not have access to your information.</p>
+              <p className="font-medium text-blue-900">No cookies are set. No third-party requests are made.</p>
             </div>
           </section>
 
@@ -42,7 +43,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">What data we collect</h2>
-            <p className="font-medium text-gray-900 mb-1">None.</p>
+            <p className="font-medium text-gray-900 mb-2">None.</p>
             <p>
               GlobalCV is a fully client-side application. Everything you type — your name, work history,
               education, skills — is processed entirely within your own browser. No data is ever
@@ -51,38 +52,90 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">How your data is stored</h2>
-            <p className="mb-3">
-              Your CV data is saved automatically to your browser&apos;s <strong>localStorage</strong> — a
-              storage mechanism built into your browser that is private to your device. This allows
-              the app to restore your progress if you close and reopen the tab.
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Browser storage used</h2>
+            <p className="mb-4">
+              The app uses browser <strong>localStorage</strong> only — no cookies of any kind are set.
+              localStorage is private to your device and never transmitted over the network.
             </p>
-            <p className="mb-3">
-              This data <strong>never leaves your device</strong>. We have no access to it, cannot read it,
-              and cannot recover it if lost.
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs border border-gray-200 rounded-lg overflow-hidden">
+                <thead className="bg-gray-100 text-gray-600 text-left">
+                  <tr>
+                    <th className="px-3 py-2 font-semibold">Key</th>
+                    <th className="px-3 py-2 font-semibold">Purpose</th>
+                    <th className="px-3 py-2 font-semibold">Legal basis</th>
+                    <th className="px-3 py-2 font-semibold">Expires</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  <tr>
+                    <td className="px-3 py-2 font-mono text-gray-600">cv_maker_v1_{'{market}'}</td>
+                    <td className="px-3 py-2">Saves your CV progress so you can resume later</td>
+                    <td className="px-3 py-2">Strictly necessary</td>
+                    <td className="px-3 py-2">Until you clear it</td>
+                  </tr>
+                  <tr className="bg-gray-50">
+                    <td className="px-3 py-2 font-mono text-gray-600">globalcv_privacy_notice_dismissed</td>
+                    <td className="px-3 py-2">Remembers that you dismissed the privacy banner</td>
+                    <td className="px-3 py-2">Strictly necessary</td>
+                    <td className="px-3 py-2">Until you clear browser data</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 text-xs text-gray-500">
+              Both entries are <strong>strictly necessary</strong> for the app to function — no consent is required
+              under the ePrivacy Directive. You can delete them at any time using the &quot;Clear Data&quot; button
+              or your browser&apos;s developer tools.
             </p>
-            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-amber-800">
-              <strong>Important:</strong> If you are using a shared or public computer, your CV data
-              may be accessible to other users of that device. Use the &quot;Clear Data&quot; button in the
-              app before leaving, or enable Privacy Mode to keep data in memory only.
+            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mt-3 text-sm text-amber-800">
+              <strong>Shared computers:</strong> If you are using a public or shared device, your CV data
+              may be accessible to other users. Use the &quot;Clear Data&quot; button before leaving, or enable
+              Privacy Mode to disable localStorage entirely.
             </div>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Share links</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Cookies</h2>
             <p>
-              The &quot;Share&quot; feature generates a URL that contains your full CV data, compressed and
-              encoded directly in the URL. This data is <strong>not encrypted</strong>. Anyone who has the
-              link can view your CV. Share links are entirely optional and generated on demand.
-              We do not store or log share URLs.
+              <strong>GlobalCV sets no cookies.</strong> The app uses localStorage exclusively (see table above).
+              No session cookies, tracking cookies, or third-party cookies are present.
             </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Third-party requests</h2>
+            <p className="mb-3">
+              <strong>None.</strong> All assets — including fonts (Inter, Noto Sans JP) — are self-hosted
+              and served directly from GlobalCV&apos;s domain. No external CDN, analytics service, or
+              third-party script is loaded at any point.
+            </p>
+            <p>
+              This means no third party (including Google, Cloudflare, or any font CDN) ever receives
+              your IP address or any browser fingerprint as a result of using GlobalCV.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Share links</h2>
+            <p className="mb-2">
+              The optional &quot;Share&quot; feature generates a URL containing your CV data compressed and
+              encoded in the query string. This data is <strong>not encrypted</strong>.
+            </p>
+            <ul className="list-disc list-inside space-y-1 pl-2">
+              <li>Anyone with the link can read your CV data.</li>
+              <li>Share links are generated on demand — we never store or log them.</li>
+              <li>Search engine crawlers are blocked from indexing share URLs via <code className="text-xs bg-gray-100 px-1 rounded">robots.txt</code>.</li>
+              <li>Photos are excluded from share links.</li>
+            </ul>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Analytics and tracking</h2>
             <p>
-              GlobalCV does not use any analytics, tracking pixels, advertising scripts, or third-party
-              monitoring tools. There are no cookies set by the application itself.
+              GlobalCV does not use any analytics platform, tracking pixel, advertising script,
+              error monitoring service, or heat-mapping tool. There is no Vercel Analytics, Google Analytics,
+              Sentry, Hotjar, or equivalent installed.
             </p>
           </section>
 
@@ -90,28 +143,43 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Hosting provider</h2>
             <p>
               GlobalCV is hosted on <a href="https://vercel.com" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">Vercel</a>.
-              Vercel may collect standard server access logs (such as IP addresses and request metadata)
-              as part of their infrastructure operations. This is subject to{' '}
+              As with any web host, Vercel&apos;s infrastructure may log standard HTTP access data (IP address,
+              request path, timestamp) for operational and security purposes. This is subject to{' '}
               <a href="https://vercel.com/legal/privacy-policy" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
                 Vercel&apos;s Privacy Policy
-              </a>. We do not have access to these logs in a form that identifies individual users.
+              </a>{' '}
+              and their{' '}
+              <a href="https://vercel.com/legal/dpa" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                Data Processing Agreement
+              </a>.
+              We do not have access to individual-level access logs.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">GDPR and your rights</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">GDPR — your rights</h2>
             <p className="mb-3">
-              Because we do not collect or process any personal data on our servers, most GDPR rights
-              (access, rectification, erasure, portability) are exercised directly by you within the app:
+              Because GlobalCV does not collect or process personal data on any server, most GDPR rights
+              are exercised directly by you within the app:
             </p>
-            <ul className="list-disc list-inside space-y-1 pl-2">
-              <li><strong>Access / portability:</strong> Export your CV as a PDF at any time.</li>
-              <li><strong>Erasure:</strong> Use the &quot;Clear Data&quot; button to delete all data from your browser.</li>
-              <li><strong>Privacy Mode:</strong> Disable localStorage entirely — data is kept in memory only and erased when you close the tab.</li>
+            <ul className="list-disc list-inside space-y-1.5 pl-2">
+              <li><strong>Right of access / portability:</strong> Export your CV as a PDF at any time.</li>
+              <li><strong>Right to erasure:</strong> Click &quot;Clear Data&quot; to permanently delete all CV data from your browser.</li>
+              <li><strong>Right to restrict processing:</strong> Enable Privacy Mode — no data is written to localStorage.</li>
+              <li><strong>No consent required:</strong> All storage is strictly necessary for the service to function.</li>
             </ul>
             <p className="mt-3">
-              If you have questions about Vercel&apos;s data processing, contact Vercel directly or refer to their
-              Data Processing Agreement.
+              For rights relating to Vercel&apos;s server-side logging, contact Vercel directly.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">ePrivacy / Cookie Law</h2>
+            <p>
+              Under the EU ePrivacy Directive (and national implementations such as PECR in the UK),
+              strictly necessary storage does not require user consent. Both localStorage entries used
+              by GlobalCV fall into this category — they exist solely to provide the service you requested.
+              No consent banner is required.
             </p>
           </section>
 
@@ -119,16 +187,16 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Children</h2>
             <p>
               GlobalCV is not directed at children under 16. We do not knowingly collect any information
-              from children. Since we collect no data at all, no special handling is required.
+              from children. Since no data is collected at all, no special handling is required.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Changes to this policy</h2>
             <p>
-              If we ever introduce features that change how data is handled (e.g. cloud sync, analytics),
-              we will update this policy and clearly communicate the changes. The current version will
-              always be available at this URL.
+              If features are ever introduced that change how data is handled (e.g. cloud sync, analytics),
+              this policy will be updated and the changes clearly communicated. The current version is
+              always available at this URL.
             </p>
           </section>
 

@@ -10,16 +10,16 @@ const securityHeaders = [
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
   // Force HTTPS for 1 year once deployed
   { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
-  // Content Security Policy — allow Google Fonts CDN (used for JP PDF font)
+  // Content Security Policy — fully self-hosted, no third-party CDN requests
   {
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-eval in dev
       "style-src 'self' 'unsafe-inline'",
-      "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob:",  // data: for base64 photos, blob: for PDF preview
+      "font-src 'self'",              // Inter + Noto Sans JP served from /public/fonts
+      "connect-src 'self'",           // No external API calls
+      "img-src 'self' data: blob:",   // data: for base64 photos, blob: for PDF preview
       "worker-src 'self' blob:",
       "frame-ancestors 'none'",
     ].join('; '),

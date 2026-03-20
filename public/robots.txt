@@ -1,0 +1,7 @@
+User-agent: *
+
+# Block share URLs — they contain personal CV data encoded in the query string
+Disallow: /*?share=
+
+# Everything else is public
+Allow: /
