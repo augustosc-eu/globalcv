@@ -115,7 +115,7 @@ export function clearCV(market: Market): void {
 export function listSavedMarkets(): Market[] {
   if (typeof window === 'undefined') return [];
 
-  const markets: Market[] = ['us', 'eu', 'latam', 'jp'];
+  const markets: Market[] = ['us', 'eu', 'latam', 'jp', 'gb', 'au', 'in', 'br'];
   return markets.filter((market) => {
     try {
       return localStorage.getItem(getStorageKey(market)) !== null;
