@@ -32,13 +32,7 @@ export default function LanguagesStep({ market, config }: Props) {
 
   return (
     <div className="space-y-6">
-      <StepHeader title={label} description={
-        system === 'cefr'
-          ? 'Use CEFR levels (A1–C2) to describe your proficiency.'
-          : system === 'jlpt'
-          ? 'Use JLPT levels for Japanese; use other proficiency levels for other languages.'
-          : 'Describe your language proficiency.'
-      } />
+      <StepHeader title={label} description={config.ui.languagesDesc} />
 
       <div className="flex gap-2">
         <input

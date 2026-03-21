@@ -194,31 +194,11 @@ export default function PersonalInfoStep({ config }: Props) {
           helpText={f.gender.helpText}
         >
           <select {...register('gender')} className={inputCls}>
-            {config.market === 'jp' ? (
-              <>
-                <option value="">選択してください</option>
-                <option value="male">男性</option>
-                <option value="female">女性</option>
-                <option value="other">その他</option>
-                <option value="prefer_not">回答しない</option>
-              </>
-            ) : config.market === 'latam' ? (
-              <>
-                <option value="">Seleccionar</option>
-                <option value="male">Masculino</option>
-                <option value="female">Femenino</option>
-                <option value="other">Otro</option>
-                <option value="prefer_not">Prefiero no decir</option>
-              </>
-            ) : (
-              <>
-                <option value="">Select</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-                <option value="prefer_not">Prefer not to say</option>
-              </>
-            )}
+            <option value="">{config.ui.genderSelect}</option>
+            <option value="male">{config.ui.genderMale}</option>
+            <option value="female">{config.ui.genderFemale}</option>
+            <option value="other">{config.ui.genderOther}</option>
+            <option value="prefer_not">{config.ui.genderPreferNot}</option>
           </select>
         </Field>
       )}

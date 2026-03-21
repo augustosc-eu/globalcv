@@ -137,7 +137,7 @@ function EducationCard({ edu, market, config, expanded, onToggle, onUpdate, onRe
             </div>
             {market !== 'jp' && (
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">GPA (optional)</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.gpa}</label>
                 <input value={edu.gpa ?? ''} onChange={(e) => onUpdate({ gpa: e.target.value })} className={inputCls} placeholder="3.8/4.0" />
               </div>
             )}
@@ -148,7 +148,7 @@ function EducationCard({ edu, market, config, expanded, onToggle, onUpdate, onRe
 
           {market !== 'jp' && (
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Honors / Awards</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.honors}</label>
               <input value={edu.honors ?? ''} onChange={(e) => onUpdate({ honors: e.target.value })} className={cn(inputCls)} placeholder="Magna Cum Laude, Dean's List" />
             </div>
           )}

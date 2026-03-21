@@ -22,6 +22,17 @@ export const enUI: MarketUI = {
   maritalMarried: 'Married', maritalDivorced: 'Divorced',
   maritalWidowed: 'Widowed', maritalPreferNot: 'Prefer not to say',
 
+  genderSelect: 'Select…', genderMale: 'Male', genderFemale: 'Female',
+  genderOther: 'Other', genderPreferNot: 'Prefer not to say',
+
+  objectiveDesc: 'A brief summary of your professional background and career goals.',
+  objectivePlaceholder: 'Results-driven software engineer with 5+ years of experience building scalable web applications. Proven track record of delivering high-impact features that improve user engagement by 30%+.',
+  objectiveAimHint: ' (aim for 2–4 sentences)',
+  skillsDesc: 'Add your technical and professional skills.',
+  languagesDesc: 'Describe your language proficiency.',
+  certsDesc: 'List your professional certifications and licences.',
+  refsDesc: 'Professional references who can vouch for your work.',
+
   workJobTitle: 'Job Title', workJobTitlePlaceholder: 'Software Engineer',
   workCompany: 'Company', workCompanyPlaceholder: 'Acme Corp',
   workLocation: 'Location', workLocationPlaceholder: 'New York, NY',
@@ -102,6 +113,17 @@ export const esUI: MarketUI = {
   maritalMarried: 'Casado/a', maritalDivorced: 'Divorciado/a',
   maritalWidowed: 'Viudo/a', maritalPreferNot: 'Prefiero no decir',
 
+  genderSelect: 'Seleccionar', genderMale: 'Masculino', genderFemale: 'Femenino',
+  genderOther: 'Otro', genderPreferNot: 'Prefiero no decir',
+
+  objectiveDesc: 'Describe tu perfil profesional y objetivos de carrera.',
+  objectivePlaceholder: 'Profesional con más de 5 años de experiencia en desarrollo de software, orientado a resultados y comprometido con la excelencia técnica. Busco aportar mi experiencia en un equipo dinámico y de alto rendimiento.',
+  objectiveAimHint: '',
+  skillsDesc: 'Añade tus habilidades técnicas y profesionales.',
+  languagesDesc: 'Describe tu nivel de dominio de cada idioma.',
+  certsDesc: 'Lista tus certificaciones y cursos profesionales.',
+  refsDesc: 'Incluye 2–3 referencias profesionales con sus datos de contacto.',
+
   workJobTitle: 'Cargo', workJobTitlePlaceholder: 'Ingeniero de Software',
   workCompany: 'Empresa', workCompanyPlaceholder: 'Empresa S.A.',
   workLocation: 'Ubicación', workLocationPlaceholder: 'Buenos Aires, Argentina',
@@ -174,6 +196,11 @@ export const gbUI: MarketUI = {
   firstNamePlaceholder: 'James',
   lastNamePlaceholder: 'Williams',
   emailPlaceholder: 'james@example.co.uk',
+  objectiveDesc: 'Write a concise personal profile (3–5 lines) highlighting your skills and career aims.',
+  objectivePlaceholder: 'Motivated software engineer with 5+ years of experience delivering scalable web applications. Adept at collaborating with cross-functional teams to build high-quality products. Seeking a senior role where I can drive technical excellence and contribute to product growth.',
+  objectiveAimHint: ' (aim for 3–5 lines)',
+  certsDesc: 'List your professional qualifications and certifications.',
+  refsDesc: 'Two professional referees are expected — or write "References available on request".',
 };
 
 // AU — Australian English
@@ -188,6 +215,10 @@ export const auUI: MarketUI = {
   firstNamePlaceholder: 'Liam',
   lastNamePlaceholder: 'Johnson',
   emailPlaceholder: 'liam@example.com.au',
+  objectiveDesc: 'Summarise your career background and what you bring to the role (2–4 sentences).',
+  objectivePlaceholder: 'Passionate software developer with 5+ years of experience in full-stack development. Skilled in delivering robust solutions in fast-paced environments. Looking to bring my expertise to a collaborative and innovative team.',
+  objectiveAimHint: ' (aim for 2–4 sentences)',
+  refsDesc: 'Include 2 professional referees with contact details. Academic referees are acceptable for recent graduates.',
 };
 
 // IN — Indian English
@@ -204,6 +235,10 @@ export const inUI: MarketUI = {
   emailPlaceholder: 'rahul@example.com',
   workJobTitlePlaceholder: 'Software Engineer',
   workCompanyPlaceholder: 'Infosys / TCS / Wipro',
+  objectiveDesc: 'State your career objective and the value you aim to bring to the organisation.',
+  objectivePlaceholder: 'Highly motivated software engineer with 5+ years of experience in software development and system design. Seeking a challenging role in a reputed organisation where I can apply my technical skills and contribute to the company\'s growth.',
+  objectiveAimHint: ' (aim for 3–5 lines)',
+  refsDesc: 'Include 2–3 professional references with contact details.',
 };
 
 // PT-BR — Brazilian Portuguese
@@ -228,6 +263,17 @@ export const ptBrUI: MarketUI = {
   maritalSelect: 'Selecionar', maritalSingle: 'Solteiro/a',
   maritalMarried: 'Casado/a', maritalDivorced: 'Divorciado/a',
   maritalWidowed: 'Viúvo/a', maritalPreferNot: 'Prefiro não informar',
+
+  genderSelect: 'Selecionar', genderMale: 'Masculino', genderFemale: 'Feminino',
+  genderOther: 'Outro', genderPreferNot: 'Prefiro não informar',
+
+  objectiveDesc: 'Descreva seu perfil profissional e objetivos de carreira.',
+  objectivePlaceholder: 'Profissional com mais de 5 anos de experiência em desenvolvimento de software, orientado a resultados e comprometido com a excelência técnica. Busco contribuir com minha experiência em uma equipe dinâmica.',
+  objectiveAimHint: '',
+  skillsDesc: 'Adicione suas habilidades técnicas e profissionais.',
+  languagesDesc: 'Descreva sua proficiência nos idiomas que você fala.',
+  certsDesc: 'Liste suas certificações e cursos profissionais.',
+  refsDesc: 'Inclua 2–3 referências profissionais com dados de contato.',
 
   workJobTitle: 'Cargo', workJobTitlePlaceholder: 'Engenheiro de Software',
   workCompany: 'Empresa', workCompanyPlaceholder: 'Empresa Ltda.',
@@ -308,6 +354,17 @@ export const jaUI: MarketUI = {
   maritalSelect: '選択してください', maritalSingle: '未婚',
   maritalMarried: '既婚', maritalDivorced: '離婚',
   maritalWidowed: '死別', maritalPreferNot: '回答しない',
+
+  genderSelect: '選択してください', genderMale: '男性', genderFemale: '女性',
+  genderOther: 'その他', genderPreferNot: '回答しない',
+
+  objectiveDesc: '志望動機や自己PRの概要を記入してください。',
+  objectivePlaceholder: '○○年より○○社にて○○業務に従事。チームリーダーとしてプロジェクト管理を担当し、業務効率化に貢献してきました。貴社の発展に貢献したいと考えております。',
+  objectiveAimHint: '',
+  skillsDesc: '資格・スキルを入力してください。',
+  languagesDesc: '語学スキルと資格を入力してください。',
+  certsDesc: '取得した免許・資格を記入してください。',
+  refsDesc: '推薦者の情報を入力してください。',
 
   workJobTitle: '役職', workJobTitlePlaceholder: 'エンジニア',
   workCompany: '会社名', workCompanyPlaceholder: '株式会社〇〇',

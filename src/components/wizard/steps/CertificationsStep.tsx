@@ -18,11 +18,7 @@ export default function CertificationsStep({ market, config }: Props) {
 
   return (
     <div className="space-y-6">
-      <StepHeader title={label} description={
-        market === 'jp'
-          ? '取得した免許・資格を記入してください。'
-          : 'List your professional certifications and licenses.'
-      } />
+      <StepHeader title={label} description={config.ui.certsDesc} />
 
       <div className="space-y-3">
         {cv.certifications.map((cert) => (
@@ -63,7 +59,7 @@ export default function CertificationsStep({ market, config }: Props) {
                     <label className="block text-xs font-medium text-gray-600 mb-1">
                       {config.ui.certDate}
                     </label>
-                    <input type={market === 'jp' ? 'month' : 'month'} value={cert.dateIssued ?? ''} onChange={(e) => updateCertification(cert.id, { dateIssued: e.target.value })} className={inputCls} />
+                    <input type="month" value={cert.dateIssued ?? ''} onChange={(e) => updateCertification(cert.id, { dateIssued: e.target.value })} className={inputCls} />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.certExpiry}</label>

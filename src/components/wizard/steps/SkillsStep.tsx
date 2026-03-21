@@ -32,11 +32,7 @@ export default function SkillsStep({ market, config }: Props) {
 
   return (
     <div className="space-y-6">
-      <StepHeader title={label} description={
-        market === 'jp'
-          ? '資格・スキルを入力してください。'
-          : 'Add your technical and professional skills.'
-      } />
+      <StepHeader title={label} description={config.ui.skillsDesc} />
 
       {/* Add new skill */}
       <div className="flex gap-2">

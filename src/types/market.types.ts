@@ -80,6 +80,22 @@ export interface MarketUI {
   maritalWidowed: string;
   maritalPreferNot: string;
 
+  // Gender options
+  genderSelect: string;
+  genderMale: string;
+  genderFemale: string;
+  genderOther: string;
+  genderPreferNot: string;
+
+  // Step descriptions (shown below each step title)
+  objectiveDesc: string;
+  objectivePlaceholder: string;
+  objectiveAimHint: string;
+  skillsDesc: string;
+  languagesDesc: string;
+  certsDesc: string;
+  refsDesc: string;
+
   // Work experience
   workJobTitle: string;
   workJobTitlePlaceholder: string;

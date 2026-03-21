@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
-import { Reference, Market } from '@/types/cv.types';
+import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 import StepHeader from './StepHeader';
 
 interface Props { market: Market; config: MarketConfig; }
 
-export default function ReferencesStep({ market, config }: Props) {
+export default function ReferencesStep({ config }: Props) {
   const { cv, addReference, updateReference, removeReference } = useCVStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const label = config.sections.references.label ?? 'References';
@@ -18,11 +18,7 @@ export default function ReferencesStep({ market, config }: Props) {
 
   return (
     <div className="space-y-6">
-      <StepHeader title={label} description={
-        market === 'latam'
-          ? 'Incluye 2–3 referencias profesionales con sus datos de contacto.'
-          : 'Professional references who can vouch for your work.'
-      } />
+      <StepHeader title={label} description={config.ui.refsDesc} />
 
       <div className="space-y-3">
         {cv.references.map((ref) => (
@@ -64,12 +60,12 @@ export default function ReferencesStep({ market, config }: Props) {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
-                    <input type="email" value={ref.email ?? ''} onChange={(e) => updateReference(ref.id, { email: e.target.value })} className={inputCls} placeholder="jane@company.com" />
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.email}</label>
+                    <input type="email" value={ref.email ?? ''} onChange={(e) => updateReference(ref.id, { email: e.target.value })} className={inputCls} placeholder={config.ui.emailPlaceholder} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
-                    <input value={ref.phone ?? ''} onChange={(e) => updateReference(ref.id, { phone: e.target.value })} className={inputCls} placeholder="+1 555 000 0000" />
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.phone}</label>
+                    <input value={ref.phone ?? ''} onChange={(e) => updateReference(ref.id, { phone: e.target.value })} className={inputCls} placeholder={config.ui.phonePlaceholder} />
                   </div>
                 </div>
               </div>
