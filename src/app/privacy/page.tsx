@@ -123,6 +123,18 @@ export default function PrivacyPage() {
           </section>
 
           <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Jobs-to-CV market recommendation</h2>
+            <p className="mb-3">
+              In the Jobs section, GlobalCV may show a suggested CV market (for example US, UK, EU, LATAM, BR, IN, JP)
+              based on the listing&apos;s region and location text. This helps you jump directly to the most relevant CV template.
+            </p>
+            <p>
+              This recommendation is computed in-app from job listing metadata and is not based on a personal profile.
+              We do not store, track, or share recommendation history.
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Share links</h2>
             <p className="mb-2">
               The optional &quot;Share&quot; feature generates a URL containing your CV data compressed and

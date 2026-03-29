@@ -99,6 +99,7 @@ export default function TermsPage() {
               <li>Source attribution and outbound links are shown as part of each listing.</li>
               <li>Some providers are deployment-gated and may only be enabled after separate approval or registration.</li>
               <li>Third-party providers may change or revoke access at any time.</li>
+              <li>Suggested CV market links in the Jobs UI are informational only and may not always match your preferred application market.</li>
             </ul>
           </section>
 
