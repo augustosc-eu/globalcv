@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FileText } from 'lucide-react';
+import { CONTACT_EMAIL } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Terms of Service — GlobalCV',
@@ -100,6 +101,7 @@ export default function TermsPage() {
               <li>Some providers are deployment-gated and may only be enabled after separate approval or registration.</li>
               <li>Third-party providers may change or revoke access at any time.</li>
               <li>Suggested CV market links in the Jobs UI are informational only and may not always match your preferred application market.</li>
+              <li>When you submit a job posting request form, you confirm you are authorized to share the listing details and contact information.</li>
             </ul>
           </section>
 
@@ -123,8 +125,8 @@ export default function TermsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">10. Contact</h2>
             <p>
               Questions?{' '}
-              <a href="mailto:acroix2020@gmail.com" className="text-blue-600 hover:underline">
-                acroix2020@gmail.com
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-blue-600 hover:underline">
+                {CONTACT_EMAIL}
               </a>
             </p>
           </section>

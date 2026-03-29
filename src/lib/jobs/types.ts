@@ -12,6 +12,7 @@ export interface Job {
   url: string;
   postedAt: string;      // ISO string
   source:
+    | 'globalcv'
     | 'remotive'
     | 'arbeitnow'
     | 'jobicy'
@@ -69,6 +70,7 @@ export const JOB_TYPES = [
 
 export const JOB_SOURCES = [
   { id: 'all', label: 'All Sources' },
+  { id: 'globalcv', label: 'GlobalCV' },
   { id: 'remotive', label: 'Remotive' },
   { id: 'arbeitnow', label: 'Arbeitnow' },
   { id: 'jobicy', label: 'Jobicy' },

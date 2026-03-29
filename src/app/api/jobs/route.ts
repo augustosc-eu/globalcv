@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Job } from '@/lib/jobs/types';
+import { INTERNAL_JOBS } from '@/lib/jobs/internal';
 
 const JOBS_PER_PAGE = 20;
 const FETCH_TIMEOUT = 8000;
@@ -8,6 +9,7 @@ const ENABLE_4DAYWEEK_SOURCE = process.env.ENABLE_4DAYWEEK_SOURCE === 'true';
 const ENABLE_THEMUSE_SOURCE = process.env.ENABLE_THEMUSE_SOURCE === 'true';
 const ENABLE_ARBEITNOW_SOURCE = process.env.ENABLE_ARBEITNOW_SOURCE === 'true';
 const LOGO_BASE_URL: Record<Job['source'], string> = {
+  globalcv: 'https://globalcv.example',
   remotive: 'https://remotive.com',
   arbeitnow: 'https://www.arbeitnow.com',
   jobicy: 'https://jobicy.com',
@@ -733,6 +735,7 @@ export async function GET(request: NextRequest) {
   const page     = Math.max(1, parseInt(sp.get('page') ?? '1', 10));
 
   const includeRemotive = source === 'all' || source === 'remotive';
+  const includeInternal = source === 'all' || source === 'globalcv';
   const includeRemoteOk = source === 'all' || source === 'remoteok';
   const includeJobicy = source === 'all' || source === 'jobicy';
   const includeArbeitnow =
@@ -749,7 +752,8 @@ export async function GET(request: NextRequest) {
     (!JOBS_SAFE_MODE) &&
     (source === 'themuse-emea' || (source === 'all' && (region === 'all' || region === 'eu' || region === 'uk')));
 
-  const [remotive, arbeitnow, jobicy, remoteok, fourDayWeek, himalayas, himalayasEmea, theMuseEmea] = await Promise.all([
+  const [internal, remotive, arbeitnow, jobicy, remoteok, fourDayWeek, himalayas, himalayasEmea, theMuseEmea] = await Promise.all([
+    includeInternal ? Promise.resolve(INTERNAL_JOBS) : Promise.resolve([]),
     includeRemotive ? fetchRemotive(category, q) : Promise.resolve([]),
     includeArbeitnow ? fetchArbeitnow() : Promise.resolve([]),
     includeJobicy ? fetchJobicy(category) : Promise.resolve([]),
@@ -761,6 +765,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   let jobs: Job[] = [
+    ...internal,
     ...remotive,
     ...arbeitnow,
     ...jobicy,

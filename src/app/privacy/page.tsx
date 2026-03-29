@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FileText } from 'lucide-react';
+import { CONTACT_EMAIL } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — GlobalCV',
@@ -27,6 +28,7 @@ export default function PrivacyPage() {
               <p className="font-medium text-blue-900">All data is processed locally in your browser.</p>
               <p className="font-medium text-blue-900">We do not have access to your information.</p>
               <p className="font-medium text-blue-900">No cookies are set for CV editing; the optional Jobs board uses third-party data sources.</p>
+              <p className="font-medium text-blue-900">If you submit a company job posting request, we process only the details you provide to review your listing.</p>
             </div>
           </section>
 
@@ -43,11 +45,16 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">What data we collect</h2>
-            <p className="font-medium text-gray-900 mb-2">None.</p>
+            <p className="font-medium text-gray-900 mb-2">For CV building: none.</p>
             <p>
               GlobalCV is a fully client-side application. Everything you type — your name, work history,
               education, skills — is processed entirely within your own browser. No data is ever
               transmitted to our servers or any third party.
+            </p>
+            <p className="mt-3">
+              For the optional <strong>Post a Job</strong> form, we process business contact details and listing
+              information that you submit (company name, contact name/email, role details, and application URL)
+              in order to review and handle your posting request.
             </p>
           </section>
 
@@ -116,6 +123,10 @@ export default function PrivacyPage() {
             <p className="mb-3">
               Some providers may be disabled by default in production until their usage requirements are validated.
             </p>
+            <p className="mb-3">
+              For job posting requests, form submissions are sent via our server endpoint and delivered by our email
+              provider (Resend) to our inbox.
+            </p>
             <p>
               Job listing logos may also be loaded from third-party image hosts directly in your browser.
               In that case, the image host may receive your IP address and user-agent when the image is requested.
@@ -180,8 +191,8 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">GDPR — your rights</h2>
             <p className="mb-3">
-              Because GlobalCV does not collect or process personal data on any server, most GDPR rights
-              are exercised directly by you within the app:
+              For CV builder usage, GlobalCV does not collect or process personal data on our server,
+              so most rights are exercised directly by you in the app:
             </p>
             <ul className="list-disc list-inside space-y-1.5 pl-2">
               <li><strong>Right of access / portability:</strong> Export your CV as a PDF at any time.</li>
@@ -190,6 +201,7 @@ export default function PrivacyPage() {
               <li><strong>No consent required:</strong> All storage is strictly necessary for the service to function.</li>
             </ul>
             <p className="mt-3">
+              For submitted job posting requests, you can request access, correction, or deletion by emailing us.
               For rights relating to Vercel&apos;s server-side logging, contact Vercel directly.
             </p>
           </section>
@@ -225,8 +237,8 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Contact</h2>
             <p>
               Questions? Email{' '}
-              <a href="mailto:acroix2020@gmail.com" className="text-blue-600 hover:underline">
-                acroix2020@gmail.com
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-blue-600 hover:underline">
+                {CONTACT_EMAIL}
               </a>
             </p>
           </section>

@@ -257,7 +257,11 @@ The app is fully static-compatible. Deploy on [Vercel](https://vercel.com) with 
 2. Import into Vercel — auto-detects Next.js
 3. Deploy
 
-No environment variables required.
+Optional environment variables:
+
+- `ENABLE_POST_JOB=true` and `NEXT_PUBLIC_ENABLE_POST_JOB=true` to enable the job submission module
+- `RESEND_API_KEY` to enable server-side email delivery for `/post-job` submissions
+- `RESEND_FROM` to control sender identity (default: `GlobalCV Jobs <hello@augustosc.com>`)
 
 For Jobs source compliance hardening, you can optionally gate higher-risk providers:
 
@@ -272,7 +276,7 @@ By default, safe mode is ON and uncertain sources stay disabled.
 
 ## Security
 
-- No user data is ever sent to a server
+- CV builder data is not sent to a server; optional `/post-job` submissions are sent to the backend and emailed via Resend
 - All CV data is stored in `localStorage` and/or encoded in the share URL (LZ-compressed)
 - **Privacy Mode** keeps everything in memory — nothing written to disk
 - Security headers enforced via `next.config.mjs`: `X-Frame-Options`, `X-Content-Type-Options`, `Strict-Transport-Security`, `Permissions-Policy`, and a Content Security Policy

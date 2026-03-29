@@ -17,6 +17,7 @@ import {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const SOURCE_BADGE: Record<string, string> = {
+  globalcv: 'bg-slate-100 text-slate-700',
   remotive:  'bg-blue-100 text-blue-700',
   arbeitnow: 'bg-violet-100 text-violet-700',
   jobicy:    'bg-emerald-100 text-emerald-700',
@@ -28,6 +29,7 @@ const SOURCE_BADGE: Record<string, string> = {
 };
 
 const SOURCE_HOME: Record<string, string> = {
+  globalcv: '/',
   remotive: 'https://remotive.com',
   arbeitnow: 'https://www.arbeitnow.com',
   jobicy: 'https://jobicy.com',
@@ -392,6 +394,7 @@ const DEFAULT: Filters = {
 };
 
 const JOBS_SAFE_MODE = process.env.NEXT_PUBLIC_JOBS_SAFE_MODE !== 'false';
+const ENABLE_POST_JOB = process.env.NEXT_PUBLIC_ENABLE_POST_JOB === 'true';
 const ENABLE_4DAYWEEK_SOURCE = process.env.NEXT_PUBLIC_ENABLE_4DAYWEEK_SOURCE === 'true';
 const ENABLE_THEMUSE_SOURCE = process.env.NEXT_PUBLIC_ENABLE_THEMUSE_SOURCE === 'true';
 const ENABLE_ARBEITNOW_SOURCE = process.env.NEXT_PUBLIC_ENABLE_ARBEITNOW_SOURCE === 'true';
@@ -483,10 +486,18 @@ export default function JobsPage() {
               Remote Jobs
             </span>
           </div>
-          <Link href="/" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-            <ArrowLeft size={11} />
-            Build your CV
-          </Link>
+          <div className="flex items-center gap-2">
+            {ENABLE_POST_JOB && (
+              <Link href="/post-job" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">
+                <Briefcase size={11} />
+                Post a Job
+              </Link>
+            )}
+            <Link href="/" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+              <ArrowLeft size={11} />
+              Build your CV
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -508,6 +519,24 @@ export default function JobsPage() {
               Aggregated from {HERO_SOURCE_NAMES.join(', ')}.
             </p>
           </div>
+
+          {ENABLE_POST_JOB && (
+            <div className="mt-6 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-blue-50 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-indigo-900">Hiring now?</p>
+                <p className="text-xs text-indigo-700">
+                  Post with GlobalCV to reach top talent actively preparing market-ready CVs.
+                </p>
+              </div>
+              <Link
+                href="/post-job"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors"
+              >
+                Post with us
+                <ExternalLink size={11} />
+              </Link>
+            </div>
+          )}
 
           {/* Search bar */}
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 mb-4">

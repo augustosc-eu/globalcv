@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { ArrowRight, Briefcase, FileText, Globe, Star } from 'lucide-react';
 
+const ENABLE_POST_JOB = process.env.NEXT_PUBLIC_ENABLE_POST_JOB === 'true';
+
 const markets = [
   {
     id: 'us',
@@ -223,13 +225,24 @@ export default function HomePage() {
               Browse live listings from Remotive, Arbeitnow, Jobicy, and RemoteOK — all in one place.
             </p>
           </div>
-          <Link
-            href="/jobs"
-            className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-white text-blue-700 font-semibold text-sm rounded-xl hover:bg-blue-50 transition-colors"
-          >
-            Browse Remote Jobs
-            <ArrowRight size={15} />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <Link
+              href="/jobs"
+              className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-white text-blue-700 font-semibold text-sm rounded-xl hover:bg-blue-50 transition-colors"
+            >
+              Browse Remote Jobs
+              <ArrowRight size={15} />
+            </Link>
+            {ENABLE_POST_JOB && (
+              <Link
+                href="/post-job"
+                className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-blue-800/60 text-white font-semibold text-sm rounded-xl border border-blue-300/30 hover:bg-blue-800 transition-colors"
+              >
+                Post a Job — Find Top Talent
+                <ArrowRight size={15} />
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
