@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, FileText, Globe, Star } from 'lucide-react';
+import { ArrowRight, Briefcase, FileText, Globe, Star } from 'lucide-react';
 
 const markets = [
   {
@@ -207,6 +207,29 @@ export default function HomePage() {
               </div>
             </Link>
           ))}
+        </div>
+      </div>
+
+      {/* Remote Jobs CTA */}
+      <div className="max-w-6xl mx-auto px-6 pb-16">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="text-center sm:text-left">
+            <div className="flex items-center gap-2 text-blue-200 text-sm font-medium mb-2 justify-center sm:justify-start">
+              <Briefcase size={14} />
+              New — Remote Job Board
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-1">Looking for a remote job?</h2>
+            <p className="text-blue-100 text-sm">
+              Browse live listings from Remotive, Arbeitnow, Jobicy, and RemoteOK — all in one place.
+            </p>
+          </div>
+          <Link
+            href="/jobs"
+            className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-white text-blue-700 font-semibold text-sm rounded-xl hover:bg-blue-50 transition-colors"
+          >
+            Browse Remote Jobs
+            <ArrowRight size={15} />
+          </Link>
         </div>
       </div>
 
