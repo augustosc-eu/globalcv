@@ -32,7 +32,8 @@ export default function TermsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">2. What GlobalCV is</h2>
             <p>
               GlobalCV is a free, browser-based tool that helps you create professional CVs and
-              resumes formatted for different job markets. It is provided as-is, free of charge,
+              resumes formatted for different job markets. It also includes an optional jobs aggregator
+              that displays listings from third-party providers. The service is provided as-is, free of charge,
               with no guarantees of availability, accuracy, or fitness for any particular purpose.
             </p>
           </section>
@@ -88,7 +89,21 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">7. Intellectual property</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">7. Third-party job data</h2>
+            <p className="mb-3">
+              The Jobs section displays content from third-party job sources. Those listings, logos, and
+              links remain subject to the respective provider&apos;s terms, licenses, and policies.
+            </p>
+            <ul className="list-disc list-inside space-y-1 pl-2">
+              <li>We do not guarantee completeness, freshness, or continued availability of third-party listings.</li>
+              <li>Source attribution and outbound links are shown as part of each listing.</li>
+              <li>Some providers are deployment-gated and may only be enabled after separate approval or registration.</li>
+              <li>Third-party providers may change or revoke access at any time.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">8. Intellectual property</h2>
             <p>
               The GlobalCV source code is open-source and available under the MIT License.
               The CV content you create belongs entirely to you.
@@ -96,7 +111,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">8. Changes</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">9. Changes</h2>
             <p>
               We reserve the right to modify these terms at any time. Continued use of the app
               after changes are posted constitutes acceptance of the updated terms.
@@ -104,7 +119,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">9. Contact</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">10. Contact</h2>
             <p>
               Questions?{' '}
               <a href="mailto:acroix2020@gmail.com" className="text-blue-600 hover:underline">

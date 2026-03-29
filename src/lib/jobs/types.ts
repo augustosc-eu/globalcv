@@ -11,7 +11,15 @@ export interface Job {
   salary?: string;
   url: string;
   postedAt: string;      // ISO string
-  source: 'remotive' | 'arbeitnow' | 'jobicy' | 'remoteok';
+  source:
+    | 'remotive'
+    | 'arbeitnow'
+    | 'jobicy'
+    | 'remoteok'
+    | '4dayweek'
+    | 'himalayas'
+    | 'himalayas-emea'
+    | 'themuse-emea';
   description?: string;  // plaintext excerpt, max ~500 chars
 }
 
@@ -65,6 +73,10 @@ export const JOB_SOURCES = [
   { id: 'arbeitnow', label: 'Arbeitnow' },
   { id: 'jobicy', label: 'Jobicy' },
   { id: 'remoteok', label: 'RemoteOK' },
+  { id: '4dayweek', label: '4 Day Week' },
+  { id: 'himalayas', label: 'Himalayas (LATAM)' },
+  { id: 'himalayas-emea', label: 'Himalayas (EMEA)' },
+  { id: 'themuse-emea', label: 'The Muse (EMEA)' },
 ] as const;
 
 /** Category → accent colors for UI */

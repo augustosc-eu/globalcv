@@ -259,6 +259,15 @@ The app is fully static-compatible. Deploy on [Vercel](https://vercel.com) with 
 
 No environment variables required.
 
+For Jobs source compliance hardening, you can optionally gate higher-risk providers:
+
+- `JOBS_SAFE_MODE=false` and `NEXT_PUBLIC_JOBS_SAFE_MODE=false` to disable strict safe mode (not recommended for public launch)
+- `ENABLE_ARBEITNOW_SOURCE=true` and `NEXT_PUBLIC_ENABLE_ARBEITNOW_SOURCE=true` to allow Arbeitnow while safe mode is on
+- `ENABLE_4DAYWEEK_SOURCE=true` and `NEXT_PUBLIC_ENABLE_4DAYWEEK_SOURCE=true`
+- `ENABLE_THEMUSE_SOURCE=true` and `NEXT_PUBLIC_ENABLE_THEMUSE_SOURCE=true`
+
+By default, safe mode is ON and uncertain sources stay disabled.
+
 ---
 
 ## Security

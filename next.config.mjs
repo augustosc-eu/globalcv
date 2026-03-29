@@ -19,7 +19,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self'",              // Inter + Noto Sans JP served from /public/fonts
       "connect-src 'self'",           // No external API calls
-      "img-src 'self' data: blob:",   // data: for base64 photos, blob: for PDF preview
+      "img-src 'self' https: data: blob:", // allow remote HTTPS company logos from job APIs
       "worker-src 'self' blob:",
       "frame-ancestors 'none'",
     ].join('; '),

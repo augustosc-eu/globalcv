@@ -21,6 +21,21 @@ const SOURCE_BADGE: Record<string, string> = {
   arbeitnow: 'bg-violet-100 text-violet-700',
   jobicy:    'bg-emerald-100 text-emerald-700',
   remoteok:  'bg-orange-100 text-orange-700',
+  '4dayweek':'bg-fuchsia-100 text-fuchsia-700',
+  himalayas: 'bg-cyan-100 text-cyan-700',
+  'himalayas-emea': 'bg-sky-100 text-sky-700',
+  'themuse-emea': 'bg-indigo-100 text-indigo-700',
+};
+
+const SOURCE_HOME: Record<string, string> = {
+  remotive: 'https://remotive.com',
+  arbeitnow: 'https://www.arbeitnow.com',
+  jobicy: 'https://jobicy.com',
+  remoteok: 'https://remoteok.com',
+  '4dayweek': 'https://4dayweek.io',
+  himalayas: 'https://himalayas.app',
+  'himalayas-emea': 'https://himalayas.app',
+  'themuse-emea': 'https://www.themuse.com',
 };
 
 const REGION_FLAG: Record<string, string> = {
@@ -36,6 +51,19 @@ const JOB_TYPE_COLOR: Record<string, string> = {
   'internship': 'bg-green-50 text-green-700',
 };
 
+type MarketRoute = 'us' | 'eu' | 'latam' | 'jp' | 'gb' | 'au' | 'in' | 'br';
+
+const MARKET_LABEL: Record<MarketRoute, string> = {
+  us: 'US Resume',
+  eu: 'EU CV',
+  latam: 'LATAM CV',
+  jp: 'Japan CV',
+  gb: 'UK CV',
+  au: 'AU/NZ Resume',
+  in: 'India CV',
+  br: 'Brasil CV',
+};
+
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
 function timeAgo(dateStr: string): string {
@@ -48,6 +76,40 @@ function timeAgo(dateStr: string): string {
     if (d < 30) return `${Math.floor(d / 7)}w ago`;
     return `${Math.floor(d / 30)}mo ago`;
   } catch { return ''; }
+}
+
+function inferMarketFromJob(job: Job): MarketRoute {
+  const haystack = `${job.location} ${job.title} ${job.company} ${job.tags.join(' ')}`.toLowerCase();
+
+  if (/(^|[^a-z])(brazil|brasil|sao paulo|são paulo|rio de janeiro|belo horizonte)([^a-z]|$)/.test(haystack)) return 'br';
+  if (/(^|[^a-z])(india|bengaluru|bangalore|mumbai|new delhi|delhi|hyderabad|pune|chennai)([^a-z]|$)/.test(haystack)) return 'in';
+  if (/(^|[^a-z])(japan|tokyo|osaka|kyoto|yokohama|jpn)([^a-z]|$)/.test(haystack)) return 'jp';
+
+  switch (job.region) {
+    case 'us':
+      return 'us';
+    case 'uk':
+      return 'gb';
+    case 'eu':
+      return 'eu';
+    case 'latam':
+      return 'latam';
+    case 'au':
+      return 'au';
+    case 'apac':
+      return 'in';
+    case 'ca':
+      return 'us';
+    default:
+      break;
+  }
+
+  if (/(^|[^a-z])(latin america|latam|mexico|argentina|colombia|chile|peru)([^a-z]|$)/.test(haystack)) return 'latam';
+  if (/(^|[^a-z])(united kingdom|london|manchester|glasgow)([^a-z]|$)/.test(haystack)) return 'gb';
+  if (/(^|[^a-z])(germany|france|spain|italy|netherlands|portugal|poland|europe|eu)([^a-z]|$)/.test(haystack)) return 'eu';
+  if (/(^|[^a-z])(australia|new zealand|sydney|melbourne|brisbane|auckland|wellington)([^a-z]|$)/.test(haystack)) return 'au';
+
+  return 'us';
 }
 
 // ─── FilterDropdown component ─────────────────────────────────────────────────
@@ -125,12 +187,18 @@ function FilterDropdown({
 
 function JobCard({ job }: { job: Job }) {
   const [expanded, setExpanded] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
   const style = CATEGORY_STYLE[job.category] ?? CATEGORY_STYLE['other'];
   const catLabel = JOB_CATEGORIES.find(c => c.id === job.category)?.label ?? job.category;
   const regionFlag = REGION_FLAG[job.region] ?? '🌍';
-  const regionLabel = JOB_REGIONS.find(r => r.id === job.region)?.label ?? job.location;
+  const fallbackRegionLabel = JOB_REGIONS.find(r => r.id === job.region)?.label ?? 'Worldwide';
+  const rawLocation = (job.location ?? '').trim();
+  const useFallbackRegion = !rawLocation || /^(remote|anywhere)$/i.test(rawLocation);
+  const displayLocation = useFallbackRegion ? fallbackRegionLabel : rawLocation;
   const typeColor = JOB_TYPE_COLOR[job.jobType] ?? 'bg-gray-100 text-gray-600';
   const typeLabel = JOB_TYPES.find(t => t.id === job.jobType)?.label;
+  const recommendedMarket = inferMarketFromJob(job);
+  const marketCtaLabel = MARKET_LABEL[recommendedMarket];
 
   const hasDesc = !!job.description && job.description.length > 10;
   const shortDesc = hasDesc && job.description!.length > 200
@@ -138,23 +206,26 @@ function JobCard({ job }: { job: Job }) {
     : job.description;
 
   return (
-    <article className={`group bg-white rounded-2xl border border-gray-100 border-l-4 ${style.border} shadow-sm hover:shadow-md transition-all duration-200`}>
+    <article className={`group bg-white rounded-2xl border border-gray-100 border-l-4 ${style.border} shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200`}>
       <div className="p-5">
 
         {/* ── Header row ── */}
         <div className="flex gap-4">
           {/* Logo */}
           <div className="flex-shrink-0 w-12 h-12 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
-            {job.companyLogo ? (
+            {job.companyLogo && !logoFailed ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={job.companyLogo}
                 alt={job.company}
                 className="w-full h-full object-contain p-1.5"
-                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                loading="lazy"
+                onError={() => setLogoFailed(true)}
               />
             ) : (
-              <Building2 size={20} className="text-gray-300" />
+              <span className="inline-flex items-center justify-center w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 text-gray-500 font-semibold text-sm">
+                {job.company.slice(0, 1).toUpperCase() || <Building2 size={18} className="text-gray-300" />}
+              </span>
             )}
           </div>
 
@@ -167,9 +238,15 @@ function JobCard({ job }: { job: Job }) {
                 </h3>
                 <p className="text-sm text-gray-500 mt-0.5">{job.company}</p>
               </div>
-              <span className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${SOURCE_BADGE[job.source] ?? 'bg-gray-100 text-gray-600'}`}>
+              <a
+                href={SOURCE_HOME[job.source]}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide hover:brightness-95 transition-colors ${SOURCE_BADGE[job.source] ?? 'bg-gray-100 text-gray-600'}`}
+                title={`Source: ${job.source}`}
+              >
                 {job.source}
-              </span>
+              </a>
             </div>
 
             {/* Badges row */}
@@ -187,7 +264,7 @@ function JobCard({ job }: { job: Job }) {
 
               <span className="inline-flex items-center gap-1 text-[11px] text-gray-500">
                 <MapPin size={10} className="text-gray-400" />
-                {regionFlag} {regionLabel}
+                {regionFlag} {displayLocation}
               </span>
 
               {job.salary && (
@@ -196,6 +273,11 @@ function JobCard({ job }: { job: Job }) {
                   {job.salary}
                 </span>
               )}
+
+              <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+                <Clock size={10} />
+                {timeAgo(job.postedAt)}
+              </span>
             </div>
           </div>
         </div>
@@ -224,8 +306,8 @@ function JobCard({ job }: { job: Job }) {
         {/* ── Tags ── */}
         {job.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-4">
-            {job.tags.slice(0, 6).map(tag => (
-              <span key={tag} className="text-[11px] px-2.5 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+            {job.tags.slice(0, 6).map((tag, index) => (
+              <span key={`${tag}-${index}`} className="text-[11px] px-2.5 py-0.5 bg-gray-100 text-gray-600 rounded-full">
                 {tag}
               </span>
             ))}
@@ -233,19 +315,28 @@ function JobCard({ job }: { job: Job }) {
         )}
 
         {/* ── Footer ── */}
-        <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-gray-100">
-          <span className="flex items-center gap-1 text-[11px] text-gray-400">
-            <Clock size={11} />
-            {timeAgo(job.postedAt)}
+        <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-gray-100 gap-2">
+          <span className="text-[11px] text-gray-400 truncate max-w-[58%]">
+            {job.company} • {regionFlag} {displayLocation}
           </span>
-          <a
-            href={job.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 active:scale-95 transition-all shadow-sm"
-          >
-            Apply now <ExternalLink size={11} />
-          </a>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link
+              href={`/${recommendedMarket}`}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition-all"
+              title={`Build a ${marketCtaLabel} with GlobalCV`}
+            >
+              <FileText size={11} />
+              Build {marketCtaLabel}
+            </Link>
+            <a
+              href={job.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 active:scale-95 transition-all shadow-sm"
+            >
+              Open listing <ExternalLink size={11} />
+            </a>
+          </div>
         </div>
       </div>
     </article>
@@ -291,18 +382,35 @@ interface Filters {
   jobType: string;
   source: string;
   salary: boolean;
+  fourDay: boolean;
   sort: 'newest' | 'salary';
 }
 
 const DEFAULT: Filters = {
   search: '', category: 'all', region: 'all',
-  jobType: 'all', source: 'all', salary: false, sort: 'newest',
+  jobType: 'all', source: 'all', salary: false, fourDay: false, sort: 'newest',
 };
+
+const JOBS_SAFE_MODE = process.env.NEXT_PUBLIC_JOBS_SAFE_MODE !== 'false';
+const ENABLE_4DAYWEEK_SOURCE = process.env.NEXT_PUBLIC_ENABLE_4DAYWEEK_SOURCE === 'true';
+const ENABLE_THEMUSE_SOURCE = process.env.NEXT_PUBLIC_ENABLE_THEMUSE_SOURCE === 'true';
+const ENABLE_ARBEITNOW_SOURCE = process.env.NEXT_PUBLIC_ENABLE_ARBEITNOW_SOURCE === 'true';
+
+const VISIBLE_JOB_SOURCES = JOB_SOURCES.filter((s) => {
+  if (s.id === 'arbeitnow' && JOBS_SAFE_MODE && !ENABLE_ARBEITNOW_SOURCE) return false;
+  if (s.id === '4dayweek') return ENABLE_4DAYWEEK_SOURCE && !JOBS_SAFE_MODE;
+  if (s.id === 'themuse-emea') return ENABLE_THEMUSE_SOURCE && !JOBS_SAFE_MODE;
+  return true;
+});
+
+const HERO_SOURCE_NAMES = VISIBLE_JOB_SOURCES
+  .filter((s) => s.id !== 'all')
+  .map((s) => s.label);
 
 function activeCount(f: Filters) {
   return [
     f.category !== 'all', f.region !== 'all', f.jobType !== 'all',
-    f.source !== 'all', f.salary, f.sort !== 'newest',
+    f.source !== 'all', f.salary, f.fourDay, f.sort !== 'newest',
   ].filter(Boolean).length;
 }
 
@@ -334,6 +442,7 @@ export default function JobsPage() {
       if (filters.jobType !== 'all')  p.set('jobType', filters.jobType);
       if (filters.source !== 'all')   p.set('source', filters.source);
       if (filters.salary)             p.set('salary', 'true');
+      if (filters.fourDay)            p.set('fourDay', 'true');
       if (filters.sort !== 'newest')  p.set('sort', filters.sort);
 
       const res = await fetch(`/api/jobs?${p}`);
@@ -359,7 +468,7 @@ export default function JobsPage() {
   const numActive = activeCount(filters);
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
       {/* ── Top nav ── */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-6 py-3.5 flex items-center justify-between">
@@ -396,12 +505,12 @@ export default function JobsPage() {
               </span>
             </h1>
             <p className="text-gray-500 text-[15px]">
-              Aggregated from Remotive, Arbeitnow, Jobicy and RemoteOK.
+              Aggregated from {HERO_SOURCE_NAMES.join(', ')}.
             </p>
           </div>
 
           {/* Search bar */}
-          <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex-1 relative">
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
@@ -412,19 +521,19 @@ export default function JobsPage() {
                 className="w-full pl-10 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
               />
             </div>
-            <button type="submit" className="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+            <button type="submit" className="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm sm:w-auto">
               Search
             </button>
             {filters.search && (
               <button type="button" onClick={() => { setFilter('search', ''); setSearchInput(''); }}
-                className="px-3 py-3 text-gray-400 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                className="px-3 py-3 text-gray-400 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors sm:w-auto">
                 <X size={14} />
               </button>
             )}
           </form>
 
           {/* ── Filter bar ── */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50/70 p-3">
             <FilterDropdown
               label="Category"
               options={JOB_CATEGORIES}
@@ -454,7 +563,7 @@ export default function JobsPage() {
             />
             <FilterDropdown
               label="Source"
-              options={JOB_SOURCES}
+              options={VISIBLE_JOB_SOURCES}
               value={filters.source}
               onChange={v => setFilter('source', v)}
               openKey="source"
@@ -473,6 +582,19 @@ export default function JobsPage() {
             >
               <DollarSign size={11} />
               Has salary
+            </button>
+
+            {/* 4 day week toggle */}
+            <button
+              onClick={() => setFilter('fourDay', !filters.fourDay)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                filters.fourDay
+                  ? 'bg-fuchsia-600 text-white border-fuchsia-600 shadow-sm'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+              }`}
+            >
+              <Clock size={11} />
+              4-day week
             </button>
 
             {/* Sort */}
@@ -555,7 +677,7 @@ export default function JobsPage() {
 
         {/* Job list */}
         {!loading && !error && jobs.length > 0 && (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
             {jobs.map(job => <JobCard key={job.id} job={job} />)}
           </div>
         )}

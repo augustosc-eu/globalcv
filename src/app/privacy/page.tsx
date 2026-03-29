@@ -4,7 +4,7 @@ import { FileText } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — GlobalCV',
-  description: 'How GlobalCV handles your data. Spoiler: we don\'t.',
+  description: 'How GlobalCV handles your data.',
 };
 
 export default function PrivacyPage() {
@@ -26,7 +26,7 @@ export default function PrivacyPage() {
               <p className="font-medium text-blue-900">We do not store your CV data on any server.</p>
               <p className="font-medium text-blue-900">All data is processed locally in your browser.</p>
               <p className="font-medium text-blue-900">We do not have access to your information.</p>
-              <p className="font-medium text-blue-900">No cookies are set. No third-party requests are made.</p>
+              <p className="font-medium text-blue-900">No cookies are set for CV editing; the optional Jobs board uses third-party data sources.</p>
             </div>
           </section>
 
@@ -106,13 +106,19 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Third-party requests</h2>
             <p className="mb-3">
-              <strong>None.</strong> All assets — including fonts (Inter, Noto Sans JP) — are self-hosted
-              and served directly from GlobalCV&apos;s domain. No external CDN, analytics service, or
-              third-party script is loaded at any point.
+              For the CV builder flow, assets are self-hosted and no analytics or ad scripts are loaded.
+            </p>
+            <p className="mb-3">
+              For the optional <strong>Jobs</strong> page, our server fetches listings from external job providers
+              (for example Remotive, Arbeitnow, Jobicy, RemoteOK, 4dayweek, Himalayas, The Muse).
+              This means those providers may receive server-side requests from our infrastructure.
+            </p>
+            <p className="mb-3">
+              Some providers may be disabled by default in production until their usage requirements are validated.
             </p>
             <p>
-              This means no third party (including Google, Cloudflare, or any font CDN) ever receives
-              your IP address or any browser fingerprint as a result of using GlobalCV.
+              Job listing logos may also be loaded from third-party image hosts directly in your browser.
+              In that case, the image host may receive your IP address and user-agent when the image is requested.
             </p>
           </section>
 
@@ -153,6 +159,9 @@ export default function PrivacyPage() {
                 Data Processing Agreement
               </a>.
               We do not have access to individual-level access logs.
+            </p>
+            <p className="mt-3">
+              We do not use provider API keys or user accounts for the public Jobs feed integration.
             </p>
           </section>
 
