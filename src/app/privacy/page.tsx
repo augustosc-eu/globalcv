@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { FileText } from 'lucide-react';
-import { CONTACT_EMAIL } from '@/lib/site';
+import { CONTACT_EMAIL, SITE_OWNER_NAME, SITE_OWNER_URL } from '@/lib/site';
+import TopNav from '@/components/shared/TopNav';
+import BrandLink from '@/components/shared/BrandLink';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — GlobalCV',
@@ -9,17 +10,19 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
+  const ENABLE_POST_JOB = process.env.NEXT_PUBLIC_ENABLE_POST_JOB === 'true';
+
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-6 py-16">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-10 transition-colors">
-          <FileText size={16} /> GlobalCV
-        </Link>
+    <main className="app-shell-bg soft-grid-bg min-h-screen">
+      <TopNav current="privacy" showPostJob={ENABLE_POST_JOB} />
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <div className="surface-card rounded-3xl p-7 md:p-10">
+          <BrandLink href="/" variant="legal" className="mb-8" />
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Privacy Policy</h1>
-        <p className="text-sm text-gray-400 mb-10">Last updated: March 2026</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2 tracking-tight">Privacy Policy</h1>
+          <p className="text-sm text-gray-400 mb-10">Last updated: March 2026</p>
 
-        <div className="prose prose-gray max-w-none space-y-8 text-sm leading-relaxed text-gray-700">
+          <div className="prose prose-gray max-w-none space-y-8 text-sm leading-relaxed text-gray-700">
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">The short version</h2>
@@ -35,7 +38,10 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Who we are</h2>
             <p>
-              GlobalCV is a free, open-source CV and resume builder built by Augusto Santa Cruz.
+              GlobalCV is a free, open-source CV and resume builder by{' '}
+              <a href={SITE_OWNER_URL} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                {SITE_OWNER_NAME}
+              </a>.
               The source code is publicly available at{' '}
               <a href="https://github.com/augustosc-eu/globalcv" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
                 github.com/augustosc-eu/globalcv
@@ -242,11 +248,12 @@ export default function PrivacyPage() {
               </a>
             </p>
           </section>
-        </div>
+          </div>
 
-        <div className="mt-12 pt-8 border-t border-gray-200 flex gap-6 text-sm text-gray-400">
-          <Link href="/" className="hover:text-gray-700 transition-colors">← Home</Link>
-          <Link href="/terms" className="hover:text-gray-700 transition-colors">Terms of Service</Link>
+          <div className="mt-12 pt-8 border-t border-gray-200 flex gap-6 text-sm text-gray-500">
+            <Link href="/" className="hover:text-gray-700 transition-colors">← Home</Link>
+            <Link href="/terms" className="hover:text-gray-700 transition-colors">Terms of Service</Link>
+          </div>
         </div>
       </div>
     </main>

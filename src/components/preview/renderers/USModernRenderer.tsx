@@ -26,6 +26,12 @@ export default function USModernRenderer({ cv, config }: Props) {
     <div className="font-sans text-[10px] leading-relaxed min-h-[1056px] flex" style={{ fontFamily: 'Arial, sans-serif' }}>
       {/* Sidebar */}
       <div className="w-[30%] flex-shrink-0 text-white p-5 space-y-5" style={{ backgroundColor: accent }}>
+        {p.photo && (
+          <div className="flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={p.photo} alt="" className="w-20 h-24 object-cover rounded border-2 border-white/40 flex-shrink-0" />
+          </div>
+        )}
         {/* Name in sidebar */}
         <div>
           <h1 className="text-base font-bold leading-tight tracking-tight text-white">

@@ -24,16 +24,24 @@ export default function USClassicRenderer({ cv, config }: Props) {
   return (
     <div className="font-sans text-gray-900 text-[11px] leading-relaxed p-8 min-h-[1056px]" style={{ fontFamily: 'Arial, sans-serif' }}>
       {/* Header */}
-      <div className="text-center mb-5 pb-4 border-b-2" style={{ borderColor: accent }}>
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: accent }}>
-          {p.firstName} {p.lastName}
-        </h1>
-        <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 mt-2 text-gray-600 text-[10px]">
-          {p.email && <span>{p.email}</span>}
-          {p.phone && <><span>·</span><span>{p.phone}</span></>}
-          {p.address?.city && <><span>·</span><span>{p.address.city}{p.address.state ? `, ${p.address.state}` : ''}</span></>}
-          {p.linkedIn && <><span>·</span><span>{p.linkedIn}</span></>}
-          {p.website && <><span>·</span><span>{p.website}</span></>}
+      <div className="mb-5 pb-4 border-b-2" style={{ borderColor: accent }}>
+        <div className="flex items-start gap-4">
+          {p.photo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={p.photo} alt="" className="w-20 h-24 object-cover border border-gray-300 rounded-sm flex-shrink-0" />
+          )}
+          <div className={p.photo ? 'text-left' : 'text-center w-full'}>
+            <h1 className="text-2xl font-bold tracking-tight" style={{ color: accent }}>
+              {p.firstName} {p.lastName}
+            </h1>
+            <div className={`flex items-center flex-wrap gap-x-3 gap-y-1 mt-2 text-gray-600 text-[10px] ${p.photo ? '' : 'justify-center'}`}>
+              {p.email && <span>{p.email}</span>}
+              {p.phone && <><span>·</span><span>{p.phone}</span></>}
+              {p.address?.city && <><span>·</span><span>{p.address.city}{p.address.state ? `, ${p.address.state}` : ''}</span></>}
+              {p.linkedIn && <><span>·</span><span>{p.linkedIn}</span></>}
+              {p.website && <><span>·</span><span>{p.website}</span></>}
+            </div>
+          </div>
         </div>
       </div>
 

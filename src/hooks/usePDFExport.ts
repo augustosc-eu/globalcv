@@ -5,12 +5,62 @@ import { CVData } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 
 type ExportState = 'idle' | 'generating' | 'done' | 'error';
+interface ExportOptions {
+  hidePhoto?: boolean;
+}
+
+const MAX_PHOTO_DATA_URI_LENGTH = 1_250_000; // ~1.2MB base64 payload threshold
+const PDF_PHOTO_MAX_PX = 1200;
+
+async function normalizePhotoForPDF(photo?: string): Promise<string | undefined> {
+  if (!photo || typeof window === 'undefined') return photo;
+  if (!photo.startsWith('data:image/')) return photo;
+  if (photo.length <= MAX_PHOTO_DATA_URI_LENGTH) return photo;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+
+      if (width > PDF_PHOTO_MAX_PX || height > PDF_PHOTO_MAX_PX) {
+        if (width >= height) {
+          height = Math.round((height * PDF_PHOTO_MAX_PX) / width);
+          width = PDF_PHOTO_MAX_PX;
+        } else {
+          width = Math.round((width * PDF_PHOTO_MAX_PX) / height);
+          height = PDF_PHOTO_MAX_PX;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(photo);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+
+      let quality = 0.85;
+      let compressed = canvas.toDataURL('image/jpeg', quality);
+      while (compressed.length > MAX_PHOTO_DATA_URI_LENGTH && quality > 0.55) {
+        quality -= 0.08;
+        compressed = canvas.toDataURL('image/jpeg', quality);
+      }
+      resolve(compressed);
+    };
+    img.onerror = () => resolve(photo);
+    img.src = photo;
+  });
+}
 
 export function usePDFExport() {
   const [state, setState] = useState<ExportState>('idle');
   const [error, setError] = useState<string | null>(null);
 
-  const exportPDF = useCallback(async (cv: CVData, config: MarketConfig) => {
+  const exportPDF = useCallback(async (cv: CVData, config: MarketConfig, options?: ExportOptions) => {
     setState('generating');
     setError(null);
     try {
@@ -21,12 +71,23 @@ export function usePDFExport() {
 
       const { pdf } = pdfModule;
       const { CVPDFDocument } = docModule;
+      const sourcePhoto = options?.hidePhoto ? undefined : cv.personalInfo.photo;
+      const normalizedPhoto = await normalizePhotoForPDF(sourcePhoto);
+      const cvForPdf: CVData = normalizedPhoto === cv.personalInfo.photo
+        ? cv
+        : {
+            ...cv,
+            personalInfo: {
+              ...cv.personalInfo,
+              photo: normalizedPhoto,
+            },
+          };
 
       // @react-pdf/renderer requires a JSX element passed to pdf()
       // We use React.createElement via dynamic import to avoid SSR issues
       const { createElement } = await import('react');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const doc = createElement(CVPDFDocument as any, { cv, config });
+      const doc = createElement(CVPDFDocument as any, { cv: cvForPdf, config });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const blob = await (pdf as any)(doc).toBlob();
 

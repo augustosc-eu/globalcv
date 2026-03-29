@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, Download, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
@@ -18,8 +19,18 @@ interface Props {
 export default function WizardNavigation({ steps, currentStep, config }: Props) {
   const { nextStep, prevStep, cv } = useCVStore();
   const { exportPDF, state: pdfState, error: pdfError } = usePDFExport();
+  const [hidePhotoInPdf, setHidePhotoInPdf] = useState(false);
   const isLast = currentStep === steps.length - 1;
   const isFirst = currentStep === 0;
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('globalcv_hide_photo_pdf');
+      setHidePhotoInPdf(saved === 'true');
+    } catch {
+      // no-op
+    }
+  }, []);
 
   return (
     <div className="mt-10 flex items-center justify-between pt-6 border-t border-gray-200">
@@ -41,8 +52,25 @@ export default function WizardNavigation({ steps, currentStep, config }: Props) 
 
       {isLast ? (
         <div className="flex flex-col items-end gap-1">
+          <label className="flex items-center gap-1.5 text-[11px] text-gray-500 mb-1 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={hidePhotoInPdf}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setHidePhotoInPdf(checked);
+                try {
+                  window.localStorage.setItem('globalcv_hide_photo_pdf', String(checked));
+                } catch {
+                  // no-op
+                }
+              }}
+              className="h-3.5 w-3.5 rounded border-gray-300 text-gray-600 focus:ring-gray-400"
+            />
+            Hide photo in PDF
+          </label>
           <button
-            onClick={() => exportPDF(cv, config)}
+            onClick={() => exportPDF(cv, config, { hidePhoto: hidePhotoInPdf })}
             disabled={pdfState === 'generating'}
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors disabled:opacity-60"
             style={{ backgroundColor: pdfState === 'error' ? '#dc2626' : config.color }}

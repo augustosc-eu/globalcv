@@ -88,22 +88,39 @@ function BodyText({ children }: { children: string }) {
 
 // ─── Classic / Traditional ────────────────────────────────────────────────────
 
-export function ClassicPDF({ cv, accent }: { cv: CVData; accent: string }) {
+export function ClassicPDF({
+  cv,
+  accent,
+  showPhoto = true,
+}: {
+  cv: CVData;
+  accent: string;
+  showPhoto?: boolean;
+}) {
   const p = cv.personalInfo;
   const isA4 = cv.pageSize === 'A4';
 
   return (
     <Page size={isA4 ? 'A4' : 'LETTER'} style={{ fontFamily: T.regular, fontSize: T.body, color: T.dark, backgroundColor: '#fff', paddingHorizontal: 40, paddingVertical: 36 }}>
       {/* Header */}
-      <View style={{ alignItems: 'center', marginBottom: 14, paddingBottom: 10, borderBottomWidth: 2, borderBottomColor: accent }}>
-        <Text style={{ fontFamily: T.bold, fontSize: T.name, color: accent, lineHeight: T.lhTight, marginBottom: 5 }}>
-          {p.firstName} {p.lastName}
-        </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {p.email      && <Text style={{ fontSize: T.meta, color: T.mid, marginHorizontal: 6 }}>{p.email}</Text>}
-          {p.phone      && <Text style={{ fontSize: T.meta, color: T.mid, marginHorizontal: 6 }}>{p.phone}</Text>}
-          {p.address?.city && <Text style={{ fontSize: T.meta, color: T.mid, marginHorizontal: 6 }}>{p.address.city}{p.address.state ? `, ${p.address.state}` : ''}</Text>}
-          {p.linkedIn   && <Text style={{ fontSize: T.meta, color: T.mid, marginHorizontal: 6 }}>{p.linkedIn}</Text>}
+      <View style={{ marginBottom: 14, paddingBottom: 10, borderBottomWidth: 2, borderBottomColor: accent }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: T.bold, fontSize: T.name, color: accent, lineHeight: T.lhTight, marginBottom: 5 }}>
+              {p.firstName} {p.lastName}
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              {p.email      && <Text style={{ fontSize: T.meta, color: T.mid, marginRight: 10 }}>{p.email}</Text>}
+              {p.phone      && <Text style={{ fontSize: T.meta, color: T.mid, marginRight: 10 }}>{p.phone}</Text>}
+              {p.address?.city && <Text style={{ fontSize: T.meta, color: T.mid, marginRight: 10 }}>{p.address.city}{p.address.state ? `, ${p.address.state}` : ''}</Text>}
+              {p.linkedIn   && <Text style={{ fontSize: T.meta, color: T.mid, marginRight: 10 }}>{p.linkedIn}</Text>}
+            </View>
+          </View>
+          {showPhoto && p.photo && (
+            <View style={{ width: 66, height: 86, borderWidth: 0.75, borderColor: '#d1d5db' }}>
+              <Image src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </View>
+          )}
         </View>
       </View>
 
@@ -202,6 +219,13 @@ export function ModernPDF({ cv, accent, isLatam = false }: { cv: CVData; accent:
       <View style={{ flexDirection: 'row', minHeight: '100%' }}>
         {/* Sidebar — background color applied directly so it extends on page 2+ */}
         <View style={{ width: SIDEBAR_W, backgroundColor: accent, paddingHorizontal: 16, paddingVertical: 22 }}>
+          {p.photo && (
+            <View style={{ alignItems: 'center', marginBottom: 12 }}>
+              <View style={{ width: 68, height: 90, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)' }}>
+                <Image src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </View>
+            </View>
+          )}
           <Text style={{ fontFamily: T.bold, fontSize: 15, color: T.white, lineHeight: 1.3, marginBottom: 16 }}>
             {p.firstName}{'\n'}{p.lastName}
           </Text>
@@ -322,19 +346,25 @@ export function EUModernPDF({ cv, accent }: { cv: CVData; accent: string }) {
   return (
     <Page size="A4" style={{ fontFamily: T.regular, fontSize: T.body, color: T.dark, backgroundColor: '#fff', padding: 0 }}>
       {/* Full-width colored header */}
-      <View style={{ backgroundColor: accent, paddingHorizontal: 28, paddingVertical: 20 }}>
-        <Text style={{ fontFamily: T.bold, fontSize: T.name, color: T.white, lineHeight: T.lhTight, marginBottom: 6 }}>
-          {p.firstName} {p.lastName}
-        </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          {p.email      && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.email}</Text>}
-          {p.phone      && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.phone}</Text>}
-          {p.address?.city && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.address.city}{p.address.country ? `, ${p.address.country}` : ''}</Text>}
-          {p.nationality && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.nationality}</Text>}
-          {p.linkedIn   && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.linkedIn}</Text>}
+      <View style={{ backgroundColor: accent, paddingHorizontal: 28, paddingVertical: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontFamily: T.bold, fontSize: T.name, color: T.white, lineHeight: T.lhTight, marginBottom: 6 }}>
+            {p.firstName} {p.lastName}
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+            {p.email      && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.email}</Text>}
+            {p.phone      && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.phone}</Text>}
+            {p.address?.city && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.address.city}{p.address.country ? `, ${p.address.country}` : ''}</Text>}
+            {p.nationality && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.nationality}</Text>}
+            {p.linkedIn   && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.linkedIn}</Text>}
+          </View>
         </View>
+        {p.photo && (
+          <View style={{ width: 60, height: 76, borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' }}>
+            <Image src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </View>
+        )}
       </View>
-
       {/* Two-column body */}
       <View style={{ flexDirection: 'row' }}>
         {/* Left sidebar */}
@@ -438,7 +468,7 @@ export function EUModernPDF({ cv, accent }: { cv: CVData; accent: string }) {
       {/* Footer — fixed renders on every page */}
       <View fixed style={{ position: 'absolute', bottom: 10, left: 28, right: 28, borderTopWidth: 0.5, borderTopColor: '#e5e7eb', paddingTop: 5, flexDirection: 'row', justifyContent: 'space-between' }}>
         <Text style={{ fontSize: T.small, color: T.muted }}>Curriculum Vitae — {p.firstName} {p.lastName}</Text>
-        <Text style={{ fontSize: T.small, color: T.muted }}>GlobalCV by Augusto Santa Cruz</Text>
+        <Text style={{ fontSize: T.small, color: T.muted }}>GlobalCV by Bagalinis Consulting</Text>
       </View>
     </Page>
   );
@@ -479,17 +509,24 @@ export function EuropassPDF({ cv, accent }: { cv: CVData; accent: string }) {
   return (
     <Page size="A4" style={{ fontFamily: T.regular, fontSize: T.body, color: T.dark, backgroundColor: '#fff', paddingHorizontal: 40, paddingVertical: 34 }}>
       {/* Header bar */}
-      <View style={{ backgroundColor: accent, paddingHorizontal: 24, paddingVertical: 18, marginHorizontal: -40, marginTop: -34, marginBottom: 16 }}>
-        <Text style={{ fontFamily: T.bold, fontSize: T.name, color: T.white, lineHeight: T.lhTight, marginBottom: 6 }}>{p.firstName} {p.lastName}</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          {p.email      && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 14 }}>{p.email}</Text>}
-          {p.phone      && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 14 }}>{p.phone}</Text>}
-          {p.address?.city && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 14 }}>{p.address.city}{p.address.country ? `, ${p.address.country}` : ''}</Text>}
-          {p.nationality && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 14 }}>{p.nationality}</Text>}
-          {p.dateOfBirth && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 14 }}>DOB: {p.dateOfBirth}</Text>}
+      <View style={{ backgroundColor: accent, paddingHorizontal: 24, paddingVertical: 18, marginHorizontal: -40, marginTop: -34, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontFamily: T.bold, fontSize: T.name, color: T.white, lineHeight: T.lhTight, marginBottom: 6 }}>{p.firstName} {p.lastName}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+            {p.email      && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 14 }}>{p.email}</Text>}
+            {p.phone      && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 14 }}>{p.phone}</Text>}
+            {p.address?.city && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 14 }}>{p.address.city}{p.address.country ? `, ${p.address.country}` : ''}</Text>}
+            {p.nationality && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 14 }}>{p.nationality}</Text>}
+            {p.dateOfBirth && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 14 }}>DOB: {p.dateOfBirth}</Text>}
+          </View>
         </View>
+        {p.photo && (
+          <View style={{ width: 60, height: 76, borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' }}>
+            <Image src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </View>
+        )}
       </View>
-
+      
       {cv.objective && (
         <View style={{ marginBottom: T.sectionGap }}>
           <SectionHeading accent={accent}>Personal Statement</SectionHeading>
@@ -855,13 +892,20 @@ export function JapanShokumuPDF({ cv }: { cv: CVData }) {
       </Text>
 
       {/* 氏名 + 日付 */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Text style={{ fontFamily: 'JP', fontWeight: 'bold', fontSize: 13 }}>
-          {p.lastName}　{p.firstName}
-        </Text>
-        <Text style={{ fontFamily: 'JP', fontSize: 7.5, color: '#6b7280', alignSelf: 'flex-end' }}>
-          作成日：　　　年　　月　　日
-        </Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, alignItems: 'flex-start', gap: 8 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontFamily: 'JP', fontWeight: 'bold', fontSize: 13 }}>
+            {p.lastName}　{p.firstName}
+          </Text>
+          <Text style={{ fontFamily: 'JP', fontSize: 7.5, color: '#6b7280', marginTop: 2 }}>
+            作成日：　　　年　　月　　日
+          </Text>
+        </View>
+        {p.photo && (
+          <View style={{ width: 56, height: 72, borderWidth: 0.75, borderColor: '#d1d5db' }}>
+            <Image src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </View>
+        )}
       </View>
 
       {/* 連絡先 */}
@@ -995,7 +1039,7 @@ export function JapanShokumuPDF({ cv }: { cv: CVData }) {
         <Text style={{ fontFamily: 'JP', fontSize: 7, color: '#9ca3af' }}>
           {p.lastName} {p.firstName}　職務経歴書
         </Text>
-        <Text style={{ fontFamily: 'JP', fontSize: 7, color: '#9ca3af' }}>GlobalCV by Augusto Santa Cruz</Text>
+        <Text style={{ fontFamily: 'JP', fontSize: 7, color: '#9ca3af' }}>GlobalCV by Bagalinis Consulting</Text>
       </View>
     </Page>
   );
@@ -1013,16 +1057,18 @@ export function CVPDFDocument({ cv, config }: Props) {
     page = <JapanRirekishoPDF cv={cv} />;
   } else if (tpl === 'jp-shokumu') {
     page = <JapanShokumuPDF cv={cv} />;
-  } else if (tpl === 'us-modern' || tpl === 'gb-modern' || tpl === 'au-modern' || tpl === 'in-modern') {
+  } else if (tpl === 'in-modern' || tpl === 'latam-modern' || tpl === 'br-modern') {
+    page = <ModernPDF cv={cv} accent={accent} isLatam />;
+  } else if (tpl === 'us-modern' || tpl === 'gb-modern' || tpl === 'au-modern') {
     page = <ModernPDF cv={cv} accent={accent} />;
   } else if (tpl === 'eu-modern') {
     page = <EUModernPDF cv={cv} accent={accent} />;
-  } else if (tpl === 'latam-modern' || tpl === 'br-modern') {
-    page = <ModernPDF cv={cv} accent={accent} isLatam />;
+  } else if (tpl === 'in-classic' || tpl === 'latam-traditional' || tpl === 'br-classic') {
+    page = <ClassicPDF cv={cv} accent={accent} showPhoto />;
   } else if (tpl === 'eu-europass') {
     page = <EuropassPDF cv={cv} accent={accent} />;
   } else {
-    // gb-classic, au-classic, in-classic, br-classic, us-classic, latam-traditional → ClassicPDF
+    // gb-classic, au-classic, us-classic → ClassicPDF
     page = <ClassicPDF cv={cv} accent={accent} />;
   }
 

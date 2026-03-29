@@ -18,8 +18,8 @@ export const auConfig: MarketConfig = {
     { id: 'au-mono',   name: 'Monochrome',  primary: '#111827', accent: '#374151', light: '#f3f4f6' },
   ],
   fields: {
-    // AU discrimination law: no photo, DOB, nationality expected on resume
-    photo:            { visibility: 'hidden' },
+    // AU discrimination law traditionally discourages photo, but this builder now allows it.
+    photo:            { visibility: 'optional', label: 'Profile Photo', helpText: 'Optional photo. Some AU/NZ employers prefer no photo.' },
     dateOfBirth:      { visibility: 'hidden' },
     nationality:      { visibility: 'hidden' },
     maritalStatus:    { visibility: 'hidden' },
@@ -46,6 +46,7 @@ export const auConfig: MarketConfig = {
   languageLevelSystem: 'generic',
   dateFormat: 'MMM yyyy',
   enableATSSuggestions: false,
+  photoAspectRatio: 0.75,
   templates: [
     { id: 'au-classic', name: 'Classic',  description: 'Clean, professional format preferred by Australian recruiters' },
     { id: 'au-modern',  name: 'Modern',   description: 'Contemporary two-column layout with colour sidebar' },

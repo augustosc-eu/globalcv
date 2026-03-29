@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Briefcase, FileText, Globe, Star } from 'lucide-react';
+import { ArrowRight, Briefcase, FileText, Globe, Sparkles, Star } from 'lucide-react';
+import TopNav from '@/components/shared/TopNav';
+import { SITE_OWNER_NAME, SITE_OWNER_URL } from '@/lib/site';
 
 const ENABLE_POST_JOB = process.env.NEXT_PUBLIC_ENABLE_POST_JOB === 'true';
 
@@ -10,7 +12,7 @@ const markets = [
     id: 'us',
     name: 'United States',
     flag: '🇺🇸',
-    gradient: 'from-blue-600 to-blue-800',
+    gradient: 'from-blue-600 to-cyan-500',
     border: 'border-blue-200 hover:border-blue-400',
     badge: 'bg-blue-100 text-blue-700',
     format: 'Resume',
@@ -25,7 +27,7 @@ const markets = [
     id: 'eu',
     name: 'European Union',
     flag: '🇪🇺',
-    gradient: 'from-indigo-600 to-indigo-800',
+    gradient: 'from-indigo-600 to-sky-500',
     border: 'border-indigo-200 hover:border-indigo-400',
     badge: 'bg-indigo-100 text-indigo-700',
     format: 'Curriculum Vitae',
@@ -40,7 +42,7 @@ const markets = [
     id: 'gb',
     name: 'United Kingdom',
     flag: '🇬🇧',
-    gradient: 'from-blue-700 to-blue-900',
+    gradient: 'from-blue-700 to-indigo-700',
     border: 'border-blue-200 hover:border-blue-500',
     badge: 'bg-blue-100 text-blue-800',
     format: 'CV',
@@ -55,7 +57,7 @@ const markets = [
     id: 'au',
     name: 'Australia & NZ',
     flag: '🇦🇺',
-    gradient: 'from-sky-500 to-sky-700',
+    gradient: 'from-sky-600 to-cyan-500',
     border: 'border-sky-200 hover:border-sky-400',
     badge: 'bg-sky-100 text-sky-700',
     format: 'Resume',
@@ -70,7 +72,7 @@ const markets = [
     id: 'latam',
     name: 'Latin America',
     flag: '🌎',
-    gradient: 'from-orange-500 to-orange-700',
+    gradient: 'from-orange-500 to-amber-500',
     border: 'border-orange-200 hover:border-orange-400',
     badge: 'bg-orange-100 text-orange-700',
     format: 'Curriculum Vitae',
@@ -85,7 +87,7 @@ const markets = [
     id: 'br',
     name: 'Brasil',
     flag: '🇧🇷',
-    gradient: 'from-green-600 to-green-800',
+    gradient: 'from-emerald-600 to-teal-500',
     border: 'border-green-200 hover:border-green-500',
     badge: 'bg-green-100 text-green-700',
     format: 'Currículo',
@@ -100,7 +102,7 @@ const markets = [
     id: 'in',
     name: 'India',
     flag: '🇮🇳',
-    gradient: 'from-amber-600 to-amber-800',
+    gradient: 'from-amber-600 to-orange-500',
     border: 'border-amber-200 hover:border-amber-400',
     badge: 'bg-amber-100 text-amber-700',
     format: 'CV / Resume',
@@ -115,7 +117,7 @@ const markets = [
     id: 'jp',
     name: '日本 / Japan',
     flag: '🇯🇵',
-    gradient: 'from-red-600 to-red-800',
+    gradient: 'from-rose-600 to-red-500',
     border: 'border-red-200 hover:border-red-400',
     badge: 'bg-red-100 text-red-700',
     format: '履歴書 / 職務経歴書',
@@ -128,131 +130,177 @@ const markets = [
   },
 ];
 
+const platformStats = [
+  { label: 'Markets', value: '8+' },
+  { label: 'Job Sources', value: '10+' },
+  { label: 'Templates', value: 'Local-first' },
+];
+
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Hero */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-16 text-center">
-          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Star size={14} className="fill-current" />
-            Multi-market CV &amp; Resume Builder
-          </div>
-          <h1 className="text-5xl font-bold text-gray-900 mb-4 tracking-tight">
-            Build your CV for{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-              any market
-            </span>
-          </h1>
-          <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
-            Each market has its own conventions. We handle the differences so your
-            application looks local — whether you&apos;re targeting San Francisco,
-            Berlin, São Paulo, or Tokyo.
-          </p>
-          <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
-            <span className="flex items-center gap-1.5">
-              <FileText size={16} /> Professional templates
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Globe size={16} /> 8 global markets
-            </span>
-            <span className="flex items-center gap-1.5">
-              <ArrowRight size={16} /> PDF export
-            </span>
-          </div>
-        </div>
-      </div>
+    <main className="app-shell-bg soft-grid-bg">
+      <TopNav current="home" showPostJob={ENABLE_POST_JOB} />
+      <div className="max-w-6xl mx-auto px-6 py-12 md:py-16">
+        <section className="surface-card rounded-3xl p-8 md:p-12 relative overflow-hidden">
+          <div className="absolute -right-20 -top-24 h-56 w-56 rounded-full bg-blue-200/40 blur-3xl" />
+          <div className="absolute -left-16 -bottom-20 h-52 w-52 rounded-full bg-cyan-200/30 blur-3xl" />
 
-      {/* Market cards */}
-      <div className="max-w-6xl mx-auto px-6 py-16">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
-          Choose your target market
-        </h2>
-        <p className="text-gray-500 text-center mb-10">
-          The builder adapts its fields, templates, and conventions to each market automatically.
-        </p>
+          <div className="relative grid grid-cols-1 md:grid-cols-[1.3fr_0.9fr] gap-8 items-start">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-xs font-semibold mb-5 border border-blue-100">
+                <Sparkles size={13} />
+                Multi-market CV and Resume Builder
+              </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {markets.map((market) => (
-            <Link
-              key={market.id}
-              href={`/${market.id}`}
-              className={`group bg-white rounded-2xl border-2 ${market.border} p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <span className="text-4xl">{market.flag}</span>
-                  <div className="mt-2">
-                    <h3 className="text-xl font-bold text-gray-900">{market.name}</h3>
-                    <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full mt-1 ${market.badge}`}>
-                      {market.format}
-                    </span>
+              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
+                Build job-ready CVs for
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500"> every target market</span>
+              </h1>
+
+              <p className="text-slate-600 text-base md:text-lg mt-4 max-w-2xl">
+                GlobalCV adapts structure, fields, and conventions automatically so your application looks local in the US, UK, EU, LATAM, Brazil, India, and Japan.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3 mt-7">
+                <Link
+                  href="/jobs"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition-colors"
+                >
+                  Browse Remote Jobs
+                  <ArrowRight size={15} />
+                </Link>
+                <Link
+                  href="/us"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors"
+                >
+                  Start with US Resume
+                  <FileText size={15} />
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white/80 backdrop-blur p-5">
+              <p className="text-sm font-semibold text-slate-900 mb-4">Why teams and candidates choose GlobalCV</p>
+              <div className="space-y-3">
+                <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-sm text-slate-700">Local conventions by market, not one generic template.</div>
+                <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-sm text-slate-700">Live jobs with region-aware CV recommendations.</div>
+                <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-sm text-slate-700">Privacy-first editing in the browser.</div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 mt-4">
+                {platformStats.map((item) => (
+                  <div key={item.label} className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-center">
+                    <p className="text-sm font-bold text-blue-700">{item.value}</p>
+                    <p className="text-[11px] text-blue-600">{item.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-12">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
+            <div>
+              <h2 className="text-2xl font-semibold text-slate-900">Choose your market</h2>
+              <p className="text-sm text-slate-500">Each profile below opens a market-specific CV workflow.</p>
+            </div>
+            <div className="inline-flex items-center gap-2 text-xs text-slate-500 bg-white/80 border border-slate-200 rounded-full px-3 py-1.5 w-fit">
+              <Globe size={12} />
+              More markets coming soon
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {markets.map((market) => (
+              <Link
+                key={market.id}
+                href={`/${market.id}`}
+                className={`group relative overflow-hidden rounded-2xl border ${market.border} bg-white p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg`}
+              >
+                <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-slate-100 group-hover:bg-slate-200/70 transition-colors" />
+                <div className="relative">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <span className="text-3xl">{market.flag}</span>
+                      <h3 className="text-lg font-bold text-slate-900 mt-2 leading-tight">{market.name}</h3>
+                      <span className={`inline-flex mt-2 text-[11px] font-semibold px-2 py-0.5 rounded-full ${market.badge}`}>
+                        {market.format}
+                      </span>
+                    </div>
+                    <div className={`p-2 rounded-xl bg-gradient-to-br ${market.gradient} text-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity`}>
+                      <ArrowRight size={16} />
+                    </div>
+                  </div>
+
+                  <ul className="space-y-1.5">
+                    {market.highlights.map((h) => (
+                      <li key={`${market.id}-${h}`} className="text-xs text-slate-600 leading-relaxed flex gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300 mt-1.5 shrink-0" />
+                        <span>{h}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-slate-700 group-hover:text-slate-900">
+                    Open market builder
+                    <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
-                <div className={`p-2 rounded-xl bg-gradient-to-br ${market.gradient} text-white opacity-0 group-hover:opacity-100 transition-opacity`}>
-                  <ArrowRight size={20} />
-                </div>
-              </div>
-
-              <ul className="space-y-2">
-                {market.highlights.map((h) => (
-                  <li key={h} className="flex items-center gap-2 text-sm text-gray-600">
-                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400 flex-shrink-0" />
-                    {h}
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-5 flex items-center gap-1 text-sm font-semibold text-gray-700 group-hover:text-gray-900">
-                Start building
-                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Remote Jobs CTA */}
-      <div className="max-w-6xl mx-auto px-6 pb-16">
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="text-center sm:text-left">
-            <div className="flex items-center gap-2 text-blue-200 text-sm font-medium mb-2 justify-center sm:justify-start">
-              <Briefcase size={14} />
-              New — Remote Job Board
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-1">Looking for a remote job?</h2>
-            <p className="text-blue-100 text-sm">
-              Browse live listings from Remotive, Arbeitnow, Jobicy, and RemoteOK — all in one place.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <Link
-              href="/jobs"
-              className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-white text-blue-700 font-semibold text-sm rounded-xl hover:bg-blue-50 transition-colors"
-            >
-              Browse Remote Jobs
-              <ArrowRight size={15} />
-            </Link>
-            {ENABLE_POST_JOB && (
-              <Link
-                href="/post-job"
-                className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-blue-800/60 text-white font-semibold text-sm rounded-xl border border-blue-300/30 hover:bg-blue-800 transition-colors"
-              >
-                Post a Job — Find Top Talent
-                <ArrowRight size={15} />
               </Link>
-            )}
+            ))}
           </div>
-        </div>
+        </section>
+
+        <section className="mt-12">
+          <div className="rounded-3xl bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-500 p-8 md:p-10 text-white shadow-lg">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div>
+                <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wide font-semibold bg-white/15 border border-white/20 px-3 py-1 rounded-full mb-3">
+                  <Star size={12} className="fill-current" />
+                  New Remote Jobs Hub
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold mb-2">Find jobs and build the right CV in one flow</h2>
+                <p className="text-sm md:text-base text-blue-100 max-w-2xl">
+                  Discover remote roles from multiple sources, then jump straight into the best market format for that listing.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <Link
+                  href="/jobs"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-blue-700 font-semibold text-sm hover:bg-blue-50 transition-colors"
+                >
+                  <Briefcase size={14} />
+                  Explore Jobs
+                </Link>
+                {ENABLE_POST_JOB && (
+                  <Link
+                    href="/post-job"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-950/40 border border-blue-200/30 text-white font-semibold text-sm hover:bg-blue-950/55 transition-colors"
+                  >
+                    Post a Job
+                    <ArrowRight size={14} />
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
-      {/* Footer */}
-      <footer className="text-center text-sm text-gray-400 py-10 border-t border-gray-200 space-y-2">
-        <p>GlobalCV — by Augusto Santa Cruz</p>
-        <p className="flex items-center justify-center gap-4 text-xs">
-          <Link href="/privacy" className="hover:text-gray-600 transition-colors">Privacy Policy</Link>
-          <Link href="/terms" className="hover:text-gray-600 transition-colors">Terms of Service</Link>
-        </p>
+      <footer className="border-t border-slate-200 bg-white/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+          <p>
+            GlobalCV by{' '}
+            <a href={SITE_OWNER_URL} target="_blank" rel="noopener noreferrer" className="hover:text-slate-700 underline-offset-2 hover:underline">
+              {SITE_OWNER_NAME}
+            </a>
+          </p>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy" className="hover:text-slate-700 transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-slate-700 transition-colors">Terms of Service</Link>
+          </div>
+        </div>
       </footer>
     </main>
   );

@@ -18,8 +18,8 @@ export default function WizardProgress({ steps, currentStep, market }: Props) {
   const { setCurrentStep } = useCVStore();
 
   return (
-    <nav className="space-y-1">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-4">
+    <nav className="space-y-1.5">
+      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 mb-3">
         Steps
       </p>
       {steps.map((step, idx) => {
@@ -31,12 +31,12 @@ export default function WizardProgress({ steps, currentStep, market }: Props) {
             key={step.key}
             onClick={() => idx < currentStep && setCurrentStep(idx)}
             className={cn(
-              'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left',
+              'w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all text-left border',
               isActive
-                ? 'text-white font-semibold'
+                ? 'text-white font-semibold border-transparent shadow-sm'
                 : isDone
-                ? 'text-gray-700 hover:bg-gray-100 cursor-pointer'
-                : 'text-gray-400 cursor-default'
+                ? 'text-slate-700 border-slate-200 bg-white hover:bg-slate-50 cursor-pointer'
+                : 'text-slate-400 border-slate-200/80 bg-slate-50/50 cursor-default'
             )}
             style={isActive ? { backgroundColor: config.color } : undefined}
             disabled={idx > currentStep}
@@ -47,8 +47,8 @@ export default function WizardProgress({ steps, currentStep, market }: Props) {
                 isActive
                   ? 'bg-white/20 text-white'
                   : isDone
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-gray-100 text-gray-400'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-slate-100 text-slate-400'
               )}
             >
               {isDone ? <Check size={12} strokeWidth={3} /> : idx + 1}

@@ -18,8 +18,8 @@ export const gbConfig: MarketConfig = {
     { id: 'gb-mono',   name: 'Monochrome',   primary: '#111827', accent: '#374151', light: '#f3f4f6' },
   ],
   fields: {
-    // UK equality law discourages photo, DOB, nationality, gender, marital status
-    photo:            { visibility: 'hidden' },
+    // UK equality law discourages photo for some roles, but this builder now allows it.
+    photo:            { visibility: 'optional', label: 'Profile Photo', helpText: 'Optional photo. Some UK employers prefer no photo.' },
     dateOfBirth:      { visibility: 'hidden' },
     nationality:      { visibility: 'hidden' },
     maritalStatus:    { visibility: 'hidden' },
@@ -46,6 +46,7 @@ export const gbConfig: MarketConfig = {
   languageLevelSystem: 'cefr',
   dateFormat: 'MMM yyyy',
   enableATSSuggestions: false,
+  photoAspectRatio: 0.75,
   templates: [
     { id: 'gb-classic', name: 'Classic CV',  description: 'Clean single-column format — standard UK two-page CV' },
     { id: 'gb-modern',  name: 'Modern CV',   description: 'Contemporary two-column layout with colour accent' },

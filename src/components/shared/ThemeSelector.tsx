@@ -23,22 +23,27 @@ export default function ThemeSelector({ config, inline = false }: Props) {
         onClick={() => setColorTheme(theme.id)}
         title={theme.name}
         className={cn(
-          'w-7 h-7 rounded-full border-2 flex items-center justify-center transition-transform hover:scale-110',
-          isActive ? 'border-gray-900 scale-110' : 'border-transparent'
+          'relative w-8 h-8 rounded-xl border flex items-center justify-center transition-all hover:-translate-y-0.5',
+          isActive
+            ? 'border-slate-900 shadow-[0_4px_12px_rgba(15,23,42,0.25)]'
+            : 'border-slate-200 hover:border-slate-300 shadow-[0_2px_8px_rgba(15,23,42,0.08)]'
         )}
-        style={{ backgroundColor: theme.primary }}
+        style={{
+          background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.accent} 58%, ${theme.light} 100%)`,
+        }}
       >
-        {isActive && <Check size={11} className="text-white" strokeWidth={3} />}
+        <span className="absolute inset-[2px] rounded-lg border border-white/40" />
+        {isActive && <Check size={11} className="text-white drop-shadow-sm" strokeWidth={3} />}
       </button>
     );
   });
 
   if (inline) {
-    return <div className="flex items-center gap-2 flex-wrap">{dots}</div>;
+    return <div className="flex items-center gap-2.5 flex-wrap">{dots}</div>;
   }
 
   // Header mode: hide entirely on mobile (< sm), show on sm+
   return (
-    <div className="hidden sm:flex items-center gap-1.5">{dots}</div>
+    <div className="hidden sm:flex items-center gap-2">{dots}</div>
   );
 }

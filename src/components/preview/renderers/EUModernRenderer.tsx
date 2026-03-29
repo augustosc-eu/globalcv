@@ -160,7 +160,7 @@ export default function EUModernRenderer({ cv, config }: Props) {
 
       <div className="px-8 py-2 text-[8px] text-gray-400 border-t border-gray-200 flex justify-between">
         <span>Curriculum Vitae — {p.firstName} {p.lastName}</span>
-        <span>GlobalCV by Augusto Santa Cruz</span>
+        <span>GlobalCV by Bagalinis Consulting</span>
       </div>
     </div>
   );

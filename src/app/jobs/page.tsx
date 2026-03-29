@@ -4,10 +4,12 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   Search, Briefcase, FileText, ExternalLink, Globe,
-  ArrowLeft, ChevronLeft, ChevronRight, Building2, MapPin,
+  ChevronLeft, ChevronRight, Building2, MapPin,
   RefreshCw, X, DollarSign, Clock, ChevronDown, Check,
   ChevronUp,
 } from 'lucide-react';
+import TopNav from '@/components/shared/TopNav';
+import { SITE_OWNER_NAME, SITE_OWNER_URL } from '@/lib/site';
 import {
   Job, JobsResponse,
   JOB_CATEGORIES, JOB_REGIONS, JOB_TYPES, JOB_SOURCES,
@@ -24,6 +26,7 @@ const SOURCE_BADGE: Record<string, string> = {
   remoteok:  'bg-orange-100 text-orange-700',
   '4dayweek':'bg-fuchsia-100 text-fuchsia-700',
   himalayas: 'bg-cyan-100 text-cyan-700',
+  'himalayas-jp': 'bg-rose-100 text-rose-700',
   'himalayas-emea': 'bg-sky-100 text-sky-700',
   'themuse-emea': 'bg-indigo-100 text-indigo-700',
 };
@@ -36,6 +39,7 @@ const SOURCE_HOME: Record<string, string> = {
   remoteok: 'https://remoteok.com',
   '4dayweek': 'https://4dayweek.io',
   himalayas: 'https://himalayas.app',
+  'himalayas-jp': 'https://himalayas.app',
   'himalayas-emea': 'https://himalayas.app',
   'themuse-emea': 'https://www.themuse.com',
 };
@@ -162,7 +166,7 @@ function FilterDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1.5 min-w-[160px] bg-white rounded-xl border border-gray-200 shadow-lg z-30 overflow-hidden py-1">
+        <div className="absolute top-full left-0 mt-1.5 min-w-[160px] bg-white rounded-xl border border-gray-200 shadow-lg z-[70] overflow-hidden py-1">
           {options.map(opt => {
             const flag = REGION_FLAG[opt.id];
             const optLabel = flag && opt.id !== 'all' ? `${flag} ${opt.label}` : opt.label;
@@ -208,24 +212,24 @@ function JobCard({ job }: { job: Job }) {
     : job.description;
 
   return (
-    <article className={`group bg-white rounded-2xl border border-gray-100 border-l-4 ${style.border} shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200`}>
+    <article className={`group surface-card rounded-2xl border border-l-4 ${style.border} overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200`}>
       <div className="p-5">
 
         {/* ── Header row ── */}
         <div className="flex gap-4">
           {/* Logo */}
-          <div className="flex-shrink-0 w-12 h-12 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
+          <div className="flex-shrink-0 w-12 h-12 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
             {job.companyLogo && !logoFailed ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={job.companyLogo}
                 alt={job.company}
-                className="w-full h-full object-contain p-1.5"
+                className="w-full h-full object-contain p-1.5 bg-white"
                 loading="lazy"
                 onError={() => setLogoFailed(true)}
               />
             ) : (
-              <span className="inline-flex items-center justify-center w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 text-gray-500 font-semibold text-sm">
+              <span className="inline-flex items-center justify-center w-full h-full bg-gradient-to-br from-slate-100 to-white text-slate-500 font-semibold text-sm">
                 {job.company.slice(0, 1).toUpperCase() || <Building2 size={18} className="text-gray-300" />}
               </span>
             )}
@@ -349,7 +353,7 @@ function JobCard({ job }: { job: Job }) {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 border-l-4 border-l-gray-200 p-5 animate-pulse shadow-sm">
+    <div className="surface-card rounded-2xl border border-slate-200 border-l-4 border-l-slate-200 p-5 animate-pulse">
       <div className="flex gap-4">
         <div className="w-12 h-12 bg-gray-200 rounded-xl flex-shrink-0" />
         <div className="flex-1">
@@ -471,41 +475,14 @@ export default function JobsPage() {
   const numActive = activeCount(filters);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
-      {/* ── Top nav ── */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-6 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2 text-gray-900 font-bold text-sm hover:text-gray-600 transition-colors">
-              <FileText size={17} className="text-blue-600" />
-              GlobalCV
-            </Link>
-            <span className="text-gray-300">/</span>
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-blue-600">
-              <Briefcase size={14} />
-              Remote Jobs
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            {ENABLE_POST_JOB && (
-              <Link href="/post-job" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">
-                <Briefcase size={11} />
-                Post a Job
-              </Link>
-            )}
-            <Link href="/" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-              <ArrowLeft size={11} />
-              Build your CV
-            </Link>
-          </div>
-        </div>
-      </header>
+    <main className="app-shell-bg soft-grid-bg">
+      <TopNav current="jobs" showPostJob={ENABLE_POST_JOB} />
 
       {/* ── Hero: search + filters ── */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="max-w-6xl mx-auto px-6 pt-8">
+        <div className="surface-card rounded-3xl p-6 md:p-8 relative z-40 overflow-visible">
           <div className="text-center mb-7">
-            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium mb-4 border border-blue-100">
               <Globe size={13} />
               Live listings — refreshed every 5 min
             </div>
@@ -547,7 +524,7 @@ export default function JobsPage() {
                 value={searchInput}
                 onChange={e => setSearchInput(e.target.value)}
                 placeholder="Job title, company, or skill — e.g. React, Stripe, Product Manager…"
-                className="w-full pl-10 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
+                className="w-full pl-10 pr-4 py-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
               />
             </div>
             <button type="submit" className="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm sm:w-auto">
@@ -562,7 +539,7 @@ export default function JobsPage() {
           </form>
 
           {/* ── Filter bar ── */}
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50/70 p-3">
+          <div className="relative z-50 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
             <FilterDropdown
               label="Category"
               options={JOB_CATEGORIES}
@@ -654,7 +631,7 @@ export default function JobsPage() {
       </div>
 
       {/* ── Results ── */}
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8">
 
         {/* Count + refresh bar */}
         <div className="flex items-center justify-between mb-5">
@@ -680,7 +657,7 @@ export default function JobsPage() {
 
         {/* Error */}
         {!loading && error && (
-          <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="text-center py-20 surface-card rounded-2xl">
             <Briefcase size={36} className="mx-auto text-gray-300 mb-4" />
             <p className="text-gray-600 font-medium mb-4">{error}</p>
             <button onClick={() => fetchJobs()} className="px-5 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
@@ -691,7 +668,7 @@ export default function JobsPage() {
 
         {/* Empty */}
         {!loading && !error && jobs.length === 0 && (
-          <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="text-center py-20 surface-card rounded-2xl">
             <Briefcase size={40} className="mx-auto text-gray-300 mb-4" />
             <p className="text-gray-700 font-semibold mb-1">No jobs found</p>
             <p className="text-sm text-gray-400 mb-5">Try different keywords or relax your filters</p>
@@ -736,22 +713,27 @@ export default function JobsPage() {
       </div>
 
       {/* ── CTA ── */}
-      <div className="bg-white border-t border-gray-200 mt-4">
-        <div className="max-w-5xl mx-auto px-6 py-10 text-center">
-          <p className="text-gray-800 font-semibold mb-1">Found your dream job?</p>
-          <p className="text-sm text-gray-500 mb-5">Build a market-tailored CV that gets you past the first screen</p>
-          <Link href="/" className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+      <div className="mt-4 px-6 pb-2">
+        <div className="max-w-6xl mx-auto rounded-3xl bg-gradient-to-r from-slate-900 via-blue-900 to-cyan-800 px-6 py-10 text-center shadow-lg">
+          <p className="text-blue-100 font-semibold mb-1">Found your dream job?</p>
+          <p className="text-sm text-blue-100/90 mb-5">Build a market-tailored CV that gets you past the first screen</p>
+          <Link href="/" className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-blue-700 text-sm font-semibold rounded-xl hover:bg-blue-50 transition-colors shadow-sm">
             <FileText size={14} />
             Build your CV — it&apos;s free
           </Link>
         </div>
       </div>
 
-      <footer className="text-center text-sm text-gray-400 py-8 border-t border-gray-200 space-y-2">
-        <p>GlobalCV — by Augusto Santa Cruz</p>
+      <footer className="text-center text-sm text-slate-500 py-8 border-t border-slate-200 bg-white/70 backdrop-blur space-y-2">
+        <p>
+          GlobalCV by{' '}
+          <a href={SITE_OWNER_URL} target="_blank" rel="noopener noreferrer" className="hover:text-slate-700 underline-offset-2 hover:underline">
+            {SITE_OWNER_NAME}
+          </a>
+        </p>
         <p className="flex items-center justify-center gap-4 text-xs">
-          <Link href="/privacy" className="hover:text-gray-600 transition-colors">Privacy Policy</Link>
-          <Link href="/terms" className="hover:text-gray-600 transition-colors">Terms of Service</Link>
+          <Link href="/privacy" className="hover:text-slate-700 transition-colors">Privacy Policy</Link>
+          <Link href="/terms" className="hover:text-slate-700 transition-colors">Terms of Service</Link>
         </p>
       </footer>
     </main>

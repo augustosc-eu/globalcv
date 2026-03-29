@@ -18,7 +18,11 @@ export const usConfig: MarketConfig = {
     { id: 'us-mono',   name: 'Monochrome', primary: '#111827', accent: '#374151', light: '#f3f4f6' },
   ],
   fields: {
-    photo: { visibility: 'hidden' },
+    photo: {
+      visibility: 'optional',
+      label: 'Profile Photo',
+      helpText: 'Optional photo for profile-forward CV formats.',
+    },
     dateOfBirth: { visibility: 'hidden' },
     nationality: { visibility: 'hidden' },
     maritalStatus: { visibility: 'hidden' },
@@ -45,6 +49,7 @@ export const usConfig: MarketConfig = {
   languageLevelSystem: 'generic',
   dateFormat: 'MMM yyyy',
   enableATSSuggestions: true,
+  photoAspectRatio: 0.75,
   templates: [
     { id: 'us-classic', name: 'Classic', description: 'Traditional ATS-friendly single-column format' },
     { id: 'us-modern',  name: 'Modern',  description: 'Clean two-column layout with accent sidebar' },

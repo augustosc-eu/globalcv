@@ -16,6 +16,7 @@ const LOGO_BASE_URL: Record<Job['source'], string> = {
   remoteok: 'https://remoteok.com',
   '4dayweek': 'https://4dayweek.io',
   himalayas: 'https://himalayas.app',
+  'himalayas-jp': 'https://himalayas.app',
   'himalayas-emea': 'https://himalayas.app',
   'themuse-emea': 'https://www.themuse.com',
 };
@@ -663,6 +664,57 @@ async function fetchHimalayasEmea(search: string): Promise<Job[]> {
   }
 }
 
+async function fetchHimalayasJapan(search: string): Promise<Job[]> {
+  try {
+    const params = new URLSearchParams({
+      country: 'Japan',
+      sort: 'recent',
+      page: '1',
+    });
+    if (search) params.set('q', search);
+
+    const res = await fetchWithTimeout(`https://himalayas.app/jobs/api/search?${params}`, {
+      next: { revalidate: 300 },
+    } as RequestInit);
+    if (!res.ok) return [];
+
+    const data = await res.json() as HimalayasApiResponse;
+    return (data.jobs ?? []).map((j): Job => {
+      const restrictions = Array.isArray(j.locationRestrictions) ? j.locationRestrictions : [];
+      const location = restrictions.length > 0
+        ? `Remote (${restrictions.slice(0, 2).join(', ')}${restrictions.length > 2 ? ' + more' : ''})`
+        : 'Remote, Japan';
+      const tags = [
+        ...(j.categories ?? []).map((t) => t.replace(/-/g, ' ')),
+        ...(j.parentCategories ?? []).map((t) => t.replace(/-/g, ' ')),
+        'Japan',
+      ].slice(0, 6);
+      const description = j.excerpt || (j.description ? stripHtml(j.description) : undefined);
+
+      return {
+        id: `himalayas-jp-${j.guid ?? `${j.companyName ?? 'company'}-${j.title ?? 'job'}`.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+        title: j.title ?? '',
+        company: j.companyName ?? '',
+        companyLogo: normalizeLogoUrl(j.companyLogo, 'himalayas-jp'),
+        location,
+        region: inferRegion(restrictions.join(', ') || location),
+        category: inferCategory(j.title ?? '', tags),
+        jobType: normalizeJobType(j.employmentType),
+        tags,
+        salary: formatSalaryRange(j.minSalary, j.maxSalary, j.currency ?? 'USD'),
+        url: j.applicationLink || j.guid || '',
+        postedAt: typeof j.pubDate === 'number'
+          ? new Date(j.pubDate * 1000).toISOString()
+          : new Date().toISOString(),
+        source: 'himalayas-jp',
+        description,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 async function fetchTheMuseEmea(): Promise<Job[]> {
   try {
     const pages = [1, 2, 3];
@@ -742,6 +794,7 @@ export async function GET(request: NextRequest) {
     (source === 'all' || source === 'arbeitnow') &&
     (!JOBS_SAFE_MODE || ENABLE_ARBEITNOW_SOURCE);
   const includeHimalayas = source === 'himalayas' || (source === 'all' && (region === 'all' || region === 'latam'));
+  const includeHimalayasJapan = source === 'himalayas-jp' || (source === 'all' && (region === 'all' || region === 'apac'));
   const includeHimalayasEmea = source === 'himalayas-emea' || (source === 'all' && (region === 'all' || region === 'eu' || region === 'uk'));
   const includeFourDayWeek =
     ENABLE_4DAYWEEK_SOURCE &&
@@ -752,7 +805,7 @@ export async function GET(request: NextRequest) {
     (!JOBS_SAFE_MODE) &&
     (source === 'themuse-emea' || (source === 'all' && (region === 'all' || region === 'eu' || region === 'uk')));
 
-  const [internal, remotive, arbeitnow, jobicy, remoteok, fourDayWeek, himalayas, himalayasEmea, theMuseEmea] = await Promise.all([
+  const [internal, remotive, arbeitnow, jobicy, remoteok, fourDayWeek, himalayas, himalayasJapan, himalayasEmea, theMuseEmea] = await Promise.all([
     includeInternal ? Promise.resolve(INTERNAL_JOBS) : Promise.resolve([]),
     includeRemotive ? fetchRemotive(category, q) : Promise.resolve([]),
     includeArbeitnow ? fetchArbeitnow() : Promise.resolve([]),
@@ -760,6 +813,7 @@ export async function GET(request: NextRequest) {
     includeRemoteOk ? fetchRemoteOK() : Promise.resolve([]),
     includeFourDayWeek ? fetch4DayWeek() : Promise.resolve([]),
     includeHimalayas ? fetchHimalayasLatam(q) : Promise.resolve([]),
+    includeHimalayasJapan ? fetchHimalayasJapan(q) : Promise.resolve([]),
     includeHimalayasEmea ? fetchHimalayasEmea(q) : Promise.resolve([]),
     includeTheMuseEmea ? fetchTheMuseEmea() : Promise.resolve([]),
   ]);
@@ -772,6 +826,7 @@ export async function GET(request: NextRequest) {
     ...remoteok,
     ...fourDayWeek,
     ...himalayas,
+    ...himalayasJapan,
     ...himalayasEmea,
     ...theMuseEmea,
   ];

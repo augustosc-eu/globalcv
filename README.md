@@ -2,7 +2,7 @@
 
 **Free, privacy-first CV and resume builder for the global job market.**
 
-Built by [Augusto Santa Cruz](https://github.com/augustosc-eu). No account required. No data leaves your browser.
+Built by [Bagalinis Consulting](https://bagalinis.com). No account required. No data leaves your browser.
 
 ---
 
@@ -290,4 +290,4 @@ MIT — free to use, modify, and distribute.
 
 ---
 
-*Made with care by [Augusto Santa Cruz](https://github.com/augustosc-eu)*
+*Made with care by [Bagalinis Consulting](https://bagalinis.com)*

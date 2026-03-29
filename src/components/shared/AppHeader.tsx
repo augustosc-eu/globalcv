@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { FileText, Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2, ShieldCheck, Undo2, Redo2, HardDriveDownload, FolderOpen, Copy } from 'lucide-react';
+import { Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2, ShieldCheck, Undo2, Redo2, HardDriveDownload, FolderOpen, Copy, ChevronDown, Wrench } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
@@ -11,6 +11,7 @@ import ShareButton from './ShareButton';
 import ThemeSelector from './ThemeSelector';
 import PasteImportModal from './PasteImportModal';
 import CopyToMarketModal from './CopyToMarketModal';
+import BrandLink from './BrandLink';
 
 const marketFlags: Record<Market, string> = {
   us: '🇺🇸', eu: '🇪🇺', latam: '🌎', jp: '🇯🇵',
@@ -25,6 +26,9 @@ export default function AppHeader({ market, config }: Props) {
   const [importOpen, setImportOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
+  const [hidePhotoInPdf, setHidePhotoInPdf] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
@@ -39,6 +43,32 @@ export default function AppHeader({ market, config }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [undo, redo]);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('globalcv_hide_photo_pdf');
+      setHidePhotoInPdf(saved === 'true');
+    } catch {
+      // no-op
+    }
+  }, []);
+
+  useEffect(() => {
+    function onPointerDown(e: MouseEvent) {
+      if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) {
+        setToolsOpen(false);
+      }
+    }
+    function onEsc(e: KeyboardEvent) {
+      if (e.key === 'Escape') setToolsOpen(false);
+    }
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onEsc);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onEsc);
+    };
+  }, []);
 
   function handleClear() {
     resetCV(market);
@@ -77,151 +107,155 @@ export default function AppHeader({ market, config }: Props) {
     ? new Date(lastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : null;
 
+  function updateHidePhotoPreference(checked: boolean) {
+    setHidePhotoInPdf(checked);
+    try {
+      window.localStorage.setItem('globalcv_hide_photo_pdf', String(checked));
+    } catch {
+      // no-op
+    }
+  }
+
   return (
     <>
-      <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3 flex-shrink-0">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 text-gray-900 font-bold text-sm hover:text-gray-600 transition-colors flex-shrink-0">
-          <FileText size={18} style={{ color: config.color }} />
-          GlobalCV
-        </Link>
+      <header className="relative z-[80] overflow-visible h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 flex items-center px-3 sm:px-4 gap-3 flex-shrink-0">
+        <BrandLink href="/" variant="editor" className="flex-shrink-0" />
 
-        <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
+        <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs text-slate-700">
+          <span>{marketFlags[market]}</span>
+          <span className="font-semibold">{config.name}</span>
+        </div>
 
-        {/* Market badge */}
-        <span className="flex items-center gap-1.5 text-sm font-medium text-gray-700 flex-shrink-0">
-          {marketFlags[market]}
-          <span className="hidden sm:inline">{config.name}</span>
-        </span>
-
-        {/* Divider + color themes — hidden on mobile (themes are in Template step) */}
-        <div className="hidden sm:block w-px h-5 bg-gray-200 flex-shrink-0" />
-        <ThemeSelector config={config} />
+        <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-500">
+          {isSaving ? (
+            <span>{config.ui.saving}</span>
+          ) : isDirty ? (
+            <button onClick={save} className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
+              <Save size={12} /> {config.ui.save}
+            </button>
+          ) : savedTime ? (
+            <span className="inline-flex items-center gap-1 text-emerald-600">
+              <CheckCircle size={12} /> {config.ui.saved} {savedTime}
+            </span>
+          ) : null}
+        </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {/* Save status */}
-          <div className="hidden sm:flex items-center gap-1.5 text-xs">
-            {isSaving ? (
-              <span className="text-gray-400">{config.ui.saving}</span>
-            ) : isDirty ? (
-              <button onClick={save} className="flex items-center gap-1 text-gray-500 hover:text-gray-800 transition-colors">
-                <Save size={12} /> {config.ui.save}
-              </button>
-            ) : savedTime ? (
-              <span className="flex items-center gap-1 text-green-600">
-                <CheckCircle size={12} /> {config.ui.saved} {savedTime}
-              </span>
-            ) : null}
-          </div>
-
-          {/* Undo / Redo */}
-          <div className="hidden sm:flex items-center gap-0.5">
+          <div className="hidden md:flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white px-0.5 py-0.5">
             <button
               onClick={undo}
               disabled={!canUndo}
-              title="Undo (⌘Z)"
-              className="p-1.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-25 disabled:cursor-default transition-colors"
+              title="Undo (Ctrl/Cmd + Z)"
+              className="p-1.5 rounded text-slate-500 hover:text-slate-800 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-default transition-colors"
             >
               <Undo2 size={13} />
             </button>
             <button
               onClick={redo}
               disabled={!canRedo}
-              title="Redo (⌘Y)"
-              className="p-1.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-25 disabled:cursor-default transition-colors"
+              title="Redo (Ctrl/Cmd + Y)"
+              className="p-1.5 rounded text-slate-500 hover:text-slate-800 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-default transition-colors"
             >
               <Redo2 size={13} />
             </button>
           </div>
 
-          {/* Privacy Mode — hidden on mobile, accessible via Template step */}
-          <button
-            onClick={togglePrivacyMode}
-            title={privacyMode ? config.ui.privacyOn : config.ui.privacyOff}
-            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-              privacyMode
-                ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100'
-                : 'border-gray-200 text-gray-400 hover:text-green-600 hover:border-green-200 hover:bg-green-50'
-            }`}
-          >
-            <ShieldCheck size={12} />
-            <span className="hidden md:inline">{privacyMode ? config.ui.privacyOn : config.ui.privacyOff}</span>
-          </button>
+          <ThemeSelector config={config} />
 
-          {/* Clear — hidden on mobile */}
-          <button
-            onClick={() => setConfirmClear(true)}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors"
-            title={config.ui.clearConfirmTitle}
-          >
-            <Trash2 size={12} />
-            <span className="hidden md:inline">{config.ui.clear}</span>
-          </button>
-
-          {/* Import */}
-          <button
-            onClick={() => setImportOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-          >
-            <Sparkles size={12} />
-            <span className="hidden sm:inline">{config.ui.import}</span>
-          </button>
-
-          {/* Copy to another market — hidden on mobile */}
-          <button
-            onClick={() => setCopyOpen(true)}
-            title="Copy CV to another market"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-          >
-            <Copy size={12} />
-            <span className="hidden md:inline">Copy to</span>
-          </button>
-
-          {/* JSON Backup / Restore — hidden on mobile */}
-          <button
-            onClick={handleBackupJSON}
-            title="Download CV as JSON backup"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-          >
-            <HardDriveDownload size={12} />
-            <span className="hidden md:inline">Backup</span>
-          </button>
-          <label
-            title="Restore CV from JSON backup"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors cursor-pointer"
-          >
-            <FolderOpen size={12} />
-            <span className="hidden md:inline">Restore</span>
-            <input type="file" accept=".json" className="sr-only" onChange={handleRestoreJSON} />
-          </label>
-
-          {/* Share */}
           <ShareButton cv={cv} />
 
-          {/* Export PDF */}
-          <div className="flex flex-col items-end">
-            <button
-              onClick={() => exportPDF(cv, config)}
-              disabled={pdfState === 'generating'}
-              title={pdfState === 'error' && pdfError ? pdfError : undefined}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-white transition-colors disabled:opacity-60"
-              style={{ backgroundColor: pdfState === 'error' ? '#dc2626' : config.color }}
-            >
-              {pdfState === 'generating' ? (
-                <><Loader2 size={12} className="animate-spin" /> {config.ui.generating}</>
-              ) : pdfState === 'done' ? (
-                <><CheckCircle size={12} /> {config.ui.done}</>
-              ) : pdfState === 'error' ? (
-                <><AlertCircle size={12} /> {config.ui.failed}</>
-              ) : (
-                <><Download size={12} /> {config.ui.exportPDF}</>
-              )}
-            </button>
-          </div>
+          <button
+            onClick={() => exportPDF(cv, config, { hidePhoto: hidePhotoInPdf })}
+            disabled={pdfState === 'generating'}
+            title={pdfState === 'error' && pdfError ? pdfError : undefined}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60 shadow-sm"
+            style={{ backgroundColor: pdfState === 'error' ? '#dc2626' : config.color }}
+          >
+            {pdfState === 'generating' ? (
+              <><Loader2 size={12} className="animate-spin" /> {config.ui.generating}</>
+            ) : pdfState === 'done' ? (
+              <><CheckCircle size={12} /> {config.ui.done}</>
+            ) : pdfState === 'error' ? (
+              <><AlertCircle size={12} /> {config.ui.failed}</>
+            ) : (
+              <><Download size={12} /> {config.ui.exportPDF}</>
+            )}
+          </button>
 
-          <Link href="/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors hidden md:inline">
-            {config.ui.markets}
-          </Link>
+          <div ref={toolsRef} className="relative">
+            <button
+              onClick={() => setToolsOpen((v) => !v)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              <Wrench size={12} />
+              <span className="hidden sm:inline">Tools</span>
+              <ChevronDown size={12} className={`transition-transform ${toolsOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {toolsOpen && (
+              <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 bg-white shadow-xl p-2 z-[95]">
+                <button
+                  onClick={() => { setImportOpen(true); setToolsOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <Sparkles size={14} />
+                  {config.ui.import}
+                </button>
+                <button
+                  onClick={() => { setCopyOpen(true); setToolsOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <Copy size={14} />
+                  Copy to another market
+                </button>
+                <button
+                  onClick={() => { handleBackupJSON(); setToolsOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <HardDriveDownload size={14} />
+                  Backup JSON
+                </button>
+                <label className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+                  <FolderOpen size={14} />
+                  Restore JSON
+                  <input type="file" accept=".json" className="sr-only" onChange={handleRestoreJSON} />
+                </label>
+                <div className="my-1 h-px bg-slate-200" />
+                <label className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg">
+                  <input
+                    type="checkbox"
+                    checked={hidePhotoInPdf}
+                    onChange={(e) => updateHidePhotoPreference(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  Hide photo in PDF
+                </label>
+                <button
+                  onClick={() => togglePrivacyMode()}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
+                    privacyMode ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100' : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <ShieldCheck size={14} />
+                  {privacyMode ? config.ui.privacyOn : config.ui.privacyOff}
+                </button>
+                <button
+                  onClick={() => { setConfirmClear(true); setToolsOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 size={14} />
+                  {config.ui.clear}
+                </button>
+                <Link
+                  href="/"
+                  onClick={() => setToolsOpen(false)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  {config.ui.markets}
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

@@ -19,6 +19,7 @@ export interface Job {
     | 'remoteok'
     | '4dayweek'
     | 'himalayas'
+    | 'himalayas-jp'
     | 'himalayas-emea'
     | 'themuse-emea';
   description?: string;  // plaintext excerpt, max ~500 chars
@@ -77,6 +78,7 @@ export const JOB_SOURCES = [
   { id: 'remoteok', label: 'RemoteOK' },
   { id: '4dayweek', label: '4 Day Week' },
   { id: 'himalayas', label: 'Himalayas (LATAM)' },
+  { id: 'himalayas-jp', label: 'Himalayas (Japan)' },
   { id: 'himalayas-emea', label: 'Himalayas (EMEA)' },
   { id: 'themuse-emea', label: 'The Muse (EMEA)' },
 ] as const;
