@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { X, Upload, Sparkles, AlertCircle } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
-import { parseRawCV, ParseResult } from '@/lib/parser/cvParser';
+import { parseCVInput, ParseResult } from '@/lib/parser/cvParser';
 import { getMarketConfig } from '@/lib/markets';
 
 interface Props {
@@ -18,8 +18,9 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
   const [text, setText] = useState('');
   const [step, setStep] = useState<'paste' | 'preview' | 'done'>('paste');
   const [result, setResult] = useState<ParseResult | null>(null);
-  const { setPersonalInfo, setObjective, addWorkExperience, addEducation,
-          addSkill, addLanguage, addCertification, resetCV } = useCVStore();
+  const [replaceExisting, setReplaceExisting] = useState(true);
+  const [selectedSections, setSelectedSections] = useState<Record<ImportSectionKey, boolean>>(defaultSections);
+  const { applyImportSections } = useCVStore();
 
   if (!open) return null;
 
@@ -27,21 +28,15 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
 
   const handleParse = () => {
     if (!text.trim()) return;
-    setResult(parseRawCV(text, market));
+    const parsed = parseCVInput(text, market);
+    setResult(parsed);
+    setSelectedSections(buildSectionSelection(parsed));
     setStep('preview');
   };
 
   const handleApply = () => {
     if (!preview) return;
-
-    resetCV(market);
-    if (preview.personalInfo) setPersonalInfo(preview.personalInfo);
-    if (preview.objective) setObjective(preview.objective);
-    preview.workExperience?.forEach((e) => addWorkExperience(e));
-    preview.education?.forEach((e) => addEducation(e));
-    preview.skills?.forEach((s) => addSkill(s));
-    preview.languages?.forEach((l) => addLanguage(l));
-    preview.certifications?.forEach((c) => addCertification(c));
+    applyImportSections(preview, selectedSections, { replaceExisting });
 
     setStep('done');
     setTimeout(() => {
@@ -49,6 +44,7 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
       setStep('paste');
       setText('');
       setResult(null);
+      setSelectedSections(defaultSections);
     }, 1500);
   };
 
@@ -95,6 +91,13 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
                 {config.ui.importSuccessDesc}
               </p>
 
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Detected format:
+                <span className="rounded-full bg-white px-2 py-0.5 text-slate-700">
+                  {result?.detectedFormat === 'markdown' ? 'Markdown' : 'Plain text'}
+                </span>
+              </div>
+
               {/* Parser warnings */}
               {(result?.warnings.length ?? 0) > 0 && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
@@ -108,6 +111,34 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
               )}
 
               <div className="space-y-3 text-sm">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sections to import</p>
+                    <label className="flex items-center gap-2 text-xs text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={replaceExisting}
+                        onChange={(e) => setReplaceExisting(e.target.checked)}
+                        className="rounded border-slate-300"
+                      />
+                      Replace existing sections
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {sectionOptions.map((section) => (
+                      <label key={section.key} className="flex items-center gap-2 text-xs text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={selectedSections[section.key]}
+                          onChange={(e) => setSelectedSections((current) => ({ ...current, [section.key]: e.target.checked }))}
+                          className="rounded border-slate-300"
+                        />
+                        {section.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
                 <PreviewRow label={config.ui.previewLabels.name} value={`${preview.personalInfo?.firstName ?? ''} ${preview.personalInfo?.lastName ?? ''}`.trim()} notFoundLabel={config.ui.previewLabels.notFound} />
                 <PreviewRow label={config.ui.previewLabels.email} value={preview.personalInfo?.email} notFoundLabel={config.ui.previewLabels.notFound} />
                 <PreviewRow label={config.ui.previewLabels.phone} value={preview.personalInfo?.phone} notFoundLabel={config.ui.previewLabels.notFound} />
@@ -177,6 +208,7 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
             {step === 'preview' && (
               <button
                 onClick={handleApply}
+                disabled={!Object.values(selectedSections).some(Boolean)}
                 className="flex items-center gap-2 px-5 py-2 bg-violet-600 text-white text-sm font-semibold rounded-lg hover:bg-violet-700 transition-colors"
               >
                 <Upload size={14} />
@@ -188,6 +220,63 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
       </div>
     </div>
   );
+}
+
+type ImportSectionKey =
+  | 'personalInfo'
+  | 'objective'
+  | 'workExperience'
+  | 'education'
+  | 'skills'
+  | 'languages'
+  | 'certifications'
+  | 'references'
+  | 'selfPromotion'
+  | 'reasonForApplication'
+  | 'desiredConditions';
+
+const defaultSections: Record<ImportSectionKey, boolean> = {
+  personalInfo: true,
+  objective: true,
+  workExperience: true,
+  education: true,
+  skills: true,
+  languages: true,
+  certifications: true,
+  references: true,
+  selfPromotion: true,
+  reasonForApplication: true,
+  desiredConditions: true,
+};
+
+const sectionOptions: Array<{ key: ImportSectionKey; label: string }> = [
+  { key: 'personalInfo', label: 'Personal info' },
+  { key: 'objective', label: 'Summary' },
+  { key: 'workExperience', label: 'Work experience' },
+  { key: 'education', label: 'Education' },
+  { key: 'skills', label: 'Skills' },
+  { key: 'languages', label: 'Languages' },
+  { key: 'certifications', label: 'Certifications' },
+  { key: 'references', label: 'References' },
+  { key: 'selfPromotion', label: 'Self promotion' },
+  { key: 'reasonForApplication', label: 'Reason for application' },
+  { key: 'desiredConditions', label: 'Desired conditions' },
+];
+
+function buildSectionSelection(result: ParseResult): Record<ImportSectionKey, boolean> {
+  return {
+    personalInfo: Boolean(result.data.personalInfo && Object.values(result.data.personalInfo).some(Boolean)),
+    objective: Boolean(result.data.objective),
+    workExperience: Boolean(result.data.workExperience?.length),
+    education: Boolean(result.data.education?.length),
+    skills: Boolean(result.data.skills?.length),
+    languages: Boolean(result.data.languages?.length),
+    certifications: Boolean(result.data.certifications?.length),
+    references: Boolean(result.data.references?.length),
+    selfPromotion: Boolean(result.data.selfPromotion),
+    reasonForApplication: Boolean(result.data.reasonForApplication),
+    desiredConditions: Boolean(result.data.desiredConditions),
+  };
 }
 
 function PreviewRow({ label, value, notFoundLabel }: { label: string; value?: string | null; notFoundLabel?: string }) {

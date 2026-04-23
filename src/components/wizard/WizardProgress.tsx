@@ -6,6 +6,7 @@ import { Market } from '@/types/cv.types';
 import { getMarketConfig } from '@/lib/markets';
 import { WizardStep } from './WizardShell';
 import { useCVStore } from '@/store/cvStore';
+import { computeStepCompletion } from '@/lib/cv/completeness';
 
 interface Props {
   steps: WizardStep[];
@@ -15,7 +16,8 @@ interface Props {
 
 export default function WizardProgress({ steps, currentStep, market }: Props) {
   const config = getMarketConfig(market);
-  const { setCurrentStep } = useCVStore();
+  const { setCurrentStep, cv } = useCVStore();
+  const completion = computeStepCompletion(cv, config);
 
   return (
     <nav className="space-y-1.5">
@@ -25,6 +27,7 @@ export default function WizardProgress({ steps, currentStep, market }: Props) {
       {steps.map((step, idx) => {
         const isDone = idx < currentStep;
         const isActive = idx === currentStep;
+        const meta = completion[step.key];
 
         return (
           <button
@@ -53,7 +56,17 @@ export default function WizardProgress({ steps, currentStep, market }: Props) {
             >
               {isDone ? <Check size={12} strokeWidth={3} /> : idx + 1}
             </span>
-            <span className="truncate">{step.label}</span>
+            <div className="min-w-0">
+              <span className="truncate block">{step.label}</span>
+              {meta && (
+                <span className={cn(
+                  'text-[11px] block truncate mt-0.5',
+                  isActive ? 'text-white/80' : 'text-slate-400'
+                )}>
+                  {meta.score}% · {meta.summary}
+                </span>
+              )}
+            </div>
           </button>
         );
       })}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronUp, CopyPlus } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Certification, Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
@@ -10,7 +10,7 @@ import StepHeader from './StepHeader';
 interface Props { market: Market; config: MarketConfig; }
 
 export default function CertificationsStep({ market, config }: Props) {
-  const { cv, addCertification, updateCertification, removeCertification } = useCVStore();
+  const { cv, addCertification, updateCertification, removeCertification, duplicateCertification } = useCVStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const label = config.sections.certifications.label ?? 'Certifications';
 
@@ -29,6 +29,9 @@ export default function CertificationsStep({ market, config }: Props) {
                 <p className="text-xs text-gray-500">{cert.issuer || config.ui.certIssuerPlaceholder}</p>
               </div>
               <div className="flex items-center gap-2">
+                <button onClick={(e) => { e.stopPropagation(); duplicateCertification(cert.id); }} className="p-1 text-gray-300 hover:text-blue-500 transition-colors">
+                  <CopyPlus size={14} />
+                </button>
                 <button onClick={(e) => { e.stopPropagation(); removeCertification(cert.id); }} className="p-1 text-gray-300 hover:text-red-500 transition-colors">
                   <Trash2 size={14} />
                 </button>

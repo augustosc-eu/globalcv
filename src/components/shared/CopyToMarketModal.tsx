@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Copy, CheckCircle } from 'lucide-react';
+import { X, Copy, CheckCircle, AlertTriangle } from 'lucide-react';
 import { CVData, Market } from '@/types/cv.types';
 import { saveCV } from '@/lib/storage/localStorage';
 import { createEmptyCVData } from '@/store/cvStore';
@@ -24,14 +24,34 @@ const marketFlags: Record<Market, string> = {
 export default function CopyToMarketModal({ cv, currentMarket, open, onClose }: Props) {
   const [selected, setSelected] = useState<Market | null>(null);
   const [done, setDone] = useState(false);
+  const [useLocalizationDefaults, setUseLocalizationDefaults] = useState(true);
 
   if (!open) return null;
 
   const targets = ALL_MARKETS.filter((m) => m !== currentMarket);
+  const previewConfig = selected ? getMarketConfig(selected) : null;
+  const hiddenPreview = previewConfig ? [
+    previewConfig.fields.photo.visibility === 'hidden' && cv.personalInfo.photo ? 'Photo will stay hidden by default' : null,
+    previewConfig.fields.dateOfBirth.visibility === 'hidden' && cv.personalInfo.dateOfBirth ? 'Date of birth is discouraged in this market' : null,
+    previewConfig.fields.maritalStatus.visibility === 'hidden' && cv.personalInfo.maritalStatus ? 'Marital status is discouraged in this market' : null,
+    previewConfig.fields.idNumber.visibility === 'hidden' && cv.personalInfo.idNumber ? 'ID/document number is discouraged in this market' : null,
+  ].filter(Boolean) as string[] : [];
+  const addedPreview = previewConfig ? [
+    previewConfig.fields.photo.visibility === 'required' && !cv.personalInfo.photo ? 'Add a photo after copying' : null,
+    previewConfig.fields.furigana.visibility !== 'hidden' ? 'Review furigana and Japanese-specific fields' : null,
+    previewConfig.sections.references.enabled && cv.references.length === 0 ? 'Consider adding references for this market' : null,
+  ].filter(Boolean) as string[] : [];
 
   function handleCopy() {
     if (!selected) return;
     const base = createEmptyCVData(selected);
+    const targetConfig = getMarketConfig(selected);
+    const hiddenFields = [
+      targetConfig.fields.photo.visibility === 'hidden' && cv.personalInfo.photo ? 'photo' : null,
+      targetConfig.fields.dateOfBirth.visibility === 'hidden' && cv.personalInfo.dateOfBirth ? 'dateOfBirth' : null,
+      targetConfig.fields.maritalStatus.visibility === 'hidden' && cv.personalInfo.maritalStatus ? 'maritalStatus' : null,
+      targetConfig.fields.idNumber.visibility === 'hidden' && cv.personalInfo.idNumber ? 'idNumber' : null,
+    ].filter(Boolean) as string[];
     const copied: CVData = {
       ...base,
       // Copy all shared content fields
@@ -43,11 +63,15 @@ export default function CopyToMarketModal({ cv, currentMarket, open, onClose }: 
       languages: cv.languages.map((l) => ({ ...l })),
       certifications: cv.certifications.map((c) => ({ ...c })),
       references: cv.references.map((r) => ({ ...r })),
+      targetRole: cv.targetRole,
+      targetCompany: cv.targetCompany,
+      jobDescriptionNotes: cv.jobDescriptionNotes,
       // Keep the target market's template/theme defaults
       market: selected,
-      templateId: base.templateId,
-      colorTheme: base.colorTheme,
-      pageSize: base.pageSize,
+      templateId: useLocalizationDefaults ? base.templateId : cv.templateId,
+      colorTheme: useLocalizationDefaults ? base.colorTheme : cv.colorTheme,
+      pageSize: useLocalizationDefaults ? base.pageSize : cv.pageSize,
+      hiddenSections: hiddenFields,
     };
     saveCV(copied);
     setDone(true);
@@ -78,8 +102,17 @@ export default function CopyToMarketModal({ cv, currentMarket, open, onClose }: 
           <>
             <div className="p-5 space-y-2">
               <p className="text-xs text-gray-500 mb-3">
-                All content (name, work, education, skills, etc.) will be copied. The target market&apos;s default template and theme will be used.
+                All content will be copied, then localized for the target market. You can keep the source template or use the target market defaults.
               </p>
+              <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-xs text-slate-700 mb-3">
+                <input
+                  type="checkbox"
+                  checked={useLocalizationDefaults}
+                  onChange={(e) => setUseLocalizationDefaults(e.target.checked)}
+                  className="rounded border-slate-300"
+                />
+                Use target market page size, theme, and template defaults
+              </label>
               {targets.map((m) => {
                 const cfg = getMarketConfig(m);
                 return (
@@ -100,6 +133,37 @@ export default function CopyToMarketModal({ cv, currentMarket, open, onClose }: 
                   </button>
                 );
               })}
+              {previewConfig && (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Copy preview for {previewConfig.name}</p>
+                  <p className="text-xs text-slate-700">
+                    <strong>Setup:</strong> {useLocalizationDefaults ? `${previewConfig.pageSize} · ${previewConfig.templates[0]?.name}` : 'Keep current template and page size'}
+                  </p>
+                  {addedPreview.length > 0 && (
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700 mb-1">Review after copy</p>
+                      <ul className="space-y-1">
+                        {addedPreview.map((item) => (
+                          <li key={item} className="text-xs text-blue-800">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {hiddenPreview.length > 0 && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                      <p className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700 mb-1">
+                        <AlertTriangle size={11} />
+                        Sensitive fields
+                      </p>
+                      <ul className="space-y-1">
+                        {hiddenPreview.map((item) => (
+                          <li key={item} className="text-xs text-amber-800">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="px-5 pb-4 flex justify-end gap-2">
               <button

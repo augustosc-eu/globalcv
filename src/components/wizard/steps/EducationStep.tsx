@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronUp, GripVertical, CopyPlus } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent,
 } from '@dnd-kit/core';
@@ -24,7 +24,7 @@ const emptyEdu = (): Omit<Education, 'id'> => ({
 });
 
 export default function EducationStep({ market, config }: Props) {
-  const { cv, addEducation, updateEducation, removeEducation, reorderEducation } = useCVStore();
+  const { cv, addEducation, updateEducation, removeEducation, reorderEducation, duplicateEducation } = useCVStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const label = config.sections.education.label ?? 'Education';
 
@@ -57,6 +57,7 @@ export default function EducationStep({ market, config }: Props) {
                 onToggle={() => setExpandedId(expandedId === edu.id ? null : edu.id)}
                 onUpdate={(data) => updateEducation(edu.id, data)}
                 onRemove={() => removeEducation(edu.id)}
+                onDuplicate={() => duplicateEducation(edu.id)}
               />
             ))}
           </div>
@@ -82,7 +83,7 @@ export default function EducationStep({ market, config }: Props) {
 
 interface CardProps {
   edu: Education; market: Market; config: MarketConfig; expanded: boolean;
-  onToggle: () => void; onUpdate: (d: Partial<Education>) => void; onRemove: () => void;
+  onToggle: () => void; onUpdate: (d: Partial<Education>) => void; onRemove: () => void; onDuplicate: () => void;
 }
 
 function SortableEducationCard(props: CardProps) {
@@ -91,7 +92,7 @@ function SortableEducationCard(props: CardProps) {
   return <div ref={setNodeRef} style={style}><EducationCard {...props} dragHandleProps={{ ...attributes, ...listeners }} /></div>;
 }
 
-function EducationCard({ edu, market, config, expanded, onToggle, onUpdate, onRemove, dragHandleProps }: CardProps & { dragHandleProps?: object }) {
+function EducationCard({ edu, market, config, expanded, onToggle, onUpdate, onRemove, onDuplicate, dragHandleProps }: CardProps & { dragHandleProps?: object }) {
   const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition';
 
   return (
@@ -105,6 +106,9 @@ function EducationCard({ edu, market, config, expanded, onToggle, onUpdate, onRe
           <p className="text-xs text-gray-500 truncate">{edu.institution || config.ui.newInstitution}</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          <button onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="p-1 text-gray-400 hover:text-blue-500 transition-colors rounded">
+            <CopyPlus size={14} />
+          </button>
           <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="p-1 text-gray-400 hover:text-red-500 transition-colors rounded">
             <Trash2 size={14} />
           </button>

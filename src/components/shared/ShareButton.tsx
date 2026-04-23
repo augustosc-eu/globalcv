@@ -3,11 +3,9 @@
 import { useState } from 'react';
 import { Share2, Check, AlertTriangle, X } from 'lucide-react';
 import { CVData } from '@/types/cv.types';
-import { encodeCVToURL } from '@/lib/sharing/shareUrl';
+import { encodeCVToURL, URL_WARN_THRESHOLD } from '@/lib/sharing/shareUrl';
 
 interface Props { cv: CVData }
-
-const URL_WARN_THRESHOLD = 2000; // chars above which we warn about compatibility
 
 export default function ShareButton({ cv }: Props) {
   const [state, setState] = useState<'idle' | 'copied' | 'warning'>('idle');
@@ -28,6 +26,17 @@ export default function ShareButton({ cv }: Props) {
     setState('copied');
     setPendingUrl(null);
     setTimeout(() => setState('idle'), 2500);
+  };
+
+  const downloadJson = () => {
+    const blob = new Blob([JSON.stringify(cv, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cv-share-${cv.market}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setState('idle');
   };
 
   return (
@@ -59,9 +68,15 @@ export default function ShareButton({ cv }: Props) {
               This link is <strong>{pendingUrl.length.toLocaleString()} characters</strong> long, which may break in some email clients and chat apps.
             </p>
             <p className="text-xs text-gray-500 mb-5">
-              The link contains your CV data (except photos) in plain text. Anyone with the link can read it.
+              The link contains your CV data (except photos) in plain text. Anyone with the link can read it. If you want a safer handoff, export a JSON backup instead.
             </p>
             <div className="flex gap-2 justify-end">
+              <button
+                onClick={downloadJson}
+                className="px-4 py-2 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Download JSON
+              </button>
               <button
                 onClick={() => setState('idle')}
                 className="px-4 py-2 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"

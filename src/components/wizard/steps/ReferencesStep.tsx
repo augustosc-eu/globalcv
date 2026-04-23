@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronUp, CopyPlus } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
@@ -10,7 +10,7 @@ import StepHeader from './StepHeader';
 interface Props { market: Market; config: MarketConfig; }
 
 export default function ReferencesStep({ config }: Props) {
-  const { cv, addReference, updateReference, removeReference } = useCVStore();
+  const { cv, addReference, updateReference, removeReference, duplicateReference } = useCVStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const label = config.sections.references.label ?? 'References';
 
@@ -29,6 +29,9 @@ export default function ReferencesStep({ config }: Props) {
                 <p className="text-xs text-gray-500 truncate">{ref.title ? `${ref.title} at ${ref.company}` : 'Title, Company'}</p>
               </div>
               <div className="flex items-center gap-2">
+                <button onClick={(e) => { e.stopPropagation(); duplicateReference(ref.id); }} className="p-1 text-gray-300 hover:text-blue-500 transition-colors">
+                  <CopyPlus size={14} />
+                </button>
                 <button onClick={(e) => { e.stopPropagation(); removeReference(ref.id); }} className="p-1 text-gray-300 hover:text-red-500 transition-colors">
                   <Trash2 size={14} />
                 </button>

@@ -74,9 +74,9 @@ export const enUI: MarketUI = {
   colorTheme: 'Color Theme', selectedLabel: 'Selected:',
 
   importTitle: 'Import from Existing CV',
-  importDesc: 'Paste your existing CV as plain text. We\'ll extract your information and fill in the form automatically.',
+  importDesc: 'Paste your existing CV as plain text or Markdown. We\'ll extract your information and fill in the form automatically.',
   importWarning: 'Parsing is heuristic — review and correct the extracted data before exporting. Photos are not imported.',
-  importPlaceholder: 'Paste your CV text here…',
+  importPlaceholder: 'Paste your CV text or Markdown here…',
   parseCV: 'Parse CV', applyToBuilder: 'Apply to Builder', editText: '← Edit text',
   importSuccess: 'Imported successfully!',
   importSuccessDesc: 'Review and complete the missing fields in the builder.',
@@ -165,9 +165,9 @@ export const esUI: MarketUI = {
   colorTheme: 'Tema de Color', selectedLabel: 'Seleccionado:',
 
   importTitle: 'Importar CV Existente',
-  importDesc: 'Pega tu CV como texto sin formato. Extraeremos tu información y rellenaremos el formulario automáticamente.',
+  importDesc: 'Pega tu CV como texto sin formato o Markdown. Extraeremos tu información y rellenaremos el formulario automáticamente.',
   importWarning: 'El análisis es heurístico — revisa y corrige los datos extraídos antes de exportar. Las fotos no se importan.',
-  importPlaceholder: 'Pega tu CV aquí…',
+  importPlaceholder: 'Pega tu CV o Markdown aquí…',
   parseCV: 'Analizar CV', applyToBuilder: 'Aplicar al Constructor', editText: '← Editar texto',
   importSuccess: '¡Importado con éxito!',
   importSuccessDesc: 'Revisa y completa los campos faltantes en el constructor.',

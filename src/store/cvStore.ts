@@ -13,37 +13,21 @@ import {
   Reference,
   PageSize,
 } from '@/types/cv.types';
-import { saveCV, loadCV } from '@/lib/storage/localStorage';
+import { saveCV, loadCV, setActiveDraft } from '@/lib/storage/localStorage';
 import { getMarketConfig } from '@/lib/markets';
 
-// ─── Factory ─────────────────────────────────────────────────────────────────
-
-export function createEmptyCVData(market: Market): CVData {
-  const config = getMarketConfig(market);
-  return {
-    id: `cv_${market}_${Date.now()}`,
-    market,
-    templateId: config.templates[0]?.id ?? '',
-    lastModified: new Date().toISOString(),
-    version: 1,
-    personalInfo: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-    },
-    workExperience: [],
-    education: [],
-    skills: [],
-    languages: [],
-    certifications: [],
-    references: [],
-    pageSize: config.pageSize,
-    colorTheme: config.color,
-  };
-}
-
-// ─── Store types ──────────────────────────────────────────────────────────────
+type ImportSectionKey =
+  | 'personalInfo'
+  | 'objective'
+  | 'workExperience'
+  | 'education'
+  | 'skills'
+  | 'languages'
+  | 'certifications'
+  | 'references'
+  | 'selfPromotion'
+  | 'reasonForApplication'
+  | 'desiredConditions';
 
 interface WizardState {
   currentStep: number;
@@ -58,92 +42,120 @@ interface CVStoreState {
   lastSaved: string | null;
   isSaving: boolean;
   privacyMode: boolean;
-  // Undo/redo history
   history: CVData[];
   historyIndex: number;
 }
 
 interface CVStoreActions {
-  // Initialization
-  initializeMarket: (market: Market) => void;
+  initializeMarket: (market: Market, draftId?: string | null) => void;
   resetCV: (market: Market) => void;
-  restoreCV: (data: CVData) => void;
+  restoreCV: (data: CVData, options?: { markDirty?: boolean; setActive?: boolean }) => void;
+  setDraftTitle: (title: string) => void;
 
-  // Personal info
   setPersonalInfo: (info: Partial<PersonalInfo>) => void;
-
-  // Objective / summary
   setObjective: (text: string) => void;
 
-  // Work experience
   addWorkExperience: (exp: Omit<WorkExperience, 'id'>) => void;
   updateWorkExperience: (id: string, exp: Partial<WorkExperience>) => void;
   removeWorkExperience: (id: string) => void;
   reorderWorkExperience: (ids: string[]) => void;
+  duplicateWorkExperience: (id: string) => void;
 
-  // Education
   addEducation: (edu: Omit<Education, 'id'>) => void;
   updateEducation: (id: string, edu: Partial<Education>) => void;
   removeEducation: (id: string) => void;
   reorderEducation: (ids: string[]) => void;
+  duplicateEducation: (id: string) => void;
 
-  // Skills
   addSkill: (skill: Omit<Skill, 'id'>) => void;
   updateSkill: (id: string, skill: Partial<Skill>) => void;
   removeSkill: (id: string) => void;
   reorderSkills: (ids: string[]) => void;
 
-  // Languages
   addLanguage: (lang: Omit<Language, 'id'>) => void;
   updateLanguage: (id: string, lang: Partial<Language>) => void;
   removeLanguage: (id: string) => void;
 
-  // Certifications
   addCertification: (cert: Omit<Certification, 'id'>) => void;
   updateCertification: (id: string, cert: Partial<Certification>) => void;
   removeCertification: (id: string) => void;
+  duplicateCertification: (id: string) => void;
 
-  // References
   addReference: (ref: Omit<Reference, 'id'>) => void;
   updateReference: (id: string, ref: Partial<Reference>) => void;
   removeReference: (id: string) => void;
+  duplicateReference: (id: string) => void;
 
-  // Japan-specific
   setSelfPromotion: (text: string) => void;
   setReasonForApplication: (text: string) => void;
   setDesiredConditions: (text: string) => void;
+  setTargeting: (data: Pick<CVData, 'targetRole' | 'targetCompany' | 'jobDescriptionNotes'>) => void;
 
-  // Template & appearance
   setMarket: (market: Market) => void;
   setTemplate: (templateId: string) => void;
   setPageSize: (size: PageSize) => void;
   setColorTheme: (color: string) => void;
 
-  // Wizard navigation
   setCurrentStep: (step: number) => void;
   nextStep: () => void;
   prevStep: () => void;
   setSteps: (steps: string[]) => void;
 
-  // Persistence
   save: () => void;
   markClean: () => void;
-
-  // Privacy
   togglePrivacyMode: () => void;
 
-  // Undo/redo
   undo: () => void;
   redo: () => void;
-}
 
-// ─── ID helper ────────────────────────────────────────────────────────────────
+  clearSection: (section: ImportSectionKey) => void;
+  applyImportSections: (
+    data: Partial<CVData>,
+    sections: Record<ImportSectionKey, boolean>,
+    options?: { replaceExisting?: boolean }
+  ) => void;
+}
 
 function genId(): string {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-// ─── Store ────────────────────────────────────────────────────────────────────
+function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function pushSnapshot(state: CVStoreState, cv: CVData) {
+  state.history = [clone(cv)];
+  state.historyIndex = 0;
+}
+
+export function createEmptyCVData(market: Market): CVData {
+  const config = getMarketConfig(market);
+  const now = new Date().toISOString();
+  return {
+    id: `cv_${market}_${Date.now()}`,
+    title: `${config.name} Draft`,
+    market,
+    templateId: config.templates[0]?.id ?? '',
+    lastModified: now,
+    version: 2,
+    personalInfo: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+    },
+    workExperience: [],
+    education: [],
+    skills: [],
+    languages: [],
+    certifications: [],
+    references: [],
+    pageSize: config.pageSize,
+    colorTheme: config.color,
+    hiddenSections: [],
+  };
+}
 
 let isUndoRedoing = false;
 
@@ -163,41 +175,53 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
       history: [],
       historyIndex: -1,
 
-      // ── Init ──────────────────────────────────────────────────────────────
+      initializeMarket: (market, draftId) => {
+        const saved = get().privacyMode ? null : loadCV(market, draftId);
+        const nextCV = saved ?? createEmptyCVData(market);
 
-      initializeMarket: (market: Market) => {
-        const saved = get().privacyMode ? null : loadCV(market);
-        if (saved) {
-          set((state) => {
-            state.cv = saved;
-            state.isDirty = false;
-            state.lastSaved = saved.lastModified;
-          });
-        } else {
-          set((state) => {
-            state.cv = createEmptyCVData(market);
-            state.isDirty = false;
-            state.lastSaved = null;
-          });
+        if (saved && !get().privacyMode) {
+          setActiveDraft(market, saved.id);
         }
-      },
 
-      resetCV: (market: Market) => {
         set((state) => {
-          state.cv = createEmptyCVData(market);
+          state.cv = nextCV;
           state.isDirty = false;
-          state.lastSaved = null;
+          state.lastSaved = nextCV.lastModified ?? null;
+          state.wizard.currentStep = 0;
+          pushSnapshot(state, nextCV);
         });
       },
 
-      restoreCV: (data: CVData) => {
+      resetCV: (market) => {
+        const nextCV = createEmptyCVData(market);
         set((state) => {
-          state.cv = data;
+          state.cv = nextCV;
+          state.isDirty = true;
+          state.lastSaved = null;
+          state.wizard.currentStep = 0;
+          pushSnapshot(state, nextCV);
+        });
+      },
+
+      restoreCV: (data, options) => {
+        const nextCV = clone(data);
+        if (options?.setActive !== false) {
+          setActiveDraft(nextCV.market, nextCV.id);
+        }
+        set((state) => {
+          state.cv = nextCV;
+          state.isDirty = options?.markDirty ?? true;
+          state.lastSaved = nextCV.lastModified ?? null;
+          pushSnapshot(state, nextCV);
+        });
+      },
+
+      setDraftTitle: (title) => {
+        set((state) => {
+          state.cv.title = title.trim() || state.cv.title;
           state.isDirty = true;
         });
       },
-
-      // ── Personal info ─────────────────────────────────────────────────────
 
       setPersonalInfo: (info) => {
         set((state) => {
@@ -206,16 +230,12 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
         });
       },
 
-      // ── Objective ─────────────────────────────────────────────────────────
-
       setObjective: (text) => {
         set((state) => {
           state.cv.objective = text;
           state.isDirty = true;
         });
       },
-
-      // ── Work Experience ───────────────────────────────────────────────────
 
       addWorkExperience: (exp) => {
         set((state) => {
@@ -228,10 +248,7 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
         set((state) => {
           const idx = state.cv.workExperience.findIndex((e) => e.id === id);
           if (idx !== -1) {
-            state.cv.workExperience[idx] = {
-              ...state.cv.workExperience[idx],
-              ...exp,
-            };
+            state.cv.workExperience[idx] = { ...state.cv.workExperience[idx], ...exp };
             state.isDirty = true;
           }
         });
@@ -239,9 +256,7 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
 
       removeWorkExperience: (id) => {
         set((state) => {
-          state.cv.workExperience = state.cv.workExperience.filter(
-            (e) => e.id !== id
-          );
+          state.cv.workExperience = state.cv.workExperience.filter((e) => e.id !== id);
           state.isDirty = true;
         });
       },
@@ -249,14 +264,23 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
       reorderWorkExperience: (ids) => {
         set((state) => {
           const map = new Map(state.cv.workExperience.map((e) => [e.id, e]));
-          state.cv.workExperience = ids
-            .map((id) => map.get(id))
-            .filter(Boolean) as WorkExperience[];
+          state.cv.workExperience = ids.map((id) => map.get(id)).filter(Boolean) as WorkExperience[];
           state.isDirty = true;
         });
       },
 
-      // ── Education ─────────────────────────────────────────────────────────
+      duplicateWorkExperience: (id) => {
+        set((state) => {
+          const item = state.cv.workExperience.find((exp) => exp.id === id);
+          if (!item) return;
+          state.cv.workExperience.splice(
+            state.cv.workExperience.findIndex((exp) => exp.id === id) + 1,
+            0,
+            { ...clone(item), id: genId() }
+          );
+          state.isDirty = true;
+        });
+      },
 
       addEducation: (edu) => {
         set((state) => {
@@ -285,14 +309,23 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
       reorderEducation: (ids) => {
         set((state) => {
           const map = new Map(state.cv.education.map((e) => [e.id, e]));
-          state.cv.education = ids
-            .map((id) => map.get(id))
-            .filter(Boolean) as Education[];
+          state.cv.education = ids.map((id) => map.get(id)).filter(Boolean) as Education[];
           state.isDirty = true;
         });
       },
 
-      // ── Skills ────────────────────────────────────────────────────────────
+      duplicateEducation: (id) => {
+        set((state) => {
+          const item = state.cv.education.find((edu) => edu.id === id);
+          if (!item) return;
+          state.cv.education.splice(
+            state.cv.education.findIndex((edu) => edu.id === id) + 1,
+            0,
+            { ...clone(item), id: genId() }
+          );
+          state.isDirty = true;
+        });
+      },
 
       addSkill: (skill) => {
         set((state) => {
@@ -321,14 +354,10 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
       reorderSkills: (ids) => {
         set((state) => {
           const map = new Map(state.cv.skills.map((s) => [s.id, s]));
-          state.cv.skills = ids
-            .map((id) => map.get(id))
-            .filter(Boolean) as Skill[];
+          state.cv.skills = ids.map((id) => map.get(id)).filter(Boolean) as Skill[];
           state.isDirty = true;
         });
       },
-
-      // ── Languages ─────────────────────────────────────────────────────────
 
       addLanguage: (lang) => {
         set((state) => {
@@ -354,8 +383,6 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
         });
       },
 
-      // ── Certifications ────────────────────────────────────────────────────
-
       addCertification: (cert) => {
         set((state) => {
           state.cv.certifications.push({ ...cert, id: genId() });
@@ -367,10 +394,7 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
         set((state) => {
           const idx = state.cv.certifications.findIndex((c) => c.id === id);
           if (idx !== -1) {
-            state.cv.certifications[idx] = {
-              ...state.cv.certifications[idx],
-              ...cert,
-            };
+            state.cv.certifications[idx] = { ...state.cv.certifications[idx], ...cert };
             state.isDirty = true;
           }
         });
@@ -378,14 +402,23 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
 
       removeCertification: (id) => {
         set((state) => {
-          state.cv.certifications = state.cv.certifications.filter(
-            (c) => c.id !== id
-          );
+          state.cv.certifications = state.cv.certifications.filter((c) => c.id !== id);
           state.isDirty = true;
         });
       },
 
-      // ── References ────────────────────────────────────────────────────────
+      duplicateCertification: (id) => {
+        set((state) => {
+          const item = state.cv.certifications.find((cert) => cert.id === id);
+          if (!item) return;
+          state.cv.certifications.splice(
+            state.cv.certifications.findIndex((cert) => cert.id === id) + 1,
+            0,
+            { ...clone(item), id: genId() }
+          );
+          state.isDirty = true;
+        });
+      },
 
       addReference: (ref) => {
         set((state) => {
@@ -406,14 +439,23 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
 
       removeReference: (id) => {
         set((state) => {
-          state.cv.references = state.cv.references.filter(
-            (r) => r.id !== id
-          );
+          state.cv.references = state.cv.references.filter((r) => r.id !== id);
           state.isDirty = true;
         });
       },
 
-      // ── Japan specific ────────────────────────────────────────────────────
+      duplicateReference: (id) => {
+        set((state) => {
+          const item = state.cv.references.find((ref) => ref.id === id);
+          if (!item) return;
+          state.cv.references.splice(
+            state.cv.references.findIndex((ref) => ref.id === id) + 1,
+            0,
+            { ...clone(item), id: genId() }
+          );
+          state.isDirty = true;
+        });
+      },
 
       setSelfPromotion: (text) => {
         set((state) => {
@@ -436,7 +478,14 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
         });
       },
 
-      // ── Template & appearance ─────────────────────────────────────────────
+      setTargeting: (data) => {
+        set((state) => {
+          state.cv.targetRole = data.targetRole;
+          state.cv.targetCompany = data.targetCompany;
+          state.cv.jobDescriptionNotes = data.jobDescriptionNotes;
+          state.isDirty = true;
+        });
+      },
 
       setMarket: (market) => {
         set((state) => {
@@ -470,14 +519,9 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
         });
       },
 
-      // ── Wizard ────────────────────────────────────────────────────────────
-
       setCurrentStep: (step) => {
         set((state) => {
-          state.wizard.currentStep = Math.max(
-            0,
-            Math.min(step, state.wizard.totalSteps - 1)
-          );
+          state.wizard.currentStep = Math.max(0, Math.min(step, state.wizard.totalSteps - 1));
         });
       },
 
@@ -504,21 +548,22 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
         });
       },
 
-      // ── Persistence ───────────────────────────────────────────────────────
-
       save: () => {
         const { cv, privacyMode } = get();
         if (privacyMode) return;
+
         set((state) => {
           state.isSaving = true;
         });
+
         try {
           saveCV(cv);
+          const savedAt = new Date().toISOString();
           set((state) => {
             state.isDirty = false;
-            state.lastSaved = new Date().toISOString();
+            state.lastSaved = savedAt;
             state.isSaving = false;
-            state.cv.lastModified = new Date().toISOString();
+            state.cv.lastModified = savedAt;
           });
         } catch {
           set((state) => {
@@ -545,7 +590,7 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
         const newIndex = historyIndex - 1;
         isUndoRedoing = true;
         set((state) => {
-          state.cv = JSON.parse(JSON.stringify(history[newIndex]));
+          state.cv = clone(history[newIndex]);
           state.historyIndex = newIndex;
           state.isDirty = true;
         });
@@ -558,17 +603,108 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
         const newIndex = historyIndex + 1;
         isUndoRedoing = true;
         set((state) => {
-          state.cv = JSON.parse(JSON.stringify(history[newIndex]));
+          state.cv = clone(history[newIndex]);
           state.historyIndex = newIndex;
           state.isDirty = true;
         });
         isUndoRedoing = false;
       },
+
+      clearSection: (section) => {
+        set((state) => {
+          switch (section) {
+            case 'personalInfo':
+              state.cv.personalInfo = createEmptyCVData(state.cv.market).personalInfo;
+              break;
+            case 'objective':
+              state.cv.objective = '';
+              break;
+            case 'workExperience':
+              state.cv.workExperience = [];
+              break;
+            case 'education':
+              state.cv.education = [];
+              break;
+            case 'skills':
+              state.cv.skills = [];
+              break;
+            case 'languages':
+              state.cv.languages = [];
+              break;
+            case 'certifications':
+              state.cv.certifications = [];
+              break;
+            case 'references':
+              state.cv.references = [];
+              break;
+            case 'selfPromotion':
+              state.cv.selfPromotion = '';
+              break;
+            case 'reasonForApplication':
+              state.cv.reasonForApplication = '';
+              break;
+            case 'desiredConditions':
+              state.cv.desiredConditions = '';
+              break;
+          }
+          state.isDirty = true;
+        });
+      },
+
+      applyImportSections: (data, sections, options) => {
+        const replaceExisting = options?.replaceExisting ?? true;
+        set((state) => {
+          if (sections.personalInfo && data.personalInfo) {
+            state.cv.personalInfo = { ...state.cv.personalInfo, ...data.personalInfo };
+          }
+          if (sections.objective && typeof data.objective === 'string') {
+            state.cv.objective = data.objective;
+          }
+          if (sections.workExperience && data.workExperience) {
+            state.cv.workExperience = replaceExisting
+              ? data.workExperience.map((item) => ({ ...item, id: genId() })) as WorkExperience[]
+              : [...state.cv.workExperience, ...data.workExperience.map((item) => ({ ...item, id: genId() })) as WorkExperience[]];
+          }
+          if (sections.education && data.education) {
+            state.cv.education = replaceExisting
+              ? data.education.map((item) => ({ ...item, id: genId() })) as Education[]
+              : [...state.cv.education, ...data.education.map((item) => ({ ...item, id: genId() })) as Education[]];
+          }
+          if (sections.skills && data.skills) {
+            state.cv.skills = replaceExisting
+              ? data.skills.map((item) => ({ ...item, id: genId() })) as Skill[]
+              : [...state.cv.skills, ...data.skills.map((item) => ({ ...item, id: genId() })) as Skill[]];
+          }
+          if (sections.languages && data.languages) {
+            state.cv.languages = replaceExisting
+              ? data.languages.map((item) => ({ ...item, id: genId() })) as Language[]
+              : [...state.cv.languages, ...data.languages.map((item) => ({ ...item, id: genId() })) as Language[]];
+          }
+          if (sections.certifications && data.certifications) {
+            state.cv.certifications = replaceExisting
+              ? data.certifications.map((item) => ({ ...item, id: genId() })) as Certification[]
+              : [...state.cv.certifications, ...data.certifications.map((item) => ({ ...item, id: genId() })) as Certification[]];
+          }
+          if (sections.references && data.references) {
+            state.cv.references = replaceExisting
+              ? data.references.map((item) => ({ ...item, id: genId() })) as Reference[]
+              : [...state.cv.references, ...data.references.map((item) => ({ ...item, id: genId() })) as Reference[]];
+          }
+          if (sections.selfPromotion && typeof data.selfPromotion === 'string') {
+            state.cv.selfPromotion = data.selfPromotion;
+          }
+          if (sections.reasonForApplication && typeof data.reasonForApplication === 'string') {
+            state.cv.reasonForApplication = data.reasonForApplication;
+          }
+          if (sections.desiredConditions && typeof data.desiredConditions === 'string') {
+            state.cv.desiredConditions = data.desiredConditions;
+          }
+          state.isDirty = true;
+        });
+      },
     }))
   )
 );
-
-// ── Autosave subscription ─────────────────────────────────────────────────────
 
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -583,22 +719,18 @@ useCVStore.subscribe(
   }
 );
 
-// ── History subscription (undo/redo snapshots, debounced 2s, max 20) ─────────
-
 const MAX_HISTORY = 20;
 let historyTimer: ReturnType<typeof setTimeout> | null = null;
 
 useCVStore.subscribe(
   (state) => state.isDirty,
   (isDirty) => {
-    if (!isDirty) return;
-    if (isUndoRedoing) return;
+    if (!isDirty || isUndoRedoing) return;
     if (historyTimer) clearTimeout(historyTimer);
     historyTimer = setTimeout(() => {
       const store = useCVStore.getState();
-      const snapshot: CVData = JSON.parse(JSON.stringify(store.cv));
+      const snapshot = clone(store.cv);
       useCVStore.setState((state) => {
-        // Drop any redo future when a new change comes in
         const base = state.history.slice(0, state.historyIndex + 1);
         const next = [...base, snapshot].slice(-MAX_HISTORY);
         state.history = next;

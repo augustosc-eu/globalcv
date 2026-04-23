@@ -1,7 +1,9 @@
 import LZString from 'lz-string';
 import { CVData } from '@/types/cv.types';
+import { parseCVData } from '@/lib/cv/schema';
 
 const SHARE_PARAM = 'share';
+export const URL_WARN_THRESHOLD = 2000;
 
 /** Strip photos before encoding to keep URL small */
 function stripPhotos(cv: CVData): CVData {
@@ -27,19 +29,15 @@ export function decodeCVFromURL(urlOrParam?: string): CVData | null {
     if (!param) return null;
     const json = LZString.decompressFromEncodedURIComponent(param);
     if (!json) return null;
-    const parsed = JSON.parse(json) as Partial<CVData>;
-    return {
-      ...parsed,
-      workExperience: Array.isArray(parsed.workExperience) ? parsed.workExperience : [],
-      education: Array.isArray(parsed.education) ? parsed.education : [],
-      skills: Array.isArray(parsed.skills) ? parsed.skills : [],
-      languages: Array.isArray(parsed.languages) ? parsed.languages : [],
-      certifications: Array.isArray(parsed.certifications) ? parsed.certifications : [],
-      references: Array.isArray(parsed.references) ? parsed.references : [],
-    } as CVData;
+    const parsed = parseCVData(JSON.parse(json));
+    return parsed;
   } catch {
     return null;
   }
+}
+
+export function canShareAsUrl(cv: CVData): boolean {
+  return encodeCVToURL(cv).length <= URL_WARN_THRESHOLD;
 }
 
 export function removeShareParam(): void {

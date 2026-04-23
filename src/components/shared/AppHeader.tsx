@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2, ShieldCheck, Undo2, Redo2, HardDriveDownload, FolderOpen, Copy, ChevronDown, Wrench } from 'lucide-react';
+import { Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2, ShieldCheck, Undo2, Redo2, HardDriveDownload, FolderOpen, Copy, ChevronDown, Wrench, Files, FilePlus2, ScrollText } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
@@ -12,6 +12,10 @@ import ThemeSelector from './ThemeSelector';
 import PasteImportModal from './PasteImportModal';
 import CopyToMarketModal from './CopyToMarketModal';
 import BrandLink from './BrandLink';
+import DraftManagerModal from './DraftManagerModal';
+import CoverLetterModal from './CoverLetterModal';
+import { clearCV, listSavedDrafts, saveCV } from '@/lib/storage/localStorage';
+import { parseCVData } from '@/lib/cv/schema';
 
 const marketFlags: Record<Market, string> = {
   us: '🇺🇸', eu: '🇪🇺', latam: '🌎', jp: '🇯🇵',
@@ -21,13 +25,16 @@ const marketFlags: Record<Market, string> = {
 interface Props { market: Market; config: MarketConfig }
 
 export default function AppHeader({ market, config }: Props) {
-  const { isDirty, isSaving, lastSaved, save, cv, resetCV, restoreCV, privacyMode, togglePrivacyMode, undo, redo, history, historyIndex } = useCVStore();
+  const { isDirty, isSaving, lastSaved, save, cv, resetCV, restoreCV, initializeMarket, privacyMode, togglePrivacyMode, undo, redo, history, historyIndex } = useCVStore();
   const { exportPDF, state: pdfState, error: pdfError } = usePDFExport();
   const [importOpen, setImportOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
+  const [draftsOpen, setDraftsOpen] = useState(false);
+  const [coverLetterOpen, setCoverLetterOpen] = useState(false);
   const [hidePhotoInPdf, setHidePhotoInPdf] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [drafts, setDrafts] = useState(() => listSavedDrafts());
   const toolsRef = useRef<HTMLDivElement>(null);
 
   const canUndo = historyIndex > 0;
@@ -54,6 +61,10 @@ export default function AppHeader({ market, config }: Props) {
   }, []);
 
   useEffect(() => {
+    setDrafts(listSavedDrafts());
+  }, [cv.id, cv.lastModified, market]);
+
+  useEffect(() => {
     function onPointerDown(e: MouseEvent) {
       if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) {
         setToolsOpen(false);
@@ -75,6 +86,10 @@ export default function AppHeader({ market, config }: Props) {
     setConfirmClear(false);
   }
 
+  function refreshDrafts() {
+    setDrafts(listSavedDrafts());
+  }
+
   function handleBackupJSON() {
     const blob = new Blob([JSON.stringify(cv, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -91,9 +106,10 @@ export default function AppHeader({ market, config }: Props) {
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const data = JSON.parse(ev.target?.result as string);
-        if (data && typeof data === 'object' && data.personalInfo) {
-          restoreCV(data);
+        const data = parseCVData(JSON.parse(ev.target?.result as string));
+        if (data) {
+          restoreCV(data, { markDirty: true, setActive: true });
+          refreshDrafts();
         }
       } catch {
         // silently ignore corrupt files
@@ -114,6 +130,27 @@ export default function AppHeader({ market, config }: Props) {
     } catch {
       // no-op
     }
+  }
+
+  function handleDeleteDraft(draftId: string) {
+    clearCV(market, draftId);
+    if (draftId === cv.id) {
+      initializeMarket(market);
+    }
+    refreshDrafts();
+  }
+
+  function handleDuplicateCurrentDraft() {
+    const nextTitle = `${cv.title ?? `${config.name} Draft`} Copy`;
+    const duplicated = {
+      ...cv,
+      id: `cv_${market}_${Date.now()}`,
+      title: nextTitle,
+      lastModified: new Date().toISOString(),
+    };
+    saveCV(duplicated);
+    restoreCV(duplicated, { markDirty: false, setActive: true });
+    refreshDrafts();
   }
 
   return (
@@ -141,6 +178,13 @@ export default function AppHeader({ market, config }: Props) {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <div className="hidden xl:flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">Draft</p>
+              <p className="text-xs font-semibold text-slate-800 truncate max-w-[180px]">{cv.title ?? `${config.name} Draft`}</p>
+            </div>
+          </div>
+
           <div className="hidden md:flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white px-0.5 py-0.5">
             <button
               onClick={undo}
@@ -209,6 +253,20 @@ export default function AppHeader({ market, config }: Props) {
                   Copy to another market
                 </button>
                 <button
+                  onClick={() => { setDraftsOpen(true); setToolsOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <Files size={14} />
+                  Manage drafts
+                </button>
+                <button
+                  onClick={() => { handleDuplicateCurrentDraft(); setToolsOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <FilePlus2 size={14} />
+                  Save as new draft
+                </button>
+                <button
                   onClick={() => { handleBackupJSON(); setToolsOpen(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
                 >
@@ -220,6 +278,13 @@ export default function AppHeader({ market, config }: Props) {
                   Restore JSON
                   <input type="file" accept=".json" className="sr-only" onChange={handleRestoreJSON} />
                 </label>
+                <button
+                  onClick={() => { setCoverLetterOpen(true); setToolsOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <ScrollText size={14} />
+                  Generate cover letter
+                </button>
                 <div className="my-1 h-px bg-slate-200" />
                 <label className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg">
                   <input
@@ -261,6 +326,21 @@ export default function AppHeader({ market, config }: Props) {
 
       <PasteImportModal market={market} open={importOpen} onClose={() => setImportOpen(false)} />
       <CopyToMarketModal cv={cv} currentMarket={market} open={copyOpen} onClose={() => setCopyOpen(false)} />
+      <DraftManagerModal
+        open={draftsOpen}
+        currentDraftId={cv.id}
+        drafts={drafts}
+        market={market}
+        onClose={() => setDraftsOpen(false)}
+        onOpenDraft={(draftId) => {
+          initializeMarket(market, draftId);
+          setDraftsOpen(false);
+          refreshDrafts();
+        }}
+        onDeleteDraft={handleDeleteDraft}
+        onDuplicateCurrent={handleDuplicateCurrentDraft}
+      />
+      <CoverLetterModal open={coverLetterOpen} cv={cv} onClose={() => setCoverLetterOpen(false)} />
 
       {confirmClear && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">

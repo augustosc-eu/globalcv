@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Eye, X } from 'lucide-react';
 import { Market } from '@/types/cv.types';
 import { getMarketConfig } from '@/lib/markets';
@@ -13,13 +13,22 @@ import StepRouter from './StepRouter';
 import PreviewPane from '@/components/preview/PreviewPane';
 import CrossTabSyncBanner from '@/components/shared/CrossTabSyncBanner';
 import MarketFormatPanel from './MarketFormatPanel';
+import ReadinessPanel from './ReadinessPanel';
+import { computeStepCompletion } from '@/lib/cv/completeness';
 
 interface WizardShellProps { market: Market }
 export interface WizardStep { key: string; label: string }
 
+const PREVIEW_WIDTH_KEY = 'globalcv_preview_width';
+const DEFAULT_PREVIEW_WIDTH = 420;
+const MIN_PREVIEW_WIDTH = 320;
+const MAX_PREVIEW_WIDTH = 720;
+
 export default function WizardShell({ market }: WizardShellProps) {
   const config = getMarketConfig(market);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const [previewWidth, setPreviewWidth] = useState(DEFAULT_PREVIEW_WIDTH);
+  const resizeState = useRef<{ startX: number; startWidth: number } | null>(null);
   const { initializeMarket, setSteps, wizard, cv, setPersonalInfo, setObjective,
           addWorkExperience, addEducation, addSkill, addLanguage, addCertification,
           addReference, setSelfPromotion, setReasonForApplication, setDesiredConditions,
@@ -73,6 +82,58 @@ export default function WizardShell({ market }: WizardShellProps) {
 
   const currentStep = wizard.currentStep;
   const activeStep = steps[currentStep];
+  const completion = computeStepCompletion(cv, config);
+  const activeCompletion = completion[activeStep?.key ?? 'personal'];
+
+  useEffect(() => {
+    try {
+      const saved = Number(window.localStorage.getItem(PREVIEW_WIDTH_KEY));
+      if (Number.isFinite(saved) && saved >= MIN_PREVIEW_WIDTH && saved <= MAX_PREVIEW_WIDTH) {
+        setPreviewWidth(saved);
+      }
+    } catch {
+      // no-op
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(PREVIEW_WIDTH_KEY, String(previewWidth));
+    } catch {
+      // no-op
+    }
+  }, [previewWidth]);
+
+  useEffect(() => {
+    function handlePointerMove(event: PointerEvent) {
+      if (!resizeState.current) return;
+      const delta = resizeState.current.startX - event.clientX;
+      const nextWidth = resizeState.current.startWidth + delta;
+      setPreviewWidth(Math.max(MIN_PREVIEW_WIDTH, Math.min(MAX_PREVIEW_WIDTH, nextWidth)));
+    }
+
+    function handlePointerUp() {
+      resizeState.current = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, []);
+
+  function startPreviewResize(event: React.PointerEvent<HTMLButtonElement>) {
+    resizeState.current = {
+      startX: event.clientX,
+      startWidth: previewWidth,
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }
 
   return (
     <div className="min-h-screen flex flex-col app-shell-bg">
@@ -94,9 +155,15 @@ export default function WizardShell({ market }: WizardShellProps) {
                 <div className="h-2 rounded-full transition-all duration-300"
                   style={{ width: `${((currentStep + 1) / steps.length) * 100}%`, backgroundColor: config.color }} />
               </div>
+              {activeCompletion && (
+                <p className="mt-2 text-xs text-slate-500">
+                  Section completion: <span className="font-semibold text-slate-700">{activeCompletion.score}%</span> · {activeCompletion.summary}
+                </p>
+              )}
             </div>
 
             <MarketFormatPanel market={market} config={config} />
+            <ReadinessPanel cv={cv} config={config} />
 
             <section className="surface-card rounded-2xl p-5 md:p-6 border border-slate-200/90">
               <StepRouter activeStepKey={activeStep?.key ?? 'personal'} market={market} config={config} />
@@ -105,7 +172,22 @@ export default function WizardShell({ market }: WizardShellProps) {
           </div>
         </main>
 
-        <aside className="hidden xl:flex flex-col w-[420px] bg-white/85 backdrop-blur border-l border-slate-200 overflow-y-auto flex-shrink-0">
+        <button
+          type="button"
+          onPointerDown={startPreviewResize}
+          onDoubleClick={() => setPreviewWidth(DEFAULT_PREVIEW_WIDTH)}
+          className="hidden xl:flex relative w-3 flex-shrink-0 items-stretch justify-center bg-transparent group"
+          aria-label="Resize preview pane"
+          title="Drag to resize preview pane. Double-click to reset."
+        >
+          <span className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-slate-200 group-hover:bg-slate-300 transition-colors" />
+          <span className="absolute top-1/2 left-1/2 h-14 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-200 group-hover:bg-slate-300 transition-colors" />
+        </button>
+
+        <aside
+          className="hidden xl:flex flex-col bg-white/85 backdrop-blur border-l border-slate-200 overflow-y-auto flex-shrink-0"
+          style={{ width: `${previewWidth}px` }}
+        >
           <PreviewPane cv={cv} config={config} />
         </aside>
       </div>

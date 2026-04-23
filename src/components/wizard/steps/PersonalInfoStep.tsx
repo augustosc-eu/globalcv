@@ -8,6 +8,7 @@ import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 import PhotoUpload from '@/components/form-fields/PhotoUpload';
 import StepHeader from './StepHeader';
+import { getSensitiveGuidance } from '@/lib/markets/sensitiveGuidance';
 
 interface Props {
   market: Market;
@@ -16,6 +17,7 @@ interface Props {
 
 export default function PersonalInfoStep({ config }: Props) {
   const { cv, setPersonalInfo } = useCVStore();
+  const guidance = getSensitiveGuidance(config.market);
   const { register, watch, reset, formState: { errors } } = useForm<PersonalInfo>({
     defaultValues: cv.personalInfo,
     mode: 'onBlur',
@@ -43,6 +45,28 @@ export default function PersonalInfoStep({ config }: Props) {
         title={config.ui.personalInfoTitle}
         description={config.ui.personalInfoDesc}
       />
+
+      <div className={`rounded-2xl border p-4 ${
+        guidance.tone === 'privacy'
+          ? 'border-amber-200 bg-amber-50'
+          : 'border-blue-200 bg-blue-50'
+      }`}>
+        <p className={`text-sm font-semibold ${
+          guidance.tone === 'privacy' ? 'text-amber-900' : 'text-blue-900'
+        }`}>
+          {guidance.title}
+        </p>
+        <ul className={`mt-2 space-y-1.5 text-xs ${
+          guidance.tone === 'privacy' ? 'text-amber-800' : 'text-blue-800'
+        }`}>
+          {guidance.points.map((point) => (
+            <li key={point} className="flex gap-2">
+              <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-current flex-shrink-0" />
+              <span>{point}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {/* Photo upload */}
       {show(f.photo) && (

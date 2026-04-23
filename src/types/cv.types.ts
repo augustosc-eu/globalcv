@@ -110,6 +110,7 @@ export interface Reference {
 
 export interface CVData {
   id: string;
+  title?: string;
   market: Market;
   templateId: string;
   lastModified: string;
@@ -125,6 +126,10 @@ export interface CVData {
   selfPromotion?: string;
   reasonForApplication?: string;
   desiredConditions?: string;
+  targetRole?: string;
+  targetCompany?: string;
+  jobDescriptionNotes?: string;
+  hiddenSections?: string[];
   pageSize: PageSize;
   colorTheme?: string;
 }
