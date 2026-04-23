@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "vexp": {
+      "command": "node",
+      "args": [
+        "/Users/augusto/.vscode/extensions/vexp.vexp-vscode-2.0.12-darwin-arm64/dist/mcp-server.cjs"
+      ],
+      "env": {
+        "VEXP_WORKSPACE": "/Volumes/MyPassport/Repo_Central/cv-maker/cv-maker"
+      }
+    }
+  }
+}
