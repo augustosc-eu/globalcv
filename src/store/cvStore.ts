@@ -145,6 +145,8 @@ function genId(): string {
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
+let isUndoRedoing = false;
+
 export const useCVStore = create<CVStoreState & CVStoreActions>()(
   subscribeWithSelector(
     immer((set, get) => ({
@@ -541,22 +543,26 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
         const { history, historyIndex } = get();
         if (historyIndex <= 0) return;
         const newIndex = historyIndex - 1;
+        isUndoRedoing = true;
         set((state) => {
           state.cv = JSON.parse(JSON.stringify(history[newIndex]));
           state.historyIndex = newIndex;
           state.isDirty = true;
         });
+        isUndoRedoing = false;
       },
 
       redo: () => {
         const { history, historyIndex } = get();
         if (historyIndex >= history.length - 1) return;
         const newIndex = historyIndex + 1;
+        isUndoRedoing = true;
         set((state) => {
           state.cv = JSON.parse(JSON.stringify(history[newIndex]));
           state.historyIndex = newIndex;
           state.isDirty = true;
         });
+        isUndoRedoing = false;
       },
     }))
   )
@@ -586,6 +592,7 @@ useCVStore.subscribe(
   (state) => state.isDirty,
   (isDirty) => {
     if (!isDirty) return;
+    if (isUndoRedoing) return;
     if (historyTimer) clearTimeout(historyTimer);
     historyTimer = setTimeout(() => {
       const store = useCVStore.getState();

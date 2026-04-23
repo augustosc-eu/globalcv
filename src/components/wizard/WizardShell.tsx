@@ -22,6 +22,7 @@ export default function WizardShell({ market }: WizardShellProps) {
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const { initializeMarket, setSteps, wizard, cv, setPersonalInfo, setObjective,
           addWorkExperience, addEducation, addSkill, addLanguage, addCertification,
+          addReference, setSelfPromotion, setReasonForApplication, setDesiredConditions,
           setTemplate, setColorTheme, setPageSize } = useCVStore();
 
   const steps: WizardStep[] = useMemo(() => {
@@ -56,6 +57,10 @@ export default function WizardShell({ market }: WizardShellProps) {
       shared.skills.forEach((s) => addSkill(s));
       shared.languages.forEach((l) => addLanguage(l));
       shared.certifications.forEach((c) => addCertification(c));
+      shared.references.forEach((r) => addReference(r));
+      if (shared.selfPromotion) setSelfPromotion(shared.selfPromotion);
+      if (shared.reasonForApplication) setReasonForApplication(shared.reasonForApplication);
+      if (shared.desiredConditions) setDesiredConditions(shared.desiredConditions);
       if (shared.templateId) setTemplate(shared.templateId);
       if (shared.colorTheme) setColorTheme(shared.colorTheme);
       if (shared.pageSize) setPageSize(shared.pageSize);

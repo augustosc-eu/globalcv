@@ -27,7 +27,16 @@ export function decodeCVFromURL(urlOrParam?: string): CVData | null {
     if (!param) return null;
     const json = LZString.decompressFromEncodedURIComponent(param);
     if (!json) return null;
-    return JSON.parse(json) as CVData;
+    const parsed = JSON.parse(json) as Partial<CVData>;
+    return {
+      ...parsed,
+      workExperience: Array.isArray(parsed.workExperience) ? parsed.workExperience : [],
+      education: Array.isArray(parsed.education) ? parsed.education : [],
+      skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+      languages: Array.isArray(parsed.languages) ? parsed.languages : [],
+      certifications: Array.isArray(parsed.certifications) ? parsed.certifications : [],
+      references: Array.isArray(parsed.references) ? parsed.references : [],
+    } as CVData;
   } catch {
     return null;
   }
