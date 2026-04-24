@@ -4,7 +4,8 @@ import { CheckCircle2, AlertTriangle, BookOpenText } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
-import { getFormatChecklist, getMarketFormatGuidance } from '@/lib/markets/formatGuidance';
+import { getFormatChecklist, getMarketDifferences, getMarketFormatGuidance } from '@/lib/markets/formatGuidance';
+import { euCountryGuidance } from '@/lib/markets/euCountryGuidance';
 
 interface Props {
   market: Market;
@@ -14,6 +15,7 @@ interface Props {
 export default function MarketFormatPanel({ market, config }: Props) {
   const { cv } = useCVStore();
   const guide = getMarketFormatGuidance(market);
+  const differences = getMarketDifferences(market);
   const checklist = getFormatChecklist(cv, config);
   const warnCount = checklist.filter((c) => c.status === 'warn').length;
 
@@ -74,7 +76,37 @@ export default function MarketFormatPanel({ market, config }: Props) {
           </ul>
         </div>
       </div>
+
+      {differences.length > 0 && (
+        <div className="mt-3 rounded-xl bg-white border border-slate-200 p-3">
+          <p className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-2">What Changes In This Market</p>
+          <dl className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            {differences.map((item) => (
+              <div key={item.label} className="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{item.label}</dt>
+                <dd className="mt-1 text-xs text-slate-700 leading-relaxed">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
+
+      {market === 'eu' && (
+        <details className="mt-3 rounded-xl bg-indigo-50 border border-indigo-100 p-3">
+          <summary className="cursor-pointer list-none text-[11px] uppercase tracking-wide font-semibold text-indigo-700">
+            EU Country Deep-Dives
+          </summary>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            {euCountryGuidance.map((country) => (
+              <div key={country.country} className="rounded-lg bg-white/80 border border-indigo-100 px-3 py-2">
+                <p className="text-xs font-semibold text-indigo-900">{country.country}</p>
+                <p className="mt-1 text-xs text-indigo-800 leading-relaxed">{country.length} {country.photo}</p>
+                <p className="mt-1 text-[11px] text-indigo-700">{country.emphasis}</p>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
     </section>
   );
 }
-

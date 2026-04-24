@@ -2,18 +2,27 @@ import { Document, Font, Image, Page, Text, View } from '@react-pdf/renderer';
 
 // ─── Japanese font (Noto Sans JP — self-hosted in /public/fonts) ─────────────
 // Self-hosted to avoid runtime requests to Google Fonts CDN (GDPR compliance).
+const JP_REGULAR_FONT = typeof window === 'undefined'
+  ? `${process.cwd()}/public/fonts/NotoSansJP-Regular.ttf`
+  : '/fonts/NotoSansJP-Regular.ttf';
+const JP_BOLD_FONT = typeof window === 'undefined'
+  ? `${process.cwd()}/public/fonts/NotoSansJP-Bold.ttf`
+  : '/fonts/NotoSansJP-Bold.ttf';
+
 Font.register({
   family: 'JP',
   fonts: [
-    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 'normal' },
-    { src: '/fonts/NotoSansJP-Bold.ttf', fontWeight: 'bold' },
+    { src: JP_REGULAR_FONT, fontWeight: 'normal' },
+    { src: JP_BOLD_FONT, fontWeight: 'bold' },
   ],
 });
 import { CVData } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 import { getActiveTheme } from '@/lib/utils/theme';
 
-interface Props { cv: CVData; config: MarketConfig; }
+type PdfExportMode = 'designed' | 'ats' | 'privacy' | 'compact';
+
+interface Props { cv: CVData; config: MarketConfig; exportMode?: PdfExportMode; }
 
 function fmtDate(ym?: string): string {
   if (!ym) return '';
@@ -25,6 +34,35 @@ function fmtDate(ym?: string): string {
 function dr(start: string, end?: string, isPresent?: boolean): string {
   if (!start) return '';
   return `${fmtDate(start)} – ${isPresent ? 'Present' : fmtDate(end)}`;
+}
+
+function isHidden(cv: CVData, section: string): boolean {
+  return cv.hiddenSections?.includes(section) ?? false;
+}
+
+function hasText(value?: string): boolean {
+  return Boolean(value?.trim());
+}
+
+function hasReferenceContent(reference: CVData['references'][number]): boolean {
+  return hasText(reference.name) || hasText(reference.title) || hasText(reference.company) || hasText(reference.email) || hasText(reference.phone);
+}
+
+// Strip markdown formatting and raw URLs from user-provided text before PDF rendering.
+// Markdown renders as literal syntax in react-pdf, and long URLs overflow containers.
+function sanitizeText(text?: string | null): string {
+  if (!text) return '';
+  return text
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')  // [text](url) → text
+    .replace(/\*\*([^*]*)\*\*/g, '$1')          // **bold** → bold
+    .replace(/\*([^*]*)\*/g, '$1')               // *italic* → italic
+    .replace(/__([^_]*)__/g, '$1')               // __bold__ → bold
+    .replace(/_([^_]*)_/g, '$1')                 // _italic_ → italic
+    .replace(/https?:\/\/(?:www\.)?([^/\s]+)\S*/g, '$1')  // shorten URLs to domain (e.g. facebook.com)
+    .replace(/[?&][a-zA-Z_]\w*=\S*/g, '')                 // strip stray URL query params (e.g. ?source=linked_in_profile)
+    .replace(/[ \t]{2,}/g, ' ')                  // collapse horizontal whitespace
+    .replace(/(\n\s*){3,}/g, '\n\n')             // collapse excessive blank lines
+    .trim();
 }
 
 // ─── Typography scale (industry-standard CV) ──────────────────────────────────
@@ -57,6 +95,26 @@ const T = {
   titleGap:    6,  // below section title rule
 };
 
+const PDF_FOOTER_H = 30;
+const EU_HEADER_H = 92;
+
+function SafeFooter({
+  left,
+  right = 'GlobalCV by Bagalinis Consulting',
+  fontFamily = T.regular,
+}: {
+  left: string;
+  right?: string;
+  fontFamily?: string;
+}) {
+  return (
+    <View fixed style={{ position: 'absolute', bottom: 10, left: 28, right: 28, borderTopWidth: 0.5, borderTopColor: '#e5e7eb', paddingTop: 5, flexDirection: 'row', justifyContent: 'space-between' }}>
+      <Text style={{ fontFamily, fontSize: T.small, color: T.muted }}>{left}</Text>
+      <Text style={{ fontFamily, fontSize: T.small, color: T.muted }}>{right}</Text>
+    </View>
+  );
+}
+
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
 function SectionHeading({ accent, children }: { accent: string; children: string }) {
@@ -83,7 +141,7 @@ function EntryHeader({ title, right, accent, sub }: { title: string; right?: str
 }
 
 function BodyText({ children }: { children: string }) {
-  return <Text style={{ fontSize: T.body, color: T.mid, lineHeight: T.lhBody, marginTop: T.intraGap }}>{children}</Text>;
+  return <Text style={{ fontSize: T.body, color: T.mid, lineHeight: T.lhBody, marginTop: T.intraGap }}>{sanitizeText(children)}</Text>;
 }
 
 // ─── Classic / Traditional ────────────────────────────────────────────────────
@@ -92,16 +150,25 @@ export function ClassicPDF({
   cv,
   accent,
   showPhoto = true,
+  compact = false,
 }: {
   cv: CVData;
   accent: string;
   showPhoto?: boolean;
+  compact?: boolean;
 }) {
   const p = cv.personalInfo;
   const isA4 = cv.pageSize === 'A4';
+  const bodySize = compact ? T.body - 0.5 : T.body;
+  const sectionGap = compact ? T.sectionGap - 4 : T.sectionGap;
+  const workExperience = compact ? cv.workExperience.slice(0, 3) : cv.workExperience;
+  const education = compact ? cv.education.slice(0, 2) : cv.education;
+  const skills = compact ? cv.skills.slice(0, 8) : cv.skills;
+  const languages = compact ? cv.languages.slice(0, 4) : cv.languages;
+  const certifications = compact ? cv.certifications.slice(0, 2) : cv.certifications;
 
   return (
-    <Page size={isA4 ? 'A4' : 'LETTER'} style={{ fontFamily: T.regular, fontSize: T.body, color: T.dark, backgroundColor: '#fff', paddingHorizontal: 40, paddingVertical: 36 }}>
+    <Page size={isA4 ? 'A4' : 'LETTER'} style={{ fontFamily: T.regular, fontSize: bodySize, color: T.dark, backgroundColor: '#fff', paddingHorizontal: compact ? 32 : 40, paddingVertical: compact ? 28 : 36 }}>
       {/* Header */}
       <View style={{ marginBottom: 14, paddingBottom: 10, borderBottomWidth: 2, borderBottomColor: accent }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -124,18 +191,18 @@ export function ClassicPDF({
         </View>
       </View>
 
-      {cv.objective && (
-        <View style={{ marginBottom: T.sectionGap }}>
+      {!isHidden(cv, 'objective') && cv.objective && (
+        <View style={{ marginBottom: sectionGap }}>
           <SectionHeading accent={accent}>Professional Summary</SectionHeading>
-          <Text style={{ fontSize: T.body, color: T.mid, lineHeight: T.lhBody }}>{cv.objective}</Text>
+          <Text style={{ fontSize: bodySize, color: T.mid, lineHeight: compact ? 1.25 : T.lhBody }}>{sanitizeText(cv.objective)}</Text>
         </View>
       )}
 
-      {cv.workExperience.length > 0 && (
-        <View style={{ marginBottom: T.sectionGap }}>
+      {!isHidden(cv, 'workExperience') && workExperience.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
           <SectionHeading accent={accent}>Work Experience</SectionHeading>
-          {cv.workExperience.map((exp, i) => (
-            <View key={exp.id} wrap={false} style={{ marginBottom: i < cv.workExperience.length - 1 ? T.entryGap : 0 }}>
+          {workExperience.map((exp, i) => (
+            <View key={exp.id} wrap={false} style={{ marginBottom: i < workExperience.length - 1 ? T.entryGap : 0 }}>
               <EntryHeader title={`${exp.title}${exp.company ? ` — ${exp.company}` : ''}`} right={dr(exp.startDate, exp.endDate, exp.isPresent)} accent={accent} sub={exp.location} />
               {exp.description && <BodyText>{exp.description}</BodyText>}
             </View>
@@ -143,35 +210,35 @@ export function ClassicPDF({
         </View>
       )}
 
-      {cv.education.length > 0 && (
-        <View style={{ marginBottom: T.sectionGap }}>
+      {!isHidden(cv, 'education') && education.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
           <SectionHeading accent={accent}>Education</SectionHeading>
-          {cv.education.map((edu, i) => (
-            <View key={edu.id} wrap={false} style={{ marginBottom: i < cv.education.length - 1 ? T.entryGap : 0 }}>
-              <EntryHeader title={`${edu.degree}${edu.fieldOfStudy ? `, ${edu.fieldOfStudy}` : ''}`} right={dr(edu.startDate, edu.endDate, edu.isPresent)} accent={accent} sub={`${edu.institution}${edu.gpa ? `  ·  GPA ${edu.gpa}` : ''}`} />
+          {education.map((edu, i) => (
+            <View key={edu.id} wrap={false} style={{ marginBottom: i < education.length - 1 ? T.entryGap : 0 }}>
+              <EntryHeader title={`${sanitizeText(edu.degree)}${edu.fieldOfStudy ? `, ${sanitizeText(edu.fieldOfStudy)}` : ''}`} right={dr(edu.startDate, edu.endDate, edu.isPresent)} accent={accent} sub={`${sanitizeText(edu.institution)}${edu.gpa ? `  ·  GPA ${edu.gpa}` : ''}`} />
             </View>
           ))}
         </View>
       )}
 
-      {cv.skills.length > 0 && (
-        <View style={{ marginBottom: T.sectionGap }}>
+      {!isHidden(cv, 'skills') && skills.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
           <SectionHeading accent={accent}>Skills</SectionHeading>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {cv.skills.map((s, i) => (
+            {skills.map((s, i) => (
               <Text key={s.id} style={{ fontSize: T.body, color: T.mid, marginRight: 6, lineHeight: 1.5 }}>
-                {s.name}{i < cv.skills.length - 1 ? '  /' : ''}
+                {s.name}{i < skills.length - 1 ? '  /' : ''}
               </Text>
             ))}
           </View>
         </View>
       )}
 
-      {cv.languages.length > 0 && (
-        <View style={{ marginBottom: T.sectionGap }}>
+      {!isHidden(cv, 'languages') && languages.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
           <SectionHeading accent={accent}>Languages</SectionHeading>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {cv.languages.map((l) => (
+            {languages.map((l) => (
               <Text key={l.id} style={{ fontSize: T.body, color: T.mid, marginRight: 20, lineHeight: 1.5 }}>
                 {l.language}: <Text style={{ color: accent }}>{l.isNative ? 'Native' : l.proficiency}</Text>
               </Text>
@@ -180,12 +247,12 @@ export function ClassicPDF({
         </View>
       )}
 
-      {cv.certifications.length > 0 && (
-        <View style={{ marginBottom: T.sectionGap }}>
+      {!isHidden(cv, 'certifications') && certifications.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
           <SectionHeading accent={accent}>Certifications</SectionHeading>
-          {cv.certifications.map((c, i) => (
-            <View key={c.id} wrap={false} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: i < cv.certifications.length - 1 ? 5 : 0 }}>
-              <Text style={{ fontSize: T.body, color: T.dark }}>{c.name}{c.issuer ? <Text style={{ color: T.mid }}> — {c.issuer}</Text> : ''}</Text>
+          {certifications.map((c, i) => (
+            <View key={c.id} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: i < certifications.length - 1 ? 5 : 0 }}>
+              <Text style={{ fontSize: T.body, color: T.dark }}>{sanitizeText(c.name)}{c.issuer ? <Text style={{ color: T.mid }}> — {sanitizeText(c.issuer)}</Text> : ''}</Text>
               {c.dateIssued && <Text style={{ fontSize: T.meta, color: T.muted, flexShrink: 0, marginLeft: 8 }}>{fmtDate(c.dateIssued)}</Text>}
             </View>
           ))}
@@ -199,12 +266,19 @@ export function ClassicPDF({
 // Sidebar background uses absolute positioning to fill page height without
 // triggering Yoga layout loops (minHeight + flex: 1 combinations).
 
-export function ModernPDF({ cv, accent, isLatam = false }: { cv: CVData; accent: string; isLatam?: boolean }) {
+export function ModernPDF({ cv, accent, isLatam = false, compact = false }: { cv: CVData; accent: string; isLatam?: boolean; compact?: boolean }) {
   const p = cv.personalInfo;
   const isA4 = cv.pageSize === 'A4';
-  const SIDEBAR_W = 158;
+  const SIDEBAR_W = compact ? 142 : 158;
+  const sectionGap = compact ? T.sectionGap - 4 : T.sectionGap;
+  const workExperience = compact ? cv.workExperience.slice(0, 3) : cv.workExperience;
+  const education = compact ? cv.education.slice(0, 2) : cv.education;
+  const skills = cv.skills.slice(0, compact ? 8 : 12);
+  const languages = cv.languages.slice(0, compact ? 4 : 6);
+  const certifications = cv.certifications.slice(0, compact ? 2 : 4);
+  const references = cv.references.filter(hasReferenceContent);
 
-  const sideText = { fontSize: T.meta, color: 'rgba(255,255,255,0.85)', lineHeight: T.lhTight, marginBottom: 3 } as const;
+  const sideText = { fontSize: compact ? T.small : T.meta, color: 'rgba(255,255,255,0.85)', lineHeight: T.lhTight, marginBottom: 3 } as const;
   const sideSubText = { fontSize: T.small, color: 'rgba(255,255,255,0.6)', lineHeight: T.lhTight } as const;
   const sideLabel = {
     fontFamily: T.bold, fontSize: T.small, color: 'rgba(255,255,255,0.55)',
@@ -213,83 +287,83 @@ export function ModernPDF({ cv, accent, isLatam = false }: { cv: CVData; accent:
     paddingBottom: 3, marginBottom: 6, marginTop: 14, lineHeight: T.lhTight,
   } as const;
 
-  return (
-    <Page size={isA4 ? 'A4' : 'LETTER'} style={{ fontFamily: T.regular, fontSize: T.body, color: T.dark, backgroundColor: '#fff', padding: 0 }}>
-      {/* minHeight: '100%' stretches both columns to full page height across pages */}
-      <View style={{ flexDirection: 'row', minHeight: '100%' }}>
-        {/* Sidebar — background color applied directly so it extends on page 2+ */}
-        <View style={{ width: SIDEBAR_W, backgroundColor: accent, paddingHorizontal: 16, paddingVertical: 22 }}>
-          {p.photo && (
-            <View style={{ alignItems: 'center', marginBottom: 12 }}>
-              <View style={{ width: 68, height: 90, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)' }}>
-                <Image src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </View>
-            </View>
-          )}
-          <Text style={{ fontFamily: T.bold, fontSize: 15, color: T.white, lineHeight: 1.3, marginBottom: 16 }}>
-            {p.firstName}{'\n'}{p.lastName}
-          </Text>
-
-          <Text style={sideLabel}>Contact</Text>
-          {p.email      && <Text style={sideText}>{p.email}</Text>}
-          {p.phone      && <Text style={sideText}>{p.phone}</Text>}
-          {p.address?.city && <Text style={sideText}>{[p.address.city, p.address.state, p.address.country].filter(Boolean).join(', ')}</Text>}
-          {p.linkedIn   && <Text style={sideText}>{p.linkedIn}</Text>}
-
-          {isLatam && (p.dateOfBirth || p.nationality) && (
-            <>
-              <Text style={sideLabel}>Datos Personales</Text>
-              {p.dateOfBirth && <Text style={sideText}>Nac.: {p.dateOfBirth}</Text>}
-              {p.nationality && <Text style={sideText}>{p.nationality}</Text>}
-            </>
-          )}
-
-          {cv.skills.length > 0 && (
-            <>
-              <Text style={sideLabel}>{isLatam ? 'Habilidades' : 'Skills'}</Text>
-              {cv.skills.map((s) => <Text key={s.id} style={sideText}>· {s.name}</Text>)}
-            </>
-          )}
-
-          {cv.languages.length > 0 && (
-            <>
-              <Text style={sideLabel}>{isLatam ? 'Idiomas' : 'Languages'}</Text>
-              {cv.languages.map((l) => (
-                <View key={l.id} style={{ marginBottom: 5 }}>
-                  <Text style={{ fontFamily: T.bold, fontSize: T.meta, color: T.white, lineHeight: T.lhTight }}>{l.language}</Text>
-                  <Text style={sideSubText}>{l.isNative ? (isLatam ? 'Nativo' : 'Native') : l.proficiency}</Text>
-                </View>
-              ))}
-            </>
-          )}
-
-          {cv.certifications.length > 0 && (
-            <>
-              <Text style={sideLabel}>{isLatam ? 'Certificaciones' : 'Certifications'}</Text>
-              {cv.certifications.map((c) => (
-                <View key={c.id} style={{ marginBottom: 6 }}>
-                  <Text style={{ fontFamily: T.bold, fontSize: T.small, color: T.white, lineHeight: T.lhTight }}>{c.name}</Text>
-                  {c.issuer && <Text style={sideSubText}>{c.issuer}</Text>}
-                </View>
-              ))}
-            </>
-          )}
+  const sidebarContent = (
+    <View fixed style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: SIDEBAR_W, paddingHorizontal: compact ? 12 : 16, paddingVertical: compact ? 16 : 22 }}>
+      {p.photo && (
+        <View style={{ alignItems: 'center', marginBottom: 12 }}>
+          <View style={{ width: 68, height: 90, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)' }}>
+            <Image src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </View>
         </View>
+      )}
+      <Text style={{ fontFamily: T.bold, fontSize: 15, color: T.white, lineHeight: 1.3, marginBottom: 16 }}>
+        {p.firstName}{'\n'}{p.lastName}
+      </Text>
 
-        {/* Main column */}
-        <View style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 22 }}>
-          {cv.objective && (
-            <View style={{ marginBottom: T.sectionGap }}>
+      <Text style={sideLabel}>Contact</Text>
+      {p.email      && <Text style={sideText}>{p.email}</Text>}
+      {p.phone      && <Text style={sideText}>{p.phone}</Text>}
+      {p.address?.city && <Text style={sideText}>{[p.address.city, p.address.state, p.address.country].filter(Boolean).join(', ')}</Text>}
+      {p.linkedIn   && <Text style={sideText}>{p.linkedIn}</Text>}
+
+      {isLatam && (p.dateOfBirth || p.nationality) && (
+        <>
+          <Text style={sideLabel}>Datos Personales</Text>
+          {p.dateOfBirth && <Text style={sideText}>Nac.: {p.dateOfBirth}</Text>}
+          {p.nationality && <Text style={sideText}>{p.nationality}</Text>}
+        </>
+      )}
+
+      {!isHidden(cv, 'skills') && skills.length > 0 && (
+        <>
+          <Text style={sideLabel}>{isLatam ? 'Habilidades' : 'Skills'}</Text>
+          {skills.map((s) => <Text key={s.id} style={sideText}>· {s.name}</Text>)}
+        </>
+      )}
+
+      {!isHidden(cv, 'languages') && languages.length > 0 && (
+        <>
+          <Text style={sideLabel}>{isLatam ? 'Idiomas' : 'Languages'}</Text>
+          {languages.map((l) => (
+            <View key={l.id} style={{ marginBottom: 5 }}>
+              <Text style={{ fontFamily: T.bold, fontSize: T.meta, color: T.white, lineHeight: T.lhTight }}>{l.language}</Text>
+              <Text style={sideSubText}>{l.isNative ? (isLatam ? 'Nativo' : 'Native') : l.proficiency}</Text>
+            </View>
+          ))}
+        </>
+      )}
+
+      {!isHidden(cv, 'certifications') && certifications.length > 0 && (
+        <>
+          <Text style={sideLabel}>{isLatam ? 'Certificaciones' : 'Certifications'}</Text>
+          {certifications.map((c) => (
+            <View key={c.id} style={{ marginBottom: 6 }}>
+              <Text style={{ fontFamily: T.bold, fontSize: T.small, color: T.white, lineHeight: T.lhTight }}>{c.name}</Text>
+              {c.issuer && <Text style={sideSubText}>{c.issuer}</Text>}
+            </View>
+          ))}
+        </>
+      )}
+    </View>
+  );
+
+  return (
+    <Page size={isA4 ? 'A4' : 'LETTER'} style={{ fontFamily: T.regular, fontSize: T.body, color: T.dark, backgroundColor: '#fff', paddingLeft: SIDEBAR_W }}>
+      <View fixed style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: SIDEBAR_W, backgroundColor: accent }} />
+      {sidebarContent}
+      <View style={{ paddingHorizontal: compact ? 16 : 20, paddingTop: compact ? 16 : 22, paddingBottom: compact ? 16 : PDF_FOOTER_H + 12 }}>
+          {!isHidden(cv, 'objective') && cv.objective && (
+            <View style={{ marginBottom: sectionGap }}>
               <ModernHeading accent={accent}>{isLatam ? 'Objetivo Profesional' : 'Professional Summary'}</ModernHeading>
-              <Text style={{ fontSize: T.body, color: T.mid, lineHeight: T.lhBody }}>{cv.objective}</Text>
+              <Text style={{ fontSize: compact ? T.body - 0.5 : T.body, color: T.mid, lineHeight: compact ? 1.25 : T.lhBody }}>{sanitizeText(cv.objective)}</Text>
             </View>
           )}
 
-          {cv.workExperience.length > 0 && (
-            <View style={{ marginBottom: T.sectionGap }}>
+          {!isHidden(cv, 'workExperience') && workExperience.length > 0 && (
+            <View style={{ marginBottom: sectionGap }}>
               <ModernHeading accent={accent}>{isLatam ? 'Experiencia Laboral' : 'Work Experience'}</ModernHeading>
-              {cv.workExperience.map((exp, i) => (
-                <View key={exp.id} wrap={false} style={{ marginBottom: i < cv.workExperience.length - 1 ? T.entryGap : 0 }}>
+              {workExperience.map((exp, i) => (
+                <View key={exp.id} wrap={false} style={{ marginBottom: i < workExperience.length - 1 ? T.entryGap : 0 }}>
                   <EntryHeader title={exp.title} right={dr(exp.startDate, exp.endDate, exp.isPresent)} accent={accent} sub={exp.company ? `${exp.company}${exp.location ? ` · ${exp.location}` : ''}` : undefined} />
                   {exp.description && <BodyText>{exp.description}</BodyText>}
                 </View>
@@ -297,22 +371,22 @@ export function ModernPDF({ cv, accent, isLatam = false }: { cv: CVData; accent:
             </View>
           )}
 
-          {cv.education.length > 0 && (
-            <View style={{ marginBottom: T.sectionGap }}>
+          {!isHidden(cv, 'education') && education.length > 0 && (
+            <View style={{ marginBottom: sectionGap }}>
               <ModernHeading accent={accent}>{isLatam ? 'Formación Académica' : 'Education'}</ModernHeading>
-              {cv.education.map((edu, i) => (
-                <View key={edu.id} wrap={false} style={{ marginBottom: i < cv.education.length - 1 ? T.entryGap : 0 }}>
-                  <EntryHeader title={`${edu.degree}${edu.fieldOfStudy ? `, ${edu.fieldOfStudy}` : ''}`} right={dr(edu.startDate, edu.endDate, edu.isPresent)} accent={accent} sub={`${edu.institution}${edu.gpa ? `  ·  ${isLatam ? 'Promedio' : 'GPA'} ${edu.gpa}` : ''}`} />
+              {education.map((edu, i) => (
+                <View key={edu.id} wrap={false} style={{ marginBottom: i < education.length - 1 ? T.entryGap : 0 }}>
+                  <EntryHeader title={`${sanitizeText(edu.degree)}${edu.fieldOfStudy ? `, ${sanitizeText(edu.fieldOfStudy)}` : ''}`} right={dr(edu.startDate, edu.endDate, edu.isPresent)} accent={accent} sub={`${sanitizeText(edu.institution)}${edu.gpa ? `  ·  ${isLatam ? 'Promedio' : 'GPA'} ${edu.gpa}` : ''}`} />
                 </View>
               ))}
             </View>
           )}
 
-          {cv.references && cv.references.length > 0 && (
-            <View style={{ marginBottom: T.sectionGap }}>
+          {!isHidden(cv, 'references') && references.length > 0 && (
+            <View style={{ marginBottom: sectionGap }}>
               <ModernHeading accent={accent}>{isLatam ? 'Referencias' : 'References'}</ModernHeading>
-              {cv.references.map((r, i) => (
-                <View key={r.id} wrap={false} style={{ marginBottom: i < cv.references.length - 1 ? T.entryGap : 0 }}>
+              {references.map((r, i) => (
+                <View key={r.id} style={{ marginBottom: i < references.length - 1 ? T.entryGap : 0 }}>
                   <Text style={{ fontFamily: T.bold, fontSize: T.body, color: T.dark, lineHeight: T.lhTight }}>{r.name}</Text>
                   <Text style={{ fontSize: T.meta, color: T.mid, lineHeight: T.lhTight }}>{r.title}, {r.company}</Text>
                   {r.email && <Text style={{ fontSize: T.meta, color: T.muted, lineHeight: T.lhTight }}>{r.email}</Text>}
@@ -320,8 +394,8 @@ export function ModernPDF({ cv, accent, isLatam = false }: { cv: CVData; accent:
               ))}
             </View>
           )}
-        </View>
       </View>
+      {!compact && <SafeFooter left={`Curriculum Vitae — ${p.firstName} ${p.lastName}`} />}
     </Page>
   );
 }
@@ -339,97 +413,106 @@ function ModernHeading({ accent, children }: { accent: string; children: string 
 
 // ─── EU Modern (header banner + gray sidebar) ─────────────────────────────────
 
-export function EUModernPDF({ cv, accent }: { cv: CVData; accent: string }) {
+export function EUModernPDF({ cv, accent, compact = false }: { cv: CVData; accent: string; compact?: boolean }) {
   const p = cv.personalInfo;
-  const SIDEBAR_W = 172;
+  const SIDEBAR_W = compact ? 156 : 172;
+  const sectionGap = compact ? T.sectionGap - 4 : T.sectionGap;
+  const workExperience = compact ? cv.workExperience.slice(0, 3) : cv.workExperience;
+  const education = compact ? cv.education.slice(0, 2) : cv.education;
+  const skills = cv.skills.slice(0, compact ? 8 : 12);
+  const languages = cv.languages.slice(0, compact ? 4 : 6);
+  const certifications = cv.certifications.slice(0, compact ? 2 : 4);
+  const references = cv.references.filter(hasReferenceContent);
+
+  const header = (
+    <View fixed style={{ position: 'absolute', top: 0, left: 0, right: 0, height: compact ? 76 : EU_HEADER_H, backgroundColor: accent, paddingHorizontal: compact ? 22 : 28, paddingVertical: compact ? 12 : 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontFamily: T.bold, fontSize: T.name, color: T.white, lineHeight: T.lhTight, marginBottom: 6 }}>
+          {p.firstName} {p.lastName}
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          {p.email      && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.email}</Text>}
+          {p.phone      && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.phone}</Text>}
+          {p.address?.city && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.address.city}{p.address.country ? `, ${p.address.country}` : ''}</Text>}
+          {p.nationality && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.nationality}</Text>}
+          {p.linkedIn   && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.linkedIn}</Text>}
+        </View>
+      </View>
+      {p.photo && (
+        <View style={{ width: 60, height: 76, borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' }}>
+          <Image src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </View>
+      )}
+    </View>
+  );
+
+  const sidebar = (
+    <View fixed style={{ position: 'absolute', left: 0, top: compact ? 76 : EU_HEADER_H, bottom: compact ? 0 : PDF_FOOTER_H, width: SIDEBAR_W, backgroundColor: '#f9fafb', paddingHorizontal: compact ? 14 : 18, paddingVertical: compact ? 14 : 18, borderRightWidth: 0.5, borderRightColor: '#e5e7eb' }}>
+      {(p.dateOfBirth || p.nationality) && (
+        <View style={{ marginBottom: sectionGap }}>
+          <EUSideTitle accent={accent}>Personal</EUSideTitle>
+          {p.dateOfBirth && <EUInfoLine label="Born" value={p.dateOfBirth} />}
+          {p.nationality && <EUInfoLine label="Nationality" value={p.nationality} />}
+        </View>
+      )}
+
+      {!isHidden(cv, 'skills') && skills.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
+          <EUSideTitle accent={accent}>Skills</EUSideTitle>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 3 }}>
+            {skills.map((s) => (
+              <Text key={s.id} style={{ fontSize: T.small, color: accent, backgroundColor: accent + '15', paddingHorizontal: 5, paddingVertical: 2, marginRight: 4, marginBottom: 4, lineHeight: T.lhTight }}>
+                {s.name}
+              </Text>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {!isHidden(cv, 'languages') && languages.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
+          <EUSideTitle accent={accent}>Languages</EUSideTitle>
+          {languages.map((l) => (
+            <View key={l.id} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+              <Text style={{ fontSize: T.meta, color: T.dark, lineHeight: T.lhTight }}>{l.language}</Text>
+              <Text style={{ fontFamily: T.bold, fontSize: T.small, color: accent, lineHeight: T.lhTight }}>{l.isNative ? 'Native' : l.proficiency}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {!isHidden(cv, 'certifications') && certifications.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
+          <EUSideTitle accent={accent}>Courses & Certs</EUSideTitle>
+          {certifications.map((c) => (
+            <View key={c.id} style={{ marginBottom: 6 }}>
+              <Text style={{ fontFamily: T.bold, fontSize: T.meta, color: T.dark, lineHeight: T.lhTight }}>{c.name}</Text>
+              {c.issuer && <Text style={{ fontSize: T.small, color: T.mid, lineHeight: T.lhTight }}>{c.issuer}</Text>}
+              {c.dateIssued && <Text style={{ fontSize: T.small, color: T.muted, lineHeight: T.lhTight }}>{fmtDate(c.dateIssued)}</Text>}
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
 
   return (
-    <Page size="A4" style={{ fontFamily: T.regular, fontSize: T.body, color: T.dark, backgroundColor: '#fff', padding: 0 }}>
-      {/* Full-width colored header */}
-      <View style={{ backgroundColor: accent, paddingHorizontal: 28, paddingVertical: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: T.bold, fontSize: T.name, color: T.white, lineHeight: T.lhTight, marginBottom: 6 }}>
-            {p.firstName} {p.lastName}
-          </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {p.email      && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.email}</Text>}
-            {p.phone      && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.phone}</Text>}
-            {p.address?.city && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.address.city}{p.address.country ? `, ${p.address.country}` : ''}</Text>}
-            {p.nationality && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.nationality}</Text>}
-            {p.linkedIn   && <Text style={{ fontSize: T.meta, color: 'rgba(255,255,255,0.85)', marginRight: 12 }}>{p.linkedIn}</Text>}
-          </View>
-        </View>
-        {p.photo && (
-          <View style={{ width: 60, height: 76, borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' }}>
-            <Image src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          </View>
-        )}
-      </View>
-      {/* Two-column body */}
-      <View style={{ flexDirection: 'row' }}>
-        {/* Left sidebar */}
-        <View style={{ width: SIDEBAR_W, backgroundColor: '#f9fafb', paddingHorizontal: 18, paddingVertical: 20, borderRightWidth: 0.5, borderRightColor: '#e5e7eb' }}>
-          {(p.dateOfBirth || p.nationality) && (
-            <View style={{ marginBottom: T.sectionGap }}>
-              <EUSideTitle accent={accent}>Personal</EUSideTitle>
-              {p.dateOfBirth && <EUInfoLine label="Born" value={p.dateOfBirth} />}
-              {p.nationality && <EUInfoLine label="Nationality" value={p.nationality} />}
-            </View>
-          )}
-
-          {cv.skills.length > 0 && (
-            <View style={{ marginBottom: T.sectionGap }}>
-              <EUSideTitle accent={accent}>Skills</EUSideTitle>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 3 }}>
-                {cv.skills.map((s) => (
-                  <Text key={s.id} style={{ fontSize: T.small, color: accent, backgroundColor: accent + '15', paddingHorizontal: 5, paddingVertical: 2, marginRight: 4, marginBottom: 4, lineHeight: T.lhTight }}>
-                    {s.name}
-                  </Text>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {cv.languages.length > 0 && (
-            <View style={{ marginBottom: T.sectionGap }}>
-              <EUSideTitle accent={accent}>Languages</EUSideTitle>
-              {cv.languages.map((l) => (
-                <View key={l.id} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
-                  <Text style={{ fontSize: T.meta, color: T.dark, lineHeight: T.lhTight }}>{l.language}</Text>
-                  <Text style={{ fontFamily: T.bold, fontSize: T.small, color: accent, lineHeight: T.lhTight }}>{l.isNative ? 'Native' : l.proficiency}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {cv.certifications.length > 0 && (
-            <View style={{ marginBottom: T.sectionGap }}>
-              <EUSideTitle accent={accent}>Courses & Certs</EUSideTitle>
-              {cv.certifications.map((c) => (
-                <View key={c.id} style={{ marginBottom: 6 }}>
-                  <Text style={{ fontFamily: T.bold, fontSize: T.meta, color: T.dark, lineHeight: T.lhTight }}>{c.name}</Text>
-                  {c.issuer && <Text style={{ fontSize: T.small, color: T.mid, lineHeight: T.lhTight }}>{c.issuer}</Text>}
-                  {c.dateIssued && <Text style={{ fontSize: T.small, color: T.muted, lineHeight: T.lhTight }}>{fmtDate(c.dateIssued)}</Text>}
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Right main column */}
-        <View style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 20 }}>
-          {cv.objective && (
-            <View style={{ marginBottom: T.sectionGap }}>
+    <Page size="A4" style={{ fontFamily: T.regular, fontSize: compact ? T.body - 0.5 : T.body, color: T.dark, backgroundColor: '#fff', paddingTop: compact ? 76 : EU_HEADER_H, paddingBottom: compact ? 18 : PDF_FOOTER_H + 10, paddingLeft: SIDEBAR_W }}>
+      {header}
+      {sidebar}
+      <View style={{ paddingHorizontal: compact ? 16 : 20, paddingVertical: compact ? 14 : 18 }}>
+          {!isHidden(cv, 'objective') && cv.objective && (
+            <View style={{ marginBottom: sectionGap }}>
               <EUMainTitle accent={accent}>Profile</EUMainTitle>
-              <Text style={{ fontSize: T.body, color: T.mid, lineHeight: T.lhBody }}>{cv.objective}</Text>
+              <Text style={{ fontSize: compact ? T.body - 0.5 : T.body, color: T.mid, lineHeight: compact ? 1.25 : T.lhBody }}>{sanitizeText(cv.objective)}</Text>
             </View>
           )}
 
-          {cv.workExperience.length > 0 && (
-            <View style={{ marginBottom: T.sectionGap }}>
+          {!isHidden(cv, 'workExperience') && workExperience.length > 0 && (
+            <View style={{ marginBottom: sectionGap }}>
               <EUMainTitle accent={accent}>Work Experience</EUMainTitle>
-              {cv.workExperience.map((exp, i) => (
-                <View key={exp.id} wrap={false} style={{ borderLeftWidth: 1.5, borderLeftColor: accent + '55', paddingLeft: 9, marginBottom: i < cv.workExperience.length - 1 ? T.entryGap : 0 }}>
+              {workExperience.map((exp, i) => (
+                <View key={exp.id} wrap={false} style={{ borderLeftWidth: 1.5, borderLeftColor: accent + '55', paddingLeft: 9, marginBottom: i < workExperience.length - 1 ? T.entryGap : 0 }}>
                   <EntryHeader title={exp.title} right={dr(exp.startDate, exp.endDate, exp.isPresent)} accent={accent} sub={exp.company ? `${exp.company}${exp.location ? ` · ${exp.location}` : ''}` : undefined} />
                   {exp.description && <BodyText>{exp.description}</BodyText>}
                 </View>
@@ -437,23 +520,23 @@ export function EUModernPDF({ cv, accent }: { cv: CVData; accent: string }) {
             </View>
           )}
 
-          {cv.education.length > 0 && (
-            <View style={{ marginBottom: T.sectionGap }}>
+          {!isHidden(cv, 'education') && education.length > 0 && (
+            <View style={{ marginBottom: sectionGap }}>
               <EUMainTitle accent={accent}>Education & Training</EUMainTitle>
-              {cv.education.map((edu, i) => (
-                <View key={edu.id} wrap={false} style={{ borderLeftWidth: 1.5, borderLeftColor: accent + '55', paddingLeft: 9, marginBottom: i < cv.education.length - 1 ? T.entryGap : 0 }}>
-                  <EntryHeader title={`${edu.degree}${edu.fieldOfStudy ? `, ${edu.fieldOfStudy}` : ''}`} right={dr(edu.startDate, edu.endDate, edu.isPresent)} accent={accent} sub={`${edu.institution}${edu.gpa ? `  ·  Grade ${edu.gpa}` : ''}`} />
+              {education.map((edu, i) => (
+                <View key={edu.id} wrap={false} style={{ borderLeftWidth: 1.5, borderLeftColor: accent + '55', paddingLeft: 9, marginBottom: i < education.length - 1 ? T.entryGap : 0 }}>
+                  <EntryHeader title={`${sanitizeText(edu.degree)}${edu.fieldOfStudy ? `, ${sanitizeText(edu.fieldOfStudy)}` : ''}`} right={dr(edu.startDate, edu.endDate, edu.isPresent)} accent={accent} sub={`${sanitizeText(edu.institution)}${edu.gpa ? `  ·  Grade ${edu.gpa}` : ''}`} />
                 </View>
               ))}
             </View>
           )}
 
-          {cv.references && cv.references.length > 0 && (
-            <View style={{ marginBottom: T.sectionGap }}>
+          {!isHidden(cv, 'references') && references.length > 0 && (
+            <View style={{ marginBottom: sectionGap }}>
               <EUMainTitle accent={accent}>References</EUMainTitle>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                {cv.references.map((r) => (
-                  <View key={r.id} wrap={false} style={{ width: '48%', marginRight: '2%', marginBottom: 8 }}>
+                {references.map((r) => (
+                  <View key={r.id} style={{ width: '48%', marginRight: '2%', marginBottom: 8 }}>
                     <Text style={{ fontFamily: T.bold, fontSize: T.meta, color: T.dark, lineHeight: T.lhTight }}>{r.name}</Text>
                     <Text style={{ fontSize: T.small, color: T.mid, lineHeight: T.lhTight }}>{r.title}, {r.company}</Text>
                     {r.email && <Text style={{ fontSize: T.small, color: T.muted, lineHeight: T.lhTight }}>{r.email}</Text>}
@@ -462,14 +545,8 @@ export function EUModernPDF({ cv, accent }: { cv: CVData; accent: string }) {
               </View>
             </View>
           )}
-        </View>
       </View>
-
-      {/* Footer — fixed renders on every page */}
-      <View fixed style={{ position: 'absolute', bottom: 10, left: 28, right: 28, borderTopWidth: 0.5, borderTopColor: '#e5e7eb', paddingTop: 5, flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={{ fontSize: T.small, color: T.muted }}>Curriculum Vitae — {p.firstName} {p.lastName}</Text>
-        <Text style={{ fontSize: T.small, color: T.muted }}>GlobalCV by Bagalinis Consulting</Text>
-      </View>
+      {!compact && <SafeFooter left={`Curriculum Vitae — ${p.firstName} ${p.lastName}`} />}
     </Page>
   );
 }
@@ -503,13 +580,21 @@ function EUInfoLine({ label, value }: { label: string; value: string }) {
 
 // ─── EU Europass ──────────────────────────────────────────────────────────────
 
-export function EuropassPDF({ cv, accent }: { cv: CVData; accent: string }) {
+export function EuropassPDF({ cv, accent, compact = false }: { cv: CVData; accent: string; compact?: boolean }) {
   const p = cv.personalInfo;
+  const pageMarginX = compact ? 32 : 40;
+  const pageMarginY = compact ? 26 : 34;
+  const sectionGap = compact ? T.sectionGap - 4 : T.sectionGap;
+  const workExperience = compact ? cv.workExperience.slice(0, 3) : cv.workExperience;
+  const education = compact ? cv.education.slice(0, 2) : cv.education;
+  const skills = compact ? cv.skills.slice(0, 8) : cv.skills;
+  const languages = compact ? cv.languages.slice(0, 4) : cv.languages;
+  const certifications = compact ? cv.certifications.slice(0, 2) : cv.certifications;
 
   return (
-    <Page size="A4" style={{ fontFamily: T.regular, fontSize: T.body, color: T.dark, backgroundColor: '#fff', paddingHorizontal: 40, paddingVertical: 34 }}>
+    <Page size="A4" style={{ fontFamily: T.regular, fontSize: compact ? T.body - 0.5 : T.body, color: T.dark, backgroundColor: '#fff', paddingHorizontal: pageMarginX, paddingVertical: pageMarginY }}>
       {/* Header bar */}
-      <View style={{ backgroundColor: accent, paddingHorizontal: 24, paddingVertical: 18, marginHorizontal: -40, marginTop: -34, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+      <View style={{ backgroundColor: accent, paddingHorizontal: compact ? 20 : 24, paddingVertical: compact ? 13 : 18, marginHorizontal: -pageMarginX, marginTop: -pageMarginY, marginBottom: compact ? 12 : 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: T.bold, fontSize: T.name, color: T.white, lineHeight: T.lhTight, marginBottom: 6 }}>{p.firstName} {p.lastName}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -527,48 +612,48 @@ export function EuropassPDF({ cv, accent }: { cv: CVData; accent: string }) {
         )}
       </View>
       
-      {cv.objective && (
-        <View style={{ marginBottom: T.sectionGap }}>
+      {!isHidden(cv, 'objective') && cv.objective && (
+        <View style={{ marginBottom: sectionGap }}>
           <SectionHeading accent={accent}>Personal Statement</SectionHeading>
-          <Text style={{ fontSize: T.body, color: T.mid, lineHeight: T.lhBody }}>{cv.objective}</Text>
+          <Text style={{ fontSize: compact ? T.body - 0.5 : T.body, color: T.mid, lineHeight: compact ? 1.25 : T.lhBody }}>{sanitizeText(cv.objective)}</Text>
         </View>
       )}
 
-      {cv.workExperience.length > 0 && (
-        <View style={{ marginBottom: T.sectionGap }}>
+      {!isHidden(cv, 'workExperience') && workExperience.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
           <SectionHeading accent={accent}>Work Experience</SectionHeading>
-          {cv.workExperience.map((exp, i) => (
-            <View key={exp.id} wrap={false} style={{ flexDirection: 'row', marginBottom: i < cv.workExperience.length - 1 ? T.entryGap : 0 }}>
+          {workExperience.map((exp, i) => (
+            <View key={exp.id} wrap={false} style={{ flexDirection: 'row', marginBottom: i < workExperience.length - 1 ? T.entryGap : 0 }}>
               <Text style={{ width: 72, fontSize: T.meta, color: T.muted, paddingTop: 1, lineHeight: T.lhTight }}>{dr(exp.startDate, exp.endDate, exp.isPresent)}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: T.bold, fontSize: T.body, color: T.dark, lineHeight: T.lhTight }}>{exp.title}</Text>
                 <Text style={{ fontSize: T.meta, color: T.mid, marginBottom: 2, lineHeight: T.lhTight }}>{exp.company}{exp.location ? ` · ${exp.location}` : ''}</Text>
-                {exp.description && <Text style={{ fontSize: T.body, color: T.mid, lineHeight: T.lhBody }}>{exp.description}</Text>}
+                {exp.description && <Text style={{ fontSize: T.body, color: T.mid, lineHeight: T.lhBody }}>{sanitizeText(exp.description)}</Text>}
               </View>
             </View>
           ))}
         </View>
       )}
 
-      {cv.education.length > 0 && (
-        <View style={{ marginBottom: T.sectionGap }}>
+      {!isHidden(cv, 'education') && education.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
           <SectionHeading accent={accent}>Education & Training</SectionHeading>
-          {cv.education.map((edu, i) => (
-            <View key={edu.id} wrap={false} style={{ flexDirection: 'row', marginBottom: i < cv.education.length - 1 ? T.entryGap : 0 }}>
+          {education.map((edu, i) => (
+            <View key={edu.id} wrap={false} style={{ flexDirection: 'row', marginBottom: i < education.length - 1 ? T.entryGap : 0 }}>
               <Text style={{ width: 72, fontSize: T.meta, color: T.muted, paddingTop: 1, lineHeight: T.lhTight }}>{dr(edu.startDate, edu.endDate, edu.isPresent)}</Text>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: T.bold, fontSize: T.body, color: T.dark, lineHeight: T.lhTight }}>{edu.degree}{edu.fieldOfStudy ? `, ${edu.fieldOfStudy}` : ''}</Text>
-                <Text style={{ fontSize: T.meta, color: T.mid, lineHeight: T.lhTight }}>{edu.institution}{edu.gpa ? `  ·  Grade ${edu.gpa}` : ''}</Text>
+                <Text style={{ fontFamily: T.bold, fontSize: T.body, color: T.dark, lineHeight: T.lhTight }}>{sanitizeText(edu.degree)}{edu.fieldOfStudy ? `, ${sanitizeText(edu.fieldOfStudy)}` : ''}</Text>
+                <Text style={{ fontSize: T.meta, color: T.mid, lineHeight: T.lhTight }}>{sanitizeText(edu.institution)}{edu.gpa ? `  ·  Grade ${edu.gpa}` : ''}</Text>
               </View>
             </View>
           ))}
         </View>
       )}
 
-      {cv.languages.length > 0 && (
-        <View style={{ marginBottom: T.sectionGap }}>
+      {!isHidden(cv, 'languages') && languages.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
           <SectionHeading accent={accent}>Language Skills</SectionHeading>
-          {cv.languages.map((l) => (
+          {languages.map((l) => (
             <View key={l.id} style={{ flexDirection: 'row', marginBottom: 5 }}>
               <Text style={{ width: 90, fontFamily: T.bold, fontSize: T.body, color: T.dark, lineHeight: T.lhTight }}>{l.language}</Text>
               <Text style={{ fontFamily: T.bold, fontSize: T.meta, color: accent, lineHeight: T.lhTight }}>{l.isNative ? 'Native' : l.proficiency}</Text>
@@ -577,20 +662,20 @@ export function EuropassPDF({ cv, accent }: { cv: CVData; accent: string }) {
         </View>
       )}
 
-      {cv.skills.length > 0 && (
-        <View style={{ marginBottom: T.sectionGap }}>
+      {!isHidden(cv, 'skills') && skills.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
           <SectionHeading accent={accent}>Digital & Technical Skills</SectionHeading>
-          <Text style={{ fontSize: T.body, color: T.mid, lineHeight: T.lhBody }}>{cv.skills.map((s) => s.name).join('  /  ')}</Text>
+          <Text style={{ fontSize: T.body, color: T.mid, lineHeight: T.lhBody }}>{skills.map((s) => s.name).join('  /  ')}</Text>
         </View>
       )}
 
-      {cv.certifications.length > 0 && (
-        <View style={{ marginBottom: T.sectionGap }}>
+      {!isHidden(cv, 'certifications') && certifications.length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
           <SectionHeading accent={accent}>Courses & Certifications</SectionHeading>
-          {cv.certifications.map((c, i) => (
-            <View key={c.id} wrap={false} style={{ flexDirection: 'row', marginBottom: i < cv.certifications.length - 1 ? 5 : 0 }}>
+          {certifications.map((c, i) => (
+            <View key={c.id} style={{ flexDirection: 'row', marginBottom: i < certifications.length - 1 ? 5 : 0 }}>
               <Text style={{ width: 72, fontSize: T.meta, color: T.muted, lineHeight: T.lhTight }}>{fmtDate(c.dateIssued)}</Text>
-              <Text style={{ flex: 1, fontSize: T.body, color: T.dark, lineHeight: T.lhTight }}>{c.name}{c.issuer ? <Text style={{ color: T.mid }}> — {c.issuer}</Text> : ''}</Text>
+              <Text style={{ flex: 1, fontSize: T.body, color: T.dark, lineHeight: T.lhTight }}>{sanitizeText(c.name)}{c.issuer ? <Text style={{ color: T.mid }}> — {sanitizeText(c.issuer)}</Text> : ''}</Text>
             </View>
           ))}
         </View>
@@ -882,7 +967,7 @@ export function JapanShokumuPDF({ cv }: { cv: CVData }) {
   const shMeta = { fontFamily: 'JP', fontSize: 7.5, color: '#6b7280', lineHeight: 1.4 } as const;
 
   return (
-    <Page size="A4" style={{ fontFamily: 'JP', fontSize: 8, padding: 36, color: '#111827', backgroundColor: '#fff', lineHeight: 1.5 }}>
+    <Page size="A4" style={{ fontFamily: 'JP', fontSize: 8, paddingTop: 36, paddingHorizontal: 36, paddingBottom: 58, color: '#111827', backgroundColor: '#fff', lineHeight: 1.5 }}>
       {/* Title */}
       <Text style={{ fontFamily: 'JP', fontWeight: 'bold', fontSize: 18, textAlign: 'center', letterSpacing: 6, marginBottom: 4 }}>
         職務経歴書
@@ -924,15 +1009,15 @@ export function JapanShokumuPDF({ cv }: { cv: CVData }) {
       </View>
 
       {/* 職務要約 */}
-      {cv.objective && (
+      {!isHidden(cv, 'objective') && cv.objective && (
         <View style={{ marginBottom: 14 }}>
           <Text style={shLabel}>職務要約</Text>
-          <Text style={shCell}>{cv.objective}</Text>
+          <Text style={shCell}>{sanitizeText(cv.objective)}</Text>
         </View>
       )}
 
       {/* 職務経歴 */}
-      {cv.workExperience.length > 0 && (
+      {!isHidden(cv, 'workExperience') && cv.workExperience.length > 0 && (
         <View style={{ marginBottom: 14 }}>
           <Text style={shLabel}>職務経歴</Text>
           {cv.workExperience.map((exp) => (
@@ -959,11 +1044,11 @@ export function JapanShokumuPDF({ cv }: { cv: CVData }) {
       )}
 
       {/* 学歴 */}
-      {cv.education.length > 0 && (
+      {!isHidden(cv, 'education') && cv.education.length > 0 && (
         <View style={{ marginBottom: 14 }}>
           <Text style={shLabel}>学歴</Text>
           {cv.education.map((edu) => (
-            <View key={edu.id} wrap={false} style={{ flexDirection: 'row', marginBottom: 5 }}>
+            <View key={edu.id} style={{ flexDirection: 'row', marginBottom: 5 }}>
               <Text style={{ ...shMeta, width: 90 }}>
                 {edu.startDate ? toJpDate(edu.startDate) : ''}
                 {' 〜 '}
@@ -971,7 +1056,7 @@ export function JapanShokumuPDF({ cv }: { cv: CVData }) {
               </Text>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: 'JP', fontWeight: 'bold', fontSize: 8, color: '#111827' }}>
-                  {edu.institution}　{edu.degree}{edu.fieldOfStudy ? `　${edu.fieldOfStudy}` : ''}
+                  {sanitizeText(edu.institution)}　{sanitizeText(edu.degree)}{edu.fieldOfStudy ? `　${sanitizeText(edu.fieldOfStudy)}` : ''}
                 </Text>
                 {edu.gpa && <Text style={shMeta}>GPA: {edu.gpa}</Text>}
               </View>
@@ -981,7 +1066,7 @@ export function JapanShokumuPDF({ cv }: { cv: CVData }) {
       )}
 
       {/* スキル */}
-      {cv.skills.length > 0 && (
+      {!isHidden(cv, 'skills') && cv.skills.length > 0 && (
         <View style={{ marginBottom: 14 }}>
           <Text style={shLabel}>スキル・ツール</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -993,7 +1078,7 @@ export function JapanShokumuPDF({ cv }: { cv: CVData }) {
       )}
 
       {/* 語学 */}
-      {cv.languages.length > 0 && (
+      {!isHidden(cv, 'languages') && cv.languages.length > 0 && (
         <View style={{ marginBottom: 14 }}>
           <Text style={shLabel}>語学</Text>
           {cv.languages.map((l) => (
@@ -1006,13 +1091,13 @@ export function JapanShokumuPDF({ cv }: { cv: CVData }) {
       )}
 
       {/* 資格・免許 */}
-      {cv.certifications.length > 0 && (
+      {!isHidden(cv, 'certifications') && cv.certifications.length > 0 && (
         <View style={{ marginBottom: 14 }}>
           <Text style={shLabel}>資格・免許</Text>
           {cv.certifications.map((c) => (
-            <View key={c.id} wrap={false} style={{ flexDirection: 'row', marginBottom: 3 }}>
+            <View key={c.id} style={{ flexDirection: 'row', marginBottom: 3 }}>
               {c.dateIssued && <Text style={{ ...shMeta, width: 70 }}>{toJpDate(c.dateIssued)}</Text>}
-              <Text style={shCell}>{c.name}{c.issuer ? `（${c.issuer}）` : ''}</Text>
+              <Text style={shCell}>{sanitizeText(c.name)}{c.issuer ? `（${sanitizeText(c.issuer)}）` : ''}</Text>
             </View>
           ))}
         </View>
@@ -1047,10 +1132,11 @@ export function JapanShokumuPDF({ cv }: { cv: CVData }) {
 
 // ─── Root document ─────────────────────────────────────────────────────────────
 
-export function CVPDFDocument({ cv, config }: Props) {
+export function CVPDFDocument({ cv, config, exportMode = 'designed' }: Props) {
   const theme = getActiveTheme(cv, config);
   const accent = theme.primary;
   const tpl = cv.templateId;
+  const compact = exportMode === 'compact';
 
   let page: React.ReactElement;
   if (tpl === 'jp-rirekisho') {
@@ -1058,18 +1144,18 @@ export function CVPDFDocument({ cv, config }: Props) {
   } else if (tpl === 'jp-shokumu') {
     page = <JapanShokumuPDF cv={cv} />;
   } else if (tpl === 'in-modern' || tpl === 'latam-modern' || tpl === 'br-modern') {
-    page = <ModernPDF cv={cv} accent={accent} isLatam />;
+    page = <ModernPDF cv={cv} accent={accent} isLatam compact={compact} />;
   } else if (tpl === 'us-modern' || tpl === 'gb-modern' || tpl === 'au-modern') {
-    page = <ModernPDF cv={cv} accent={accent} />;
+    page = <ModernPDF cv={cv} accent={accent} compact={compact} />;
   } else if (tpl === 'eu-modern') {
-    page = <EUModernPDF cv={cv} accent={accent} />;
+    page = <EUModernPDF cv={cv} accent={accent} compact={compact} />;
   } else if (tpl === 'in-classic' || tpl === 'latam-traditional' || tpl === 'br-classic') {
-    page = <ClassicPDF cv={cv} accent={accent} showPhoto />;
+    page = <ClassicPDF cv={cv} accent={accent} showPhoto compact={compact} />;
   } else if (tpl === 'eu-europass') {
-    page = <EuropassPDF cv={cv} accent={accent} />;
+    page = <EuropassPDF cv={cv} accent={accent} compact={compact} />;
   } else {
     // gb-classic, au-classic, us-classic → ClassicPDF
-    page = <ClassicPDF cv={cv} accent={accent} />;
+    page = <ClassicPDF cv={cv} accent={accent} compact={compact} />;
   }
 
   return (

@@ -6,7 +6,7 @@ import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 import { WizardStep } from './WizardShell';
-import { usePDFExport } from '@/hooks/usePDFExport';
+import { ExportMode, usePDFExport } from '@/hooks/usePDFExport';
 import { cn } from '@/lib/utils/cn';
 
 interface Props {
@@ -20,6 +20,7 @@ export default function WizardNavigation({ steps, currentStep, config }: Props) 
   const { nextStep, prevStep, cv } = useCVStore();
   const { exportPDF, state: pdfState, error: pdfError } = usePDFExport();
   const [hidePhotoInPdf, setHidePhotoInPdf] = useState(false);
+  const [exportMode, setExportMode] = useState<ExportMode>('designed');
   const isLast = currentStep === steps.length - 1;
   const isFirst = currentStep === 0;
 
@@ -69,8 +70,19 @@ export default function WizardNavigation({ steps, currentStep, config }: Props) 
             />
             Hide photo in PDF
           </label>
+          <select
+            value={exportMode}
+            onChange={(e) => setExportMode(e.target.value as ExportMode)}
+            className="mb-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700"
+            aria-label="Export mode"
+          >
+            <option value="designed">Designed PDF</option>
+            <option value="ats">ATS-safe</option>
+            <option value="privacy">Privacy copy</option>
+            <option value="compact">One-page compact</option>
+          </select>
           <button
-            onClick={() => exportPDF(cv, config, { hidePhoto: hidePhotoInPdf })}
+            onClick={() => exportPDF(cv, config, { hidePhoto: hidePhotoInPdf, mode: exportMode })}
             disabled={pdfState === 'generating'}
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors disabled:opacity-60"
             style={{ backgroundColor: pdfState === 'error' ? '#dc2626' : config.color }}

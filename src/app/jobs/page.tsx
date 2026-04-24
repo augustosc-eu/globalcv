@@ -327,7 +327,15 @@ function JobCard({ job }: { job: Job }) {
           </span>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Link
-              href={`/${recommendedMarket}`}
+              href={{
+                pathname: `/${recommendedMarket}`,
+                query: {
+                  mode: 'job',
+                  targetRole: job.title,
+                  targetCompany: job.company,
+                  jobDescriptionNotes: [job.description, ...job.tags].filter(Boolean).join('\n\n'),
+                },
+              }}
               className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition-all"
               title={`Build a ${marketCtaLabel} with GlobalCV`}
             >

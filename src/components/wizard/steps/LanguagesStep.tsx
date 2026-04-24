@@ -5,6 +5,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Language, CEFRLevel, JLPTLevel, GenericLevel, Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
+import { getLanguageOptions } from '@/lib/markets/languageOptions';
 import StepHeader from './StepHeader';
 
 interface Props { market: Market; config: MarketConfig; }
@@ -22,12 +23,20 @@ export default function LanguagesStep({ market, config }: Props) {
   const [newLang, setNewLang] = useState('');
   const label = config.sections.languages.label ?? 'Languages';
   const system = config.languageLevelSystem;
+  const languageOptions = getLanguageOptions(market);
+  const listId = languageOptions.length > 0 ? `${market}-language-options` : undefined;
+  const addedLanguages = new Set(cv.languages.map((lang) => lang.language.toLowerCase()));
+
+  const addLanguageValue = (language: string) => {
+    const trimmed = language.trim();
+    if (!trimmed || addedLanguages.has(trimmed.toLowerCase())) return;
+    const defaultProf = system === 'cefr' ? 'B2' : system === 'jlpt' ? 'N3' : 'conversational';
+    addLanguage({ language: trimmed, proficiency: defaultProf as Language['proficiency'], isNative: false });
+    setNewLang('');
+  };
 
   const handleAdd = () => {
-    if (!newLang.trim()) return;
-    const defaultProf = system === 'cefr' ? 'B2' : system === 'jlpt' ? 'N3' : 'conversational';
-    addLanguage({ language: newLang.trim(), proficiency: defaultProf as Language['proficiency'], isNative: false });
-    setNewLang('');
+    addLanguageValue(newLang);
   };
 
   return (
@@ -40,8 +49,20 @@ export default function LanguagesStep({ market, config }: Props) {
           onChange={(e) => setNewLang(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           placeholder={config.ui.languagePlaceholder}
+          list={listId}
           className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
         />
+        {languageOptions.length > 0 && (
+          <datalist id={listId}>
+            {languageOptions.map((option) => (
+              <option
+                key={option.label}
+                value={option.label}
+                label={option.nativeLabel ? `${option.label} (${option.nativeLabel})` : option.label}
+              />
+            ))}
+          </datalist>
+        )}
         <button
           onClick={handleAdd}
           className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
@@ -50,6 +71,29 @@ export default function LanguagesStep({ market, config }: Props) {
           {config.ui.addLanguage}
         </button>
       </div>
+
+      {languageOptions.length > 0 && (
+        <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3">
+          <p className="text-xs font-semibold text-indigo-900 mb-2">EU language suggestions</p>
+          <div className="flex flex-wrap gap-2">
+            {languageOptions.map((option) => {
+              const isAdded = addedLanguages.has(option.label.toLowerCase());
+              return (
+                <button
+                  key={option.label}
+                  type="button"
+                  onClick={() => addLanguageValue(option.label)}
+                  disabled={isAdded}
+                  className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-xs font-medium text-indigo-800 transition-colors hover:bg-indigo-100 disabled:cursor-default disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+                >
+                  <span>{option.label}</span>
+                  {option.nativeLabel && <span className="text-indigo-400">{option.nativeLabel}</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {cv.languages.length === 0 && (
         <div className="text-center py-10 text-gray-400 text-sm">{config.ui.noLanguagesYet}</div>

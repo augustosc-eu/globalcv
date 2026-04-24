@@ -18,6 +18,11 @@ export interface MarketFormatGuidance {
   doList: string[];
 }
 
+export interface MarketDifferenceItem {
+  label: string;
+  value: string;
+}
+
 const guidanceByMarket: Record<Market, MarketFormatGuidance> = {
   us: {
     preferredLabel: 'US Resume',
@@ -77,6 +82,27 @@ const guidanceByMarket: Record<Market, MarketFormatGuidance> = {
   },
 };
 
+const marketDifferences: Partial<Record<Market, MarketDifferenceItem[]>> = {
+  us: [
+    { label: 'Page setup', value: 'Letter size with a 1-page target for most roles.' },
+    { label: 'Personal details', value: 'Photo, date of birth, and nationality stay off the resume.' },
+    { label: 'Content style', value: 'ATS-friendly headings with quantified impact bullets.' },
+    { label: 'Template fit', value: 'Classic and modern resume layouts tuned for US recruiters.' },
+  ],
+  eu: [
+    { label: 'Page setup', value: 'A4 CV format, usually 1-2 pages depending on seniority.' },
+    { label: 'Personal details', value: 'Photo and personal details are optional and country-dependent.' },
+    { label: 'Language scale', value: 'CEFR language levels are built into the CV workflow.' },
+    { label: 'Template fit', value: 'Europass-compatible and modern EU layouts are available.' },
+  ],
+  jp: [
+    { label: 'Page setup', value: 'A4 rirekisho and shokumu keirekisho formats.' },
+    { label: 'Required fields', value: 'Photo, furigana, gender, nearest station, and commute time.' },
+    { label: 'Content style', value: 'Formal chronology with Japan-specific sections.' },
+    { label: 'Template fit', value: 'Includes 自己PR and 志望動機 sections for local applications.' },
+  ],
+};
+
 function estimatePages(cv: CVData, config: MarketConfig): number {
   const unitsPerPage = config.pageSize === 'A4' ? 52 : 46;
   let units = 6;
@@ -94,6 +120,10 @@ function estimatePages(cv: CVData, config: MarketConfig): number {
 
 export function getMarketFormatGuidance(market: Market): MarketFormatGuidance {
   return guidanceByMarket[market];
+}
+
+export function getMarketDifferences(market: Market): MarketDifferenceItem[] {
+  return marketDifferences[market] ?? [];
 }
 
 export function getFormatChecklist(cv: CVData, config: MarketConfig): FormatChecklistItem[] {
@@ -160,4 +190,3 @@ export function getFormatChecklist(cv: CVData, config: MarketConfig): FormatChec
 
   return items;
 }
-

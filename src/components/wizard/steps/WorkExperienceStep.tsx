@@ -15,6 +15,8 @@ import { MarketConfig } from '@/types/market.types';
 import DateRangePicker from '@/components/form-fields/DateRangePicker';
 import StepHeader from './StepHeader';
 import { cn } from '@/lib/utils/cn';
+import { getBulletSuggestions } from '@/lib/cv/bulletSuggestions';
+import { getSampleContent } from '@/lib/markets/sampleContent';
 
 interface Props { market: Market; config: MarketConfig; }
 
@@ -29,6 +31,7 @@ export default function WorkExperienceStep({ market, config }: Props) {
   const label = config.sections.workExperience.label ?? 'Work Experience';
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const samples = getSampleContent(market);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -43,6 +46,15 @@ export default function WorkExperienceStep({ market, config }: Props) {
   return (
     <div className="space-y-6">
       <StepHeader title={label} description="List your most recent positions first. Drag to reorder." />
+
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Sample work bullets for this market</p>
+        <div className="space-y-2">
+          {samples.workBullets.map((sample) => (
+            <p key={sample} className="rounded-lg bg-white border border-slate-100 px-3 py-2 text-xs text-slate-700 leading-relaxed">{sample}</p>
+          ))}
+        </div>
+      </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={cv.workExperience.map((e) => e.id)} strategy={verticalListSortingStrategy}>
@@ -94,6 +106,7 @@ function SortableExperienceCard(props: CardProps) {
 
 function ExperienceCard({ exp, market, config, expanded, onToggle, onUpdate, onRemove, onDuplicate, dragHandleProps }: CardProps & { dragHandleProps?: object }) {
   const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition';
+  const suggestions = getBulletSuggestions(exp);
 
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
@@ -167,6 +180,23 @@ function ExperienceCard({ exp, market, config, expanded, onToggle, onUpdate, onR
               rows={4} className={cn(inputCls, 'resize-none')}
               placeholder={config.ui.workDescPlaceholder}
             />
+            <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 p-3">
+              <p className="text-xs font-semibold text-blue-900 mb-2">Guided bullet rewriter</p>
+              <div className="space-y-2">
+                {suggestions.map((suggestion) => (
+                  <div key={suggestion} className="rounded-lg bg-white border border-blue-100 p-2">
+                    <p className="text-xs text-blue-800 leading-relaxed">{suggestion}</p>
+                    <button
+                      type="button"
+                      onClick={() => onUpdate({ description: exp.description ? `${exp.description}\n${suggestion}` : suggestion })}
+                      className="mt-1 text-[11px] font-semibold text-blue-700 hover:text-blue-900 transition-colors"
+                    >
+                      Add to description
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           {market === 'jp' && (

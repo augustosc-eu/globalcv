@@ -4,6 +4,7 @@ import { useCVStore } from '@/store/cvStore';
 import { MarketConfig } from '@/types/market.types';
 import StepHeader from './StepHeader';
 import { analyzeJobTargeting } from '@/lib/cv/jobTargeting';
+import { getSampleContent } from '@/lib/markets/sampleContent';
 
 interface Props {
   config: MarketConfig;
@@ -13,6 +14,7 @@ export default function ObjectiveStep({ config }: Props) {
   const { cv, setObjective, setTargeting } = useCVStore();
   const sectionLabel = config.sections.objective.label ?? 'Professional Summary';
   const targeting = analyzeJobTargeting(cv);
+  const samples = getSampleContent(config.market);
 
   return (
     <div className="space-y-6">
@@ -29,6 +31,24 @@ export default function ObjectiveStep({ config }: Props) {
         <p className="text-xs text-gray-400 mt-1 text-right">
           {cv.objective?.length ?? 0} {config.ui.characters}{config.ui.objectiveAimHint}
         </p>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Market-specific starter</p>
+        <div className="space-y-2">
+          {samples.summaries.map((sample) => (
+            <div key={sample} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+              <p className="text-sm text-slate-700 leading-relaxed">{sample}</p>
+              <button
+                type="button"
+                onClick={() => setObjective(sample)}
+                className="mt-2 text-xs font-semibold text-slate-900 hover:text-blue-700 transition-colors"
+              >
+                Use as starter
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-4">

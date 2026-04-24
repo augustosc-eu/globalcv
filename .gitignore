@@ -5,6 +5,7 @@ node_modules/
 
 # testing
 /coverage
+/tmp/pdf-fixtures/
 
 # next.js
 /.next/

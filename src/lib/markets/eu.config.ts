@@ -1,4 +1,4 @@
-import { enUI } from './ui';
+import { euUI } from './ui';
 import { MarketConfig } from '@/types/market.types';
 
 export const euConfig: MarketConfig = {
@@ -50,5 +50,5 @@ export const euConfig: MarketConfig = {
     { id: 'eu-europass', name: 'Europass', description: 'Standard European Curriculum Vitae format' },
     { id: 'eu-modern',   name: 'Modern EU', description: 'Contemporary design with CEFR language grid' },
   ],
-  ui: enUI,
+  ui: euUI,
 };

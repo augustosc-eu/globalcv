@@ -9,6 +9,7 @@ import ATSSuggestionsPanel from '@/components/shared/ATSSuggestionsPanel';
 import { cn } from '@/lib/utils/cn';
 import { Check, Sparkles } from 'lucide-react';
 import { getMarketFormatGuidance } from '@/lib/markets/formatGuidance';
+import { getTemplateUseCase } from '@/lib/markets/templateUseCases';
 
 interface Props { market: Market; config: MarketConfig; }
 
@@ -47,6 +48,7 @@ export default function TemplatePickerStep({ config }: Props) {
         {config.templates.map((tmpl) => {
           const isSelected = cv.templateId === tmpl.id;
           const isRecommended = tmpl.id === guidance.recommendedTemplateId;
+          const useCase = getTemplateUseCase(tmpl.id);
           return (
             <button
               key={tmpl.id}
@@ -77,6 +79,14 @@ export default function TemplatePickerStep({ config }: Props) {
               <div>
                 <p className="font-bold text-gray-900">{tmpl.name}</p>
                 <p className="text-sm text-gray-500 mt-0.5">{tmpl.description}</p>
+                <p className="mt-3 text-xs font-semibold text-slate-800">Best for: {useCase.bestFor}</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {useCase.traits.map((trait) => (
+                    <span key={trait} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                      {trait}
+                    </span>
+                  ))}
+                </div>
               </div>
             </button>
           );

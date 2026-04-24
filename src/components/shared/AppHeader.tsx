@@ -6,7 +6,7 @@ import { Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2, Sh
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
-import { usePDFExport } from '@/hooks/usePDFExport';
+import { ExportMode, usePDFExport } from '@/hooks/usePDFExport';
 import ShareButton from './ShareButton';
 import ThemeSelector from './ThemeSelector';
 import PasteImportModal from './PasteImportModal';
@@ -22,6 +22,13 @@ const marketFlags: Record<Market, string> = {
   gb: '🇬🇧', au: '🇦🇺', in: '🇮🇳', br: '🇧🇷',
 };
 
+const exportModeLabels: Record<ExportMode, string> = {
+  designed: 'Designed',
+  ats: 'ATS-safe',
+  privacy: 'Privacy',
+  compact: 'Compact',
+};
+
 interface Props { market: Market; config: MarketConfig }
 
 export default function AppHeader({ market, config }: Props) {
@@ -33,6 +40,7 @@ export default function AppHeader({ market, config }: Props) {
   const [draftsOpen, setDraftsOpen] = useState(false);
   const [coverLetterOpen, setCoverLetterOpen] = useState(false);
   const [hidePhotoInPdf, setHidePhotoInPdf] = useState(false);
+  const [exportMode, setExportMode] = useState<ExportMode>('designed');
   const [toolsOpen, setToolsOpen] = useState(false);
   const [drafts, setDrafts] = useState(() => listSavedDrafts());
   const toolsRef = useRef<HTMLDivElement>(null);
@@ -54,7 +62,11 @@ export default function AppHeader({ market, config }: Props) {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem('globalcv_hide_photo_pdf');
+      const savedMode = window.localStorage.getItem('globalcv_export_mode') as ExportMode | null;
       setHidePhotoInPdf(saved === 'true');
+      if (savedMode && ['designed', 'ats', 'privacy', 'compact'].includes(savedMode)) {
+        setExportMode(savedMode);
+      }
     } catch {
       // no-op
     }
@@ -127,6 +139,15 @@ export default function AppHeader({ market, config }: Props) {
     setHidePhotoInPdf(checked);
     try {
       window.localStorage.setItem('globalcv_hide_photo_pdf', String(checked));
+    } catch {
+      // no-op
+    }
+  }
+
+  function updateExportModePreference(mode: ExportMode) {
+    setExportMode(mode);
+    try {
+      window.localStorage.setItem('globalcv_export_mode', mode);
     } catch {
       // no-op
     }
@@ -209,7 +230,7 @@ export default function AppHeader({ market, config }: Props) {
           <ShareButton cv={cv} />
 
           <button
-            onClick={() => exportPDF(cv, config, { hidePhoto: hidePhotoInPdf })}
+            onClick={() => exportPDF(cv, config, { hidePhoto: hidePhotoInPdf, mode: exportMode })}
             disabled={pdfState === 'generating'}
             title={pdfState === 'error' && pdfError ? pdfError : undefined}
             className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60 shadow-sm"
@@ -222,7 +243,7 @@ export default function AppHeader({ market, config }: Props) {
             ) : pdfState === 'error' ? (
               <><AlertCircle size={12} /> {config.ui.failed}</>
             ) : (
-              <><Download size={12} /> {config.ui.exportPDF}</>
+              <><Download size={12} /> {config.ui.exportPDF}<span className="hidden lg:inline opacity-80">({exportModeLabels[exportMode]})</span></>
             )}
           </button>
 
@@ -286,6 +307,19 @@ export default function AppHeader({ market, config }: Props) {
                   Generate cover letter
                 </button>
                 <div className="my-1 h-px bg-slate-200" />
+                <label className="flex flex-col gap-1 px-3 py-2 text-sm text-slate-700 rounded-lg">
+                  <span className="text-xs font-semibold text-slate-500">Export mode</span>
+                  <select
+                    value={exportMode}
+                    onChange={(e) => updateExportModePreference(e.target.value as ExportMode)}
+                    className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"
+                  >
+                    <option value="designed">Designed PDF</option>
+                    <option value="ats">ATS-safe</option>
+                    <option value="privacy">Privacy copy</option>
+                    <option value="compact">One-page compact</option>
+                  </select>
+                </label>
                 <label className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg">
                   <input
                     type="checkbox"

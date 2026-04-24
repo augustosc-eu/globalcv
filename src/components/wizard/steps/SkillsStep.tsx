@@ -6,6 +6,7 @@ import { useCVStore } from '@/store/cvStore';
 import { Skill, SkillLevel, Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 import StepHeader from './StepHeader';
+import { getSampleContent } from '@/lib/markets/sampleContent';
 
 interface Props { market: Market; config: MarketConfig; }
 
@@ -15,6 +16,7 @@ export default function SkillsStep({ market, config }: Props) {
   const [newCategory, setNewCategory] = useState('');
 
   const label = config.sections.skills.label ?? 'Skills';
+  const samples = getSampleContent(market);
 
   const handleAdd = () => {
     if (!newName.trim()) return;
@@ -56,6 +58,23 @@ export default function SkillsStep({ market, config }: Props) {
           <Plus size={14} />
           {config.ui.addSkill}
         </button>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Market-relevant skill starters</p>
+        <div className="flex flex-wrap gap-2">
+          {samples.skills.map((skill) => (
+            <button
+              key={skill}
+              type="button"
+              onClick={() => addSkill({ name: skill, level: 3, category: 'Market fit' })}
+              disabled={cv.skills.some((item) => item.name.toLowerCase() === skill.toLowerCase())}
+              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-default disabled:bg-slate-100 disabled:text-slate-400"
+            >
+              {skill}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Skill groups */}

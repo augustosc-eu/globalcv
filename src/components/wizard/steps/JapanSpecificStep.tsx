@@ -4,6 +4,7 @@ import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 import StepHeader from './StepHeader';
+import { getSampleContent } from '@/lib/markets/sampleContent';
 
 interface Props { market: Market; config: MarketConfig; }
 
@@ -12,6 +13,7 @@ const textareaCls = `${inputCls} resize-none`;
 
 export default function JapanSpecificStep({ config }: Props) {
   const { cv, setSelfPromotion, setReasonForApplication, setDesiredConditions } = useCVStore();
+  const samples = getSampleContent(config.market).japanSpecific;
 
   return (
     <div className="space-y-6">
@@ -37,6 +39,15 @@ export default function JapanSpecificStep({ config }: Props) {
             className={textareaCls}
             placeholder="私は○○を得意としており、これまで○○において○○の成果を上げてきました。貴社でも○○を活かして貢献したいと考えております。"
           />
+          {samples?.selfPromotion && (
+            <button
+              type="button"
+              onClick={() => setSelfPromotion(samples.selfPromotion)}
+              className="mt-2 text-xs font-semibold text-red-700 hover:text-red-900 transition-colors"
+            >
+              サンプルを使用
+            </button>
+          )}
           <p className="text-xs text-gray-400 mt-1 text-right">{cv.selfPromotion?.length ?? 0}文字</p>
         </div>
       )}
@@ -58,6 +69,15 @@ export default function JapanSpecificStep({ config }: Props) {
             className={textareaCls}
             placeholder="貴社の○○という事業に魅力を感じ、応募いたしました。私のこれまでの経験を活かして○○に貢献できると確信しております。"
           />
+          {samples?.reasonForApplication && (
+            <button
+              type="button"
+              onClick={() => setReasonForApplication(samples.reasonForApplication)}
+              className="mt-2 text-xs font-semibold text-red-700 hover:text-red-900 transition-colors"
+            >
+              サンプルを使用
+            </button>
+          )}
           <p className="text-xs text-gray-400 mt-1 text-right">{cv.reasonForApplication?.length ?? 0}文字</p>
         </div>
       )}

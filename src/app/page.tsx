@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Briefcase, FileText, Globe, Sparkles, Star } from 'lucide-react';
+import { ArrowRight, Briefcase, FileText, Globe, Repeat2, Sparkles, Star, Target } from 'lucide-react';
 import TopNav from '@/components/shared/TopNav';
 import { SITE_OWNER_NAME, SITE_OWNER_URL } from '@/lib/site';
 
@@ -136,6 +136,66 @@ const platformStats = [
   { label: 'Templates', value: 'Local-first' },
 ];
 
+const concreteMarketDifferences = [
+  {
+    market: 'United States',
+    flag: '🇺🇸',
+    accent: 'border-blue-200 bg-blue-50/70 text-blue-700',
+    points: [
+      { label: 'Page', value: 'Letter resume with a 1-page target' },
+      { label: 'Personal info', value: 'No photo, date of birth, or nationality' },
+      { label: 'Content', value: 'ATS headings and quantified impact bullets' },
+      { label: 'Best for', value: 'US recruiter and ATS review' },
+    ],
+  },
+  {
+    market: 'European Union',
+    flag: '🇪🇺',
+    accent: 'border-indigo-200 bg-indigo-50/70 text-indigo-700',
+    points: [
+      { label: 'Page', value: 'A4 CV, commonly 1-2 pages' },
+      { label: 'Personal info', value: 'Photo and details vary by country' },
+      { label: 'Content', value: 'CEFR languages and Europass option' },
+      { label: 'Best for', value: 'Cross-border European applications' },
+    ],
+  },
+  {
+    market: 'Japan',
+    flag: '🇯🇵',
+    accent: 'border-rose-200 bg-rose-50/70 text-rose-700',
+    points: [
+      { label: 'Page', value: 'A4 rirekisho and shokumu formats' },
+      { label: 'Personal info', value: 'Photo, furigana, gender, station, commute' },
+      { label: 'Content', value: 'Formal chronology, 自己PR, and 志望動機' },
+      { label: 'Best for', value: 'Japanese hiring conventions' },
+    ],
+  },
+];
+
+const onboardingChoices = [
+  {
+    title: 'Applying to a job',
+    description: 'Start with a target role and tailor your CV around keywords, skills, and recruiter scan checks.',
+    href: '/jobs',
+    icon: Target,
+    cta: 'Find a job to tailor',
+  },
+  {
+    title: 'Building a general CV',
+    description: 'Open the builder with market defaults and create a strong reusable CV from scratch.',
+    href: '/us?mode=general',
+    icon: FileText,
+    cta: 'Start a general CV',
+  },
+  {
+    title: 'Converting to another market',
+    description: 'Use market previews to see which fields, templates, and conventions change before copying.',
+    href: '/us?mode=convert',
+    icon: Repeat2,
+    cta: 'Start conversion flow',
+  },
+];
+
 export default function HomePage() {
   return (
     <main className="app-shell-bg soft-grid-bg">
@@ -158,7 +218,7 @@ export default function HomePage() {
               </h1>
 
               <p className="text-slate-600 text-base md:text-lg mt-4 max-w-2xl">
-                GlobalCV adapts structure, fields, and conventions automatically so your application looks local in the US, UK, EU, LATAM, Brazil, India, and Japan.
+                Switch markets and see the fields, page size, photo rules, language scale, and templates change so your application looks local in the US, UK, EU, LATAM, Brazil, India, and Japan.
               </p>
 
               <div className="flex flex-wrap items-center gap-3 mt-7">
@@ -195,6 +255,81 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="mt-12">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
+            <div>
+              <h2 className="text-2xl font-semibold text-slate-900">What are you trying to do today?</h2>
+              <p className="text-sm text-slate-500 mt-1">Start from the workflow that matches your goal.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {onboardingChoices.map((choice) => {
+              const Icon = choice.icon;
+              return (
+                <Link key={choice.title} href={choice.href} className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg">
+                  <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white">
+                    <Icon size={18} />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900">{choice.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{choice.description}</p>
+                  <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-slate-800">
+                    {choice.cta}
+                    <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mt-12">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
+            <div>
+              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-2">
+                <Globe size={13} />
+                Concrete Market Differences
+              </div>
+              <h2 className="text-2xl font-semibold text-slate-900">See exactly what changes by country</h2>
+              <p className="text-sm text-slate-500 mt-1 max-w-2xl">
+                GlobalCV does more than swap labels. It changes the format, required fields, page expectations, and writing cues for the market you are targeting.
+              </p>
+            </div>
+            <Link
+              href="/jp"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors w-fit"
+            >
+              Compare with Japan
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {concreteMarketDifferences.map((item) => (
+              <div key={item.market} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{item.flag}</span>
+                    <h3 className="text-lg font-bold text-slate-900">{item.market}</h3>
+                  </div>
+                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${item.accent}`}>
+                    Local rules
+                  </span>
+                </div>
+
+                <dl className="space-y-2.5">
+                  {item.points.map((point) => (
+                    <div key={`${item.market}-${point.label}`} className="grid grid-cols-[88px_1fr] gap-3 border-t border-slate-100 pt-2.5 first:border-t-0 first:pt-0">
+                      <dt className="text-[11px] uppercase tracking-wide font-semibold text-slate-500">{point.label}</dt>
+                      <dd className="text-sm text-slate-700 leading-relaxed">{point.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ))}
           </div>
         </section>
 

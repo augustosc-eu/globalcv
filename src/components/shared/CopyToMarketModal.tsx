@@ -6,6 +6,7 @@ import { CVData, Market } from '@/types/cv.types';
 import { saveCV } from '@/lib/storage/localStorage';
 import { createEmptyCVData } from '@/store/cvStore';
 import { getMarketConfig } from '@/lib/markets';
+import { getMarketSwitchPreview } from '@/lib/markets/marketSwitchPreview';
 
 interface Props {
   cv: CVData;
@@ -30,17 +31,7 @@ export default function CopyToMarketModal({ cv, currentMarket, open, onClose }: 
 
   const targets = ALL_MARKETS.filter((m) => m !== currentMarket);
   const previewConfig = selected ? getMarketConfig(selected) : null;
-  const hiddenPreview = previewConfig ? [
-    previewConfig.fields.photo.visibility === 'hidden' && cv.personalInfo.photo ? 'Photo will stay hidden by default' : null,
-    previewConfig.fields.dateOfBirth.visibility === 'hidden' && cv.personalInfo.dateOfBirth ? 'Date of birth is discouraged in this market' : null,
-    previewConfig.fields.maritalStatus.visibility === 'hidden' && cv.personalInfo.maritalStatus ? 'Marital status is discouraged in this market' : null,
-    previewConfig.fields.idNumber.visibility === 'hidden' && cv.personalInfo.idNumber ? 'ID/document number is discouraged in this market' : null,
-  ].filter(Boolean) as string[] : [];
-  const addedPreview = previewConfig ? [
-    previewConfig.fields.photo.visibility === 'required' && !cv.personalInfo.photo ? 'Add a photo after copying' : null,
-    previewConfig.fields.furigana.visibility !== 'hidden' ? 'Review furigana and Japanese-specific fields' : null,
-    previewConfig.sections.references.enabled && cv.references.length === 0 ? 'Consider adding references for this market' : null,
-  ].filter(Boolean) as string[] : [];
+  const switchPreview = selected ? getMarketSwitchPreview(cv, selected, !useLocalizationDefaults) : null;
 
   function handleCopy() {
     if (!selected) return;
@@ -136,30 +127,40 @@ export default function CopyToMarketModal({ cv, currentMarket, open, onClose }: 
               {previewConfig && (
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Copy preview for {previewConfig.name}</p>
-                  <p className="text-xs text-slate-700">
-                    <strong>Setup:</strong> {useLocalizationDefaults ? `${previewConfig.pageSize} · ${previewConfig.templates[0]?.name}` : 'Keep current template and page size'}
-                  </p>
-                  {addedPreview.length > 0 && (
+                  {switchPreview?.setup.map((item) => (
+                    <p key={item} className="text-xs text-slate-700">{item}</p>
+                  ))}
+                  {switchPreview && switchPreview.newRequirements.length > 0 && (
                     <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700 mb-1">Review after copy</p>
                       <ul className="space-y-1">
-                        {addedPreview.map((item) => (
+                        {switchPreview.newRequirements.map((item) => (
                           <li key={item} className="text-xs text-blue-800">{item}</li>
                         ))}
                       </ul>
                     </div>
                   )}
-                  {hiddenPreview.length > 0 && (
+                  {switchPreview && switchPreview.hiddenOrSensitive.length > 0 && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
                       <p className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700 mb-1">
                         <AlertTriangle size={11} />
                         Sensitive fields
                       </p>
                       <ul className="space-y-1">
-                        {hiddenPreview.map((item) => (
+                        {switchPreview.hiddenOrSensitive.map((item) => (
                           <li key={item} className="text-xs text-amber-800">{item}</li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+                  {switchPreview && switchPreview.sections.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">Enabled sections</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {switchPreview.sections.slice(0, 8).map((section) => (
+                          <span key={section} className="rounded-full bg-white border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600">{section}</span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

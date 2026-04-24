@@ -91,6 +91,37 @@ export const enUI: MarketUI = {
   noItemsYet: 'No items added yet.',
 };
 
+export const euUI: MarketUI = {
+  ...enUI,
+  phonePlaceholder: '+32 470 00 00 00',
+  city: 'City', cityPlaceholder: 'Brussels',
+  country: 'Country', countryPlaceholder: 'Belgium',
+  firstNamePlaceholder: 'Sofia',
+  lastNamePlaceholder: 'Müller',
+  emailPlaceholder: 'sofia@example.eu',
+  workLocationPlaceholder: 'Berlin, Germany',
+  institutionPlaceholder: 'University of Amsterdam',
+  locationPlaceholder: 'Amsterdam, Netherlands',
+  objectiveDesc: 'Write a concise personal statement for European employers, highlighting international experience, languages, and role fit.',
+  objectivePlaceholder: 'Project coordinator with 5+ years of experience delivering cross-border digital initiatives across European teams. Skilled in stakeholder communication, process improvement, and multilingual collaboration, with a track record of improving delivery predictability and documentation quality.',
+  objectiveAimHint: ' (aim for 3–5 lines)',
+  skillPlaceholder: 'e.g. Stakeholder coordination, GDPR, Data analysis',
+  skillCategoryPlaceholder: 'e.g. Digital skills',
+  languagePlaceholder: 'e.g. German, French, Spanish',
+  langCertPlaceholder: 'e.g. CEFR C1, DELF B2',
+  certIssuerPlaceholder: 'European Commission / Coursera / PMI',
+  certNamePlaceholder: 'PRINCE2 Foundation / EU Project Management',
+  workCompanyPlaceholder: 'European Digital Agency',
+  workJobTitlePlaceholder: 'Project Coordinator',
+  workDescPlaceholder: '• Coordinated a cross-border rollout across teams in Germany, Spain, and the Netherlands, improving reporting consistency and delivery visibility.',
+  degreePlaceholder: 'Master of Science',
+  fieldOfStudyPlaceholder: 'International Business',
+  refNamePlaceholder: 'Elena Rossi',
+  refJobTitlePlaceholder: 'Programme Manager',
+  refCompanyPlaceholder: 'European Digital Agency',
+  refRelationshipPlaceholder: 'Project sponsor',
+};
+
 export const esUI: MarketUI = {
   back: 'Atrás', next: 'Siguiente', save: 'Guardar', saving: 'Guardando…', saved: 'Guardado',
   clear: 'Limpiar', clearConfirmTitle: '¿Limpiar todos los datos?',

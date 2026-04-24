@@ -12,9 +12,9 @@ import WizardNavigation from './WizardNavigation';
 import StepRouter from './StepRouter';
 import PreviewPane from '@/components/preview/PreviewPane';
 import CrossTabSyncBanner from '@/components/shared/CrossTabSyncBanner';
-import MarketFormatPanel from './MarketFormatPanel';
-import ReadinessPanel from './ReadinessPanel';
+import BuilderInsightsPanel from './BuilderInsightsPanel';
 import { computeStepCompletion } from '@/lib/cv/completeness';
+import { useSearchParams } from 'next/navigation';
 
 interface WizardShellProps { market: Market }
 export interface WizardStep { key: string; label: string }
@@ -26,13 +26,15 @@ const MAX_PREVIEW_WIDTH = 720;
 
 export default function WizardShell({ market }: WizardShellProps) {
   const config = getMarketConfig(market);
+  const searchParams = useSearchParams();
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [previewWidth, setPreviewWidth] = useState(DEFAULT_PREVIEW_WIDTH);
+  const appliedUrlTargeting = useRef(false);
   const resizeState = useRef<{ startX: number; startWidth: number } | null>(null);
   const { initializeMarket, setSteps, wizard, cv, setPersonalInfo, setObjective,
           addWorkExperience, addEducation, addSkill, addLanguage, addCertification,
           addReference, setSelfPromotion, setReasonForApplication, setDesiredConditions,
-          setTemplate, setColorTheme, setPageSize } = useCVStore();
+          setTemplate, setColorTheme, setPageSize, setTargeting, setCurrentStep } = useCVStore();
 
   const steps: WizardStep[] = useMemo(() => {
     const list: WizardStep[] = [{ key: 'personal', label: 'Personal Info' }];
@@ -79,6 +81,28 @@ export default function WizardShell({ market }: WizardShellProps) {
     }
     setSteps(steps.map((s) => s.label));
   }, [market]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (appliedUrlTargeting.current) return;
+    const role = searchParams.get('targetRole') ?? undefined;
+    const company = searchParams.get('targetCompany') ?? undefined;
+    const notes = searchParams.get('jobDescriptionNotes') ?? undefined;
+    const mode = searchParams.get('mode');
+    if (!role && !company && !notes && !mode) return;
+
+    appliedUrlTargeting.current = true;
+    if (role || company || notes) {
+      setTargeting({ targetRole: role, targetCompany: company, jobDescriptionNotes: notes });
+    }
+    if (mode === 'job' || role || notes) {
+      const objectiveStep = steps.findIndex((step) => step.key === 'objective');
+      if (objectiveStep >= 0) setCurrentStep(objectiveStep);
+    }
+    if (mode === 'convert') {
+      const templateStep = steps.findIndex((step) => step.key === 'template');
+      if (templateStep >= 0) setCurrentStep(templateStep);
+    }
+  }, [searchParams, setCurrentStep, setTargeting, steps]);
 
   const currentStep = wizard.currentStep;
   const activeStep = steps[currentStep];
@@ -162,8 +186,7 @@ export default function WizardShell({ market }: WizardShellProps) {
               )}
             </div>
 
-            <MarketFormatPanel market={market} config={config} />
-            <ReadinessPanel cv={cv} config={config} />
+            <BuilderInsightsPanel market={market} cv={cv} config={config} />
 
             <section className="surface-card rounded-2xl p-5 md:p-6 border border-slate-200/90">
               <StepRouter activeStepKey={activeStep?.key ?? 'personal'} market={market} config={config} />
