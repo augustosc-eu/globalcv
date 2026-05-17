@@ -217,6 +217,7 @@ export interface MarketConfig {
   sections: {
     objective: SectionConfig;
     workExperience: SectionConfig;
+    projects: SectionConfig;
     education: SectionConfig;
     skills: SectionConfig;
     languages: SectionConfig;

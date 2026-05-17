@@ -22,7 +22,7 @@ import { getActiveTheme } from '@/lib/utils/theme';
 
 type PdfExportMode = 'designed' | 'ats' | 'privacy' | 'compact';
 
-interface Props { cv: CVData; config: MarketConfig; exportMode?: PdfExportMode; }
+interface Props { cv: CVData; config: MarketConfig; exportMode?: PdfExportMode; qrDataUrl?: string; }
 
 function fmtDate(ym?: string): string {
   if (!ym) return '';
@@ -151,11 +151,13 @@ export function ClassicPDF({
   accent,
   showPhoto = true,
   compact = false,
+  qrDataUrl,
 }: {
   cv: CVData;
   accent: string;
   showPhoto?: boolean;
   compact?: boolean;
+  qrDataUrl?: string;
 }) {
   const p = cv.personalInfo;
   const isA4 = cv.pageSize === 'A4';
@@ -183,11 +185,15 @@ export function ClassicPDF({
               {p.linkedIn   && <Text style={{ fontSize: T.meta, color: T.mid, marginRight: 10 }}>{p.linkedIn}</Text>}
             </View>
           </View>
-          {showPhoto && p.photo && (
+          {showPhoto && p.photo ? (
             <View style={{ width: 66, height: 86, borderWidth: 0.75, borderColor: '#d1d5db' }}>
               <Image src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </View>
-          )}
+          ) : qrDataUrl ? (
+            <View style={{ width: 52, height: 52, borderWidth: 0.5, borderColor: '#e5e7eb', padding: 2 }}>
+              <Image src={qrDataUrl} style={{ width: '100%', height: '100%' }} />
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -205,6 +211,23 @@ export function ClassicPDF({
             <View key={exp.id} wrap={false} style={{ marginBottom: i < workExperience.length - 1 ? T.entryGap : 0 }}>
               <EntryHeader title={`${exp.title}${exp.company ? ` — ${exp.company}` : ''}`} right={dr(exp.startDate, exp.endDate, exp.isPresent)} accent={accent} sub={exp.location} />
               {exp.description && <BodyText>{exp.description}</BodyText>}
+            </View>
+          ))}
+        </View>
+      )}
+
+      {!isHidden(cv, 'projects') && (cv.projects ?? []).length > 0 && (
+        <View style={{ marginBottom: sectionGap }}>
+          <SectionHeading accent={accent}>Projects</SectionHeading>
+          {(cv.projects ?? []).map((proj, i) => (
+            <View key={proj.id} wrap={false} style={{ marginBottom: i < (cv.projects ?? []).length - 1 ? T.entryGap : 0 }}>
+              <EntryHeader
+                title={proj.name}
+                right={proj.role ?? undefined}
+                accent={accent}
+                sub={(proj.techStack ?? []).join(' · ') || undefined}
+              />
+              {proj.description && <BodyText>{proj.description}</BodyText>}
             </View>
           ))}
         </View>
@@ -266,7 +289,7 @@ export function ClassicPDF({
 // Sidebar background uses absolute positioning to fill page height without
 // triggering Yoga layout loops (minHeight + flex: 1 combinations).
 
-export function ModernPDF({ cv, accent, isLatam = false, compact = false }: { cv: CVData; accent: string; isLatam?: boolean; compact?: boolean }) {
+export function ModernPDF({ cv, accent, isLatam = false, compact = false, qrDataUrl }: { cv: CVData; accent: string; isLatam?: boolean; compact?: boolean; qrDataUrl?: string }) {
   const p = cv.personalInfo;
   const isA4 = cv.pageSize === 'A4';
   const SIDEBAR_W = compact ? 142 : 158;
@@ -344,6 +367,15 @@ export function ModernPDF({ cv, accent, isLatam = false, compact = false }: { cv
           ))}
         </>
       )}
+
+      {qrDataUrl && (
+        <View style={{ marginTop: 18, alignItems: 'center' }}>
+          <View style={{ width: 46, height: 46, backgroundColor: T.white, padding: 2 }}>
+            <Image src={qrDataUrl} style={{ width: '100%', height: '100%' }} />
+          </View>
+          <Text style={{ fontSize: 7, color: 'rgba(255,255,255,0.5)', marginTop: 4, textAlign: 'center' }}>Scan profile</Text>
+        </View>
+      )}
     </View>
   );
 
@@ -366,6 +398,23 @@ export function ModernPDF({ cv, accent, isLatam = false, compact = false }: { cv
                 <View key={exp.id} wrap={false} style={{ marginBottom: i < workExperience.length - 1 ? T.entryGap : 0 }}>
                   <EntryHeader title={exp.title} right={dr(exp.startDate, exp.endDate, exp.isPresent)} accent={accent} sub={exp.company ? `${exp.company}${exp.location ? ` · ${exp.location}` : ''}` : undefined} />
                   {exp.description && <BodyText>{exp.description}</BodyText>}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {!isHidden(cv, 'projects') && (cv.projects ?? []).length > 0 && (
+            <View style={{ marginBottom: sectionGap }}>
+              <ModernHeading accent={accent}>{isLatam ? 'Proyectos' : 'Projects'}</ModernHeading>
+              {(cv.projects ?? []).map((proj, i) => (
+                <View key={proj.id} wrap={false} style={{ marginBottom: i < (cv.projects ?? []).length - 1 ? T.entryGap : 0 }}>
+                  <EntryHeader
+                    title={proj.name}
+                    right={proj.role ?? undefined}
+                    accent={accent}
+                    sub={(proj.techStack ?? []).join(' · ') || undefined}
+                  />
+                  {proj.description && <BodyText>{proj.description}</BodyText>}
                 </View>
               ))}
             </View>
@@ -515,6 +564,23 @@ export function EUModernPDF({ cv, accent, compact = false }: { cv: CVData; accen
                 <View key={exp.id} wrap={false} style={{ borderLeftWidth: 1.5, borderLeftColor: accent + '55', paddingLeft: 9, marginBottom: i < workExperience.length - 1 ? T.entryGap : 0 }}>
                   <EntryHeader title={exp.title} right={dr(exp.startDate, exp.endDate, exp.isPresent)} accent={accent} sub={exp.company ? `${exp.company}${exp.location ? ` · ${exp.location}` : ''}` : undefined} />
                   {exp.description && <BodyText>{exp.description}</BodyText>}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {!isHidden(cv, 'projects') && (cv.projects ?? []).length > 0 && (
+            <View style={{ marginBottom: sectionGap }}>
+              <EUMainTitle accent={accent}>Projects</EUMainTitle>
+              {(cv.projects ?? []).map((proj, i) => (
+                <View key={proj.id} wrap={false} style={{ borderLeftWidth: 1.5, borderLeftColor: accent + '55', paddingLeft: 9, marginBottom: i < (cv.projects ?? []).length - 1 ? T.entryGap : 0 }}>
+                  <EntryHeader
+                    title={proj.name}
+                    right={proj.role ?? undefined}
+                    accent={accent}
+                    sub={(proj.techStack ?? []).join(' · ') || undefined}
+                  />
+                  {proj.description && <BodyText>{proj.description}</BodyText>}
                 </View>
               ))}
             </View>
@@ -1132,7 +1198,7 @@ export function JapanShokumuPDF({ cv }: { cv: CVData }) {
 
 // ─── Root document ─────────────────────────────────────────────────────────────
 
-export function CVPDFDocument({ cv, config, exportMode = 'designed' }: Props) {
+export function CVPDFDocument({ cv, config, exportMode = 'designed', qrDataUrl }: Props) {
   const theme = getActiveTheme(cv, config);
   const accent = theme.primary;
   const tpl = cv.templateId;
@@ -1144,18 +1210,18 @@ export function CVPDFDocument({ cv, config, exportMode = 'designed' }: Props) {
   } else if (tpl === 'jp-shokumu') {
     page = <JapanShokumuPDF cv={cv} />;
   } else if (tpl === 'in-modern' || tpl === 'latam-modern' || tpl === 'br-modern') {
-    page = <ModernPDF cv={cv} accent={accent} isLatam compact={compact} />;
+    page = <ModernPDF cv={cv} accent={accent} isLatam compact={compact} qrDataUrl={qrDataUrl} />;
   } else if (tpl === 'us-modern' || tpl === 'gb-modern' || tpl === 'au-modern') {
-    page = <ModernPDF cv={cv} accent={accent} compact={compact} />;
+    page = <ModernPDF cv={cv} accent={accent} compact={compact} qrDataUrl={qrDataUrl} />;
   } else if (tpl === 'eu-modern') {
     page = <EUModernPDF cv={cv} accent={accent} compact={compact} />;
   } else if (tpl === 'in-classic' || tpl === 'latam-traditional' || tpl === 'br-classic') {
-    page = <ClassicPDF cv={cv} accent={accent} showPhoto compact={compact} />;
+    page = <ClassicPDF cv={cv} accent={accent} showPhoto compact={compact} qrDataUrl={qrDataUrl} />;
   } else if (tpl === 'eu-europass') {
     page = <EuropassPDF cv={cv} accent={accent} compact={compact} />;
   } else {
     // gb-classic, au-classic, us-classic → ClassicPDF
-    page = <ClassicPDF cv={cv} accent={accent} compact={compact} />;
+    page = <ClassicPDF cv={cv} accent={accent} compact={compact} qrDataUrl={qrDataUrl} />;
   }
 
   return (

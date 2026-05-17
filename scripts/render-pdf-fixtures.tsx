@@ -113,6 +113,7 @@ function baseCV(market: Market, config: MarketConfig, templateId: string): CVDat
     selfPromotion: '私は課題を整理し、周囲と協力しながら着実に改善を進めることを強みとしています。',
     reasonForApplication: '貴社の事業内容と成長方針に魅力を感じ、これまで培った経験を活かして貢献できると考え志望いたしました。',
     desiredConditions: '貴社の規定に従います。',
+    projects: [],
     hiddenSections: [],
   };
 }

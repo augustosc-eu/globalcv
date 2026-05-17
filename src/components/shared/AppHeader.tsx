@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2, ShieldCheck, Undo2, Redo2, HardDriveDownload, FolderOpen, Copy, ChevronDown, Wrench, Files, FilePlus2, ScrollText } from 'lucide-react';
+import { Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2, ShieldCheck, Undo2, Redo2, HardDriveDownload, FolderOpen, Copy, ChevronDown, Wrench, Files, FilePlus2, ScrollText, Keyboard, Moon, Sun } from 'lucide-react';
+import { useDarkMode } from '@/hooks/useDarkMode';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
@@ -14,6 +15,7 @@ import CopyToMarketModal from './CopyToMarketModal';
 import BrandLink from './BrandLink';
 import DraftManagerModal from './DraftManagerModal';
 import CoverLetterModal from './CoverLetterModal';
+import KeyboardShortcutsModal from './KeyboardShortcutsModal';
 import { clearCV, listSavedDrafts, saveCV } from '@/lib/storage/localStorage';
 import { parseCVData } from '@/lib/cv/schema';
 
@@ -33,12 +35,14 @@ interface Props { market: Market; config: MarketConfig }
 
 export default function AppHeader({ market, config }: Props) {
   const { isDirty, isSaving, lastSaved, save, cv, resetCV, restoreCV, initializeMarket, privacyMode, togglePrivacyMode, undo, redo, history, historyIndex } = useCVStore();
+  const { dark, toggle: toggleDarkMode } = useDarkMode();
   const { exportPDF, state: pdfState, error: pdfError } = usePDFExport();
   const [importOpen, setImportOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
   const [draftsOpen, setDraftsOpen] = useState(false);
   const [coverLetterOpen, setCoverLetterOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [hidePhotoInPdf, setHidePhotoInPdf] = useState(false);
   const [exportMode, setExportMode] = useState<ExportMode>('designed');
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -51,13 +55,18 @@ export default function AppHeader({ market, config }: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const mod = e.metaKey || e.ctrlKey;
-      if (!mod) return;
-      if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
-      if ((e.key === 'y') || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+      if (mod) {
+        if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
+        if ((e.key === 'y') || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redo(); return; }
+        if (e.key === 's') { e.preventDefault(); save(); return; }
+      }
+      if (e.key === '?' && !mod && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
+        setShortcutsOpen((v) => !v);
+      }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [undo, redo]);
+  }, [undo, redo, save]);
 
   useEffect(() => {
     try {
@@ -306,6 +315,14 @@ export default function AppHeader({ market, config }: Props) {
                   <ScrollText size={14} />
                   Generate cover letter
                 </button>
+                <button
+                  onClick={() => { setShortcutsOpen(true); setToolsOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <Keyboard size={14} />
+                  Keyboard shortcuts
+                  <kbd className="ml-auto text-[10px] font-semibold text-slate-400 border border-slate-200 rounded px-1">?</kbd>
+                </button>
                 <div className="my-1 h-px bg-slate-200" />
                 <label className="flex flex-col gap-1 px-3 py-2 text-sm text-slate-700 rounded-lg">
                   <span className="text-xs font-semibold text-slate-500">Export mode</span>
@@ -329,6 +346,13 @@ export default function AppHeader({ market, config }: Props) {
                   />
                   Hide photo in PDF
                 </label>
+                <button
+                  onClick={toggleDarkMode}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  {dark ? <Sun size={14} /> : <Moon size={14} />}
+                  {dark ? 'Light mode' : 'Dark mode'}
+                </button>
                 <button
                   onClick={() => togglePrivacyMode()}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
@@ -375,6 +399,7 @@ export default function AppHeader({ market, config }: Props) {
         onDuplicateCurrent={handleDuplicateCurrentDraft}
       />
       <CoverLetterModal open={coverLetterOpen} cv={cv} onClose={() => setCoverLetterOpen(false)} />
+      <KeyboardShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
 
       {confirmClear && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">

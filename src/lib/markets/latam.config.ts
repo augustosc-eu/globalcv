@@ -33,6 +33,7 @@ export const latamConfig: MarketConfig = {
   sections: {
     objective: { enabled: true, required: true, order: 0, label: 'Objetivo Profesional' },
     workExperience: { enabled: true, required: true, order: 1, label: 'Experiencia Laboral' },
+    projects: { enabled: false, required: false, order: 1.5, label: 'Proyectos' },
     education: { enabled: true, required: true, order: 2, label: 'Formación Académica' },
     skills: { enabled: true, required: false, order: 3, label: 'Habilidades' },
     languages: { enabled: true, required: false, order: 4, label: 'Idiomas' },

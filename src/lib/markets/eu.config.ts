@@ -33,6 +33,7 @@ export const euConfig: MarketConfig = {
   sections: {
     objective: { enabled: true, required: false, order: 0, label: 'Personal Statement' },
     workExperience: { enabled: true, required: true, order: 1, label: 'Work Experience' },
+    projects: { enabled: true, required: false, order: 1.5, label: 'Projects' },
     education: { enabled: true, required: true, order: 2, label: 'Education & Training' },
     skills: { enabled: true, required: false, order: 3, label: 'Digital & Technical Skills' },
     languages: { enabled: true, required: true, order: 4, label: 'Language Skills' },

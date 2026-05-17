@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Upload, Sparkles, AlertCircle } from 'lucide-react';
+import { useState, useRef, DragEvent } from 'react';
+import { X, Upload, Sparkles, AlertCircle, FileText, ClipboardPaste } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { parseCVInput, ParseResult } from '@/lib/parser/cvParser';
 import { getMarketConfig } from '@/lib/markets';
+import { extractTextFromPdf } from '@/lib/pdf/extractPdfText';
 
 interface Props {
   market: Market;
@@ -15,16 +16,85 @@ interface Props {
 
 export default function PasteImportModal({ market, open, onClose }: Props) {
   const config = getMarketConfig(market);
+  const [inputMode, setInputMode] = useState<'text' | 'pdf'>('text');
   const [text, setText] = useState('');
   const [step, setStep] = useState<'paste' | 'preview' | 'done'>('paste');
   const [result, setResult] = useState<ParseResult | null>(null);
   const [replaceExisting, setReplaceExisting] = useState(true);
   const [selectedSections, setSelectedSections] = useState<Record<ImportSectionKey, boolean>>(defaultSections);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { applyImportSections } = useCVStore();
 
   if (!open) return null;
 
   const preview = result?.data ?? null;
+
+  const resetPdfInput = () => {
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const resetImportState = () => {
+    setStep('paste');
+    setText('');
+    setResult(null);
+    setSelectedSections(defaultSections);
+    setPdfFile(null);
+    setPdfError(null);
+    setPdfLoading(false);
+    setIsDragOver(false);
+    setInputMode('text');
+    resetPdfInput();
+  };
+
+  const handleClose = () => {
+    resetImportState();
+    onClose();
+  };
+
+  const handlePdfFile = async (file: File) => {
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      setPdfError('Please upload a PDF file.');
+      setPdfFile(null);
+      resetPdfInput();
+      return;
+    }
+    setPdfFile(file);
+    setPdfError(null);
+    setPdfLoading(true);
+    try {
+      const extracted = await extractTextFromPdf(file);
+      if (!extracted.trim()) {
+        setPdfError('No readable text was found in this PDF. Try copying the text manually.');
+        setText('');
+        setResult(null);
+        resetPdfInput();
+        return;
+      }
+      setText(extracted);
+      const parsed = parseCVInput(extracted, market);
+      setResult(parsed);
+      setSelectedSections(buildSectionSelection(parsed));
+      setStep('preview');
+    } catch {
+      setPdfError('Could not read this PDF. Try copying the text manually.');
+      setResult(null);
+      resetPdfInput();
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handlePdfFile(file);
+  };
 
   const handleParse = () => {
     if (!text.trim()) return;
@@ -41,10 +111,7 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
     setStep('done');
     setTimeout(() => {
       onClose();
-      setStep('paste');
-      setText('');
-      setResult(null);
-      setSelectedSections(defaultSections);
+      resetImportState();
     }, 1500);
   };
 
@@ -57,7 +124,7 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
             <Sparkles size={18} className="text-violet-600" />
             <h2 className="font-bold text-gray-900">{config.ui.importTitle}</h2>
           </div>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
+          <button onClick={handleClose} className="p-1 text-gray-400 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
             <X size={18} />
           </button>
         </div>
@@ -66,22 +133,92 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {step === 'paste' && (
             <>
-              <p className="text-sm text-gray-600">
-                {config.ui.importDesc}
-              </p>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2">
-                <AlertCircle size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-700">
-                  {config.ui.importWarning}
-                </p>
+              {/* Mode tabs */}
+              <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
+                <button
+                  onClick={() => { setInputMode('text'); setPdfError(null); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${inputMode === 'text' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <ClipboardPaste size={13} />
+                  Paste text
+                </button>
+                <button
+                  onClick={() => { setInputMode('pdf'); setPdfError(null); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${inputMode === 'pdf' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <FileText size={13} />
+                  Upload PDF
+                </button>
               </div>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder={config.ui.importPlaceholder}
-                rows={16}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500 transition resize-none"
-              />
+
+              {inputMode === 'text' && (
+                <>
+                  <p className="text-sm text-gray-600">{config.ui.importDesc}</p>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2">
+                    <AlertCircle size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700">{config.ui.importWarning}</p>
+                  </div>
+                  <textarea
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder={config.ui.importPlaceholder}
+                    rows={14}
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500 transition resize-none"
+                  />
+                </>
+              )}
+
+              {inputMode === 'pdf' && (
+                <>
+                  <p className="text-sm text-gray-600">
+                    Upload your existing CV as a PDF. Text is extracted locally — nothing is sent to a server.
+                  </p>
+
+                  {pdfError && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex gap-2">
+                      <AlertCircle size={14} className="text-red-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-red-700">{pdfError}</p>
+                    </div>
+                  )}
+
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                    onDragLeave={() => setIsDragOver(false)}
+                    onClick={() => !pdfLoading && fileInputRef.current?.click()}
+                    className={`relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed cursor-pointer transition-colors px-6 py-12 ${isDragOver ? 'border-violet-400 bg-violet-50' : 'border-gray-300 hover:border-gray-400 bg-gray-50 hover:bg-gray-100'}`}
+                  >
+                    {pdfLoading ? (
+                      <>
+                        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                        <p className="text-sm font-medium text-gray-600">Extracting text from PDF…</p>
+                      </>
+                    ) : pdfFile ? (
+                      <>
+                        <FileText size={32} className="text-violet-500" />
+                        <p className="text-sm font-semibold text-gray-800">{pdfFile.name}</p>
+                        <p className="text-xs text-gray-500">Click to choose a different file</p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={32} className="text-gray-400" />
+                        <div className="text-center">
+                          <p className="text-sm font-semibold text-gray-700">Drop your PDF here</p>
+                          <p className="text-xs text-gray-500 mt-1">or click to browse</p>
+                        </div>
+                        <p className="text-xs text-gray-400">PDF files only · processed locally</p>
+                      </>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePdfFile(f); }}
+                    />
+                  </div>
+                </>
+              )}
             </>
           )}
 
@@ -192,10 +329,10 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
                 {config.ui.editText}
               </button>
             )}
-            <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors">
+            <button onClick={handleClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors">
               {config.ui.cancel}
             </button>
-            {step === 'paste' && (
+            {step === 'paste' && inputMode === 'text' && (
               <button
                 onClick={handleParse}
                 disabled={!text.trim()}

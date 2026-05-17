@@ -32,6 +32,7 @@ export const jpConfig: MarketConfig = {
   sections: {
     objective: { enabled: false, required: false, order: 0, label: '志望動機' },
     workExperience: { enabled: true, required: true, order: 1, label: '職歴' },
+    projects: { enabled: false, required: false, order: 1.5, label: 'プロジェクト' },
     education: { enabled: true, required: true, order: 2, label: '学歴' },
     skills: { enabled: true, required: false, order: 3, label: '免許・資格' },
     languages: { enabled: true, required: false, order: 4, label: '語学スキル' },

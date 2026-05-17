@@ -108,6 +108,17 @@ export interface Reference {
   relationship: string;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  role?: string;
+  url?: string;
+  techStack?: string[];
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface CVData {
   id: string;
   title?: string;
@@ -123,6 +134,7 @@ export interface CVData {
   languages: Language[];
   certifications: Certification[];
   references: Reference[];
+  projects: Project[];
   selfPromotion?: string;
   reasonForApplication?: string;
   desiredConditions?: string;
@@ -132,4 +144,23 @@ export interface CVData {
   hiddenSections?: string[];
   pageSize: PageSize;
   colorTheme?: string;
+  qrCodeEnabled?: boolean;
+  fontFamily?: 'inter' | 'georgia' | 'roboto' | 'playfair';
+}
+
+export type ApplicationStatus = 'saved' | 'applied' | 'interview' | 'offer' | 'rejected';
+
+export interface ApplicationEntry {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  company: string;
+  jobUrl?: string;
+  companyLogo?: string;
+  location?: string;
+  cvDraftId?: string;
+  market?: Market;
+  status: ApplicationStatus;
+  savedAt: string;
+  notes?: string;
 }

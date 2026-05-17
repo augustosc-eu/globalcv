@@ -127,6 +127,16 @@ export const cvDataSchema = z.object({
   languages: z.array(languageSchema).default([]),
   certifications: z.array(certificationSchema).default([]),
   references: z.array(referenceSchema).default([]),
+  projects: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    role: z.string().optional(),
+    url: z.string().optional(),
+    techStack: z.array(z.string()).optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+  })).default([]),
   selfPromotion: z.string().optional(),
   reasonForApplication: z.string().optional(),
   desiredConditions: z.string().optional(),
@@ -136,6 +146,8 @@ export const cvDataSchema = z.object({
   hiddenSections: z.array(z.string()).optional(),
   pageSize: pageSizeSchema,
   colorTheme: z.string().optional(),
+  qrCodeEnabled: z.boolean().optional(),
+  fontFamily: z.enum(['inter', 'georgia', 'roboto', 'playfair']).optional(),
 });
 
 export const partialImportSchema = cvDataSchema.partial().extend({

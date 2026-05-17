@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Briefcase, Menu, PlusCircle, Shield, X } from 'lucide-react';
+import { Briefcase, Menu, PlusCircle, Shield, X, ClipboardList } from 'lucide-react';
 import BrandLink from './BrandLink';
 
-type NavKey = 'home' | 'jobs' | 'post-job' | 'privacy' | 'terms';
+type NavKey = 'home' | 'jobs' | 'applications' | 'post-job' | 'privacy' | 'terms';
 
 interface TopNavProps {
   current?: NavKey;
@@ -15,6 +15,7 @@ interface TopNavProps {
 const NAV_ITEMS: Array<{ key: NavKey; label: string; href: string; icon?: React.ComponentType<{ size?: number }> }> = [
   { key: 'home', label: 'Markets', href: '/' },
   { key: 'jobs', label: 'Jobs', href: '/jobs', icon: Briefcase },
+  { key: 'applications', label: 'Tracker', href: '/applications', icon: ClipboardList },
   { key: 'privacy', label: 'Privacy', href: '/privacy', icon: Shield },
   { key: 'terms', label: 'Terms', href: '/terms' },
 ];

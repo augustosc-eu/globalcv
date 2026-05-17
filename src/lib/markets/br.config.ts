@@ -34,6 +34,7 @@ export const brConfig: MarketConfig = {
   sections: {
     objective:            { enabled: true,  required: true,  order: 0, label: 'Objetivo Profissional' },
     workExperience:       { enabled: true,  required: true,  order: 1, label: 'Experiência Profissional' },
+    projects:             { enabled: false, required: false, order: 1.5, label: 'Projetos' },
     education:            { enabled: true,  required: true,  order: 2, label: 'Formação Acadêmica' },
     skills:               { enabled: true,  required: false, order: 3, label: 'Habilidades' },
     languages:            { enabled: true,  required: false, order: 4, label: 'Idiomas' },

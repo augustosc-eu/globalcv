@@ -11,6 +11,7 @@ import {
   Language,
   Certification,
   Reference,
+  Project,
   PageSize,
 } from '@/types/cv.types';
 import { saveCV, loadCV, setActiveDraft } from '@/lib/storage/localStorage';
@@ -86,10 +87,20 @@ interface CVStoreActions {
   removeReference: (id: string) => void;
   duplicateReference: (id: string) => void;
 
+  addProject: (project: Omit<Project, 'id'>) => void;
+  updateProject: (id: string, project: Partial<Project>) => void;
+  removeProject: (id: string) => void;
+  reorderProjects: (ids: string[]) => void;
+  duplicateProject: (id: string) => void;
+
   setSelfPromotion: (text: string) => void;
   setReasonForApplication: (text: string) => void;
   setDesiredConditions: (text: string) => void;
   setTargeting: (data: Pick<CVData, 'targetRole' | 'targetCompany' | 'jobDescriptionNotes'>) => void;
+
+  setQrCodeEnabled: (enabled: boolean) => void;
+
+  setFontFamily: (font: CVData['fontFamily']) => void;
 
   setMarket: (market: Market) => void;
   setTemplate: (templateId: string) => void;
@@ -151,6 +162,7 @@ export function createEmptyCVData(market: Market): CVData {
     languages: [],
     certifications: [],
     references: [],
+    projects: [],
     pageSize: config.pageSize,
     colorTheme: config.color,
     hiddenSections: [],
@@ -457,6 +469,52 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
         });
       },
 
+      addProject: (project) => {
+        set((state) => {
+          state.cv.projects = state.cv.projects ?? [];
+          state.cv.projects.push({ ...project, id: genId() });
+          state.isDirty = true;
+        });
+      },
+
+      updateProject: (id, project) => {
+        set((state) => {
+          const idx = (state.cv.projects ?? []).findIndex((p) => p.id === id);
+          if (idx !== -1) {
+            state.cv.projects[idx] = { ...state.cv.projects[idx], ...project };
+            state.isDirty = true;
+          }
+        });
+      },
+
+      removeProject: (id) => {
+        set((state) => {
+          state.cv.projects = (state.cv.projects ?? []).filter((p) => p.id !== id);
+          state.isDirty = true;
+        });
+      },
+
+      reorderProjects: (ids) => {
+        set((state) => {
+          const map = new Map((state.cv.projects ?? []).map((p) => [p.id, p]));
+          state.cv.projects = ids.map((id) => map.get(id)).filter(Boolean) as Project[];
+          state.isDirty = true;
+        });
+      },
+
+      duplicateProject: (id) => {
+        set((state) => {
+          const item = (state.cv.projects ?? []).find((p) => p.id === id);
+          if (!item) return;
+          state.cv.projects.splice(
+            state.cv.projects.findIndex((p) => p.id === id) + 1,
+            0,
+            { ...clone(item), id: genId() }
+          );
+          state.isDirty = true;
+        });
+      },
+
       setSelfPromotion: (text) => {
         set((state) => {
           state.cv.selfPromotion = text;
@@ -483,6 +541,20 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
           state.cv.targetRole = data.targetRole;
           state.cv.targetCompany = data.targetCompany;
           state.cv.jobDescriptionNotes = data.jobDescriptionNotes;
+          state.isDirty = true;
+        });
+      },
+
+      setQrCodeEnabled: (enabled) => {
+        set((state) => {
+          state.cv.qrCodeEnabled = enabled;
+          state.isDirty = true;
+        });
+      },
+
+      setFontFamily: (font) => {
+        set((state) => {
+          state.cv.fontFamily = font;
           state.isDirty = true;
         });
       },

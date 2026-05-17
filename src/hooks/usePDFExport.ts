@@ -16,6 +16,7 @@ const COMPACT_LIMITS = {
   workDescription: 190,
   workEntries: 3,
   educationEntries: 2,
+  projects: 3,
   skills: 8,
   languages: 4,
   certifications: 2,
@@ -39,13 +40,16 @@ function hasText(value?: string): boolean {
   return Boolean(value?.trim());
 }
 
-function cleanOptionalEntries(cv: CVData): Pick<CVData, 'workExperience' | 'education' | 'skills' | 'languages' | 'certifications' | 'references'> {
+function cleanOptionalEntries(cv: CVData): Pick<CVData, 'workExperience' | 'education' | 'projects' | 'skills' | 'languages' | 'certifications' | 'references'> {
   return {
     workExperience: cv.workExperience.filter((exp) =>
       hasText(exp.title) || hasText(exp.company) || hasText(exp.description)
     ),
     education: cv.education.filter((edu) =>
       hasText(edu.degree) || hasText(edu.institution) || hasText(edu.fieldOfStudy)
+    ),
+    projects: (cv.projects ?? []).filter((project) =>
+      hasText(project.name) || hasText(project.description) || hasText(project.role) || hasText(project.url)
     ),
     skills: cv.skills.filter((skill) => hasText(skill.name)),
     languages: cv.languages.filter((language) => hasText(language.language)),
@@ -98,6 +102,7 @@ function prepareCVForExportMode(
       description: trimToSentence(exp.description, COMPACT_LIMITS.workDescription) ?? '',
     })),
     education: cleaned.education.slice(0, COMPACT_LIMITS.educationEntries),
+    projects: cleaned.projects.slice(0, COMPACT_LIMITS.projects),
     skills: cleaned.skills.slice(0, COMPACT_LIMITS.skills),
     languages: cleaned.languages.slice(0, COMPACT_LIMITS.languages),
     certifications: cleaned.certifications.slice(0, COMPACT_LIMITS.certifications),
@@ -171,11 +176,23 @@ export function usePDFExport() {
       const normalizedPhoto = await normalizePhotoForPDF(sourcePhoto);
       const cvForPdf = prepareCVForExportMode(cv, config, mode, normalizedPhoto);
 
+      // Generate QR code data URL if enabled and a URL is present
+      let qrDataUrl: string | undefined;
+      if (cv.qrCodeEnabled && mode !== 'ats') {
+        const qrTarget = cv.personalInfo.linkedIn || cv.personalInfo.website;
+        if (qrTarget) {
+          const qrModule = await import('qrcode');
+          qrDataUrl = await qrModule.default.toDataURL(qrTarget, {
+            width: 80, margin: 1, color: { dark: '#111827', light: '#ffffff' },
+          });
+        }
+      }
+
       // @react-pdf/renderer requires a JSX element passed to pdf()
       // We use React.createElement via dynamic import to avoid SSR issues
       const { createElement } = await import('react');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const doc = createElement(CVPDFDocument as any, { cv: cvForPdf, config, exportMode: mode });
+      const doc = createElement(CVPDFDocument as any, { cv: cvForPdf, config, exportMode: mode, qrDataUrl });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const blob = await (pdf as any)(doc).toBlob();
 

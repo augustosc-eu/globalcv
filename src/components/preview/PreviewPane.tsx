@@ -166,6 +166,13 @@ export default function PreviewPane({ cv, config }: Props) {
               transform: `scale(${zoom})`,
               transformOrigin: 'top center',
               marginBottom: `${Math.max(0, zoom - 1) * pageWidth * 1.4}px`,
+              fontFamily: cv.fontFamily === 'georgia'
+                ? 'Georgia, serif'
+                : cv.fontFamily === 'playfair'
+                ? '"Playfair Display", Georgia, serif'
+                : cv.fontFamily === 'roboto'
+                ? 'Roboto, Arial, sans-serif'
+                : 'Inter, system-ui, sans-serif',
             }}
           >
             <Renderer cv={cv} config={config} />

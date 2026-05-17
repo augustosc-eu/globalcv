@@ -1,7 +1,7 @@
 'use client';
 
 import { useCVStore } from '@/store/cvStore';
-import { Market } from '@/types/cv.types';
+import { Market, CVData } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 import StepHeader from './StepHeader';
 import ThemeSelector from '@/components/shared/ThemeSelector';
@@ -10,6 +10,15 @@ import { cn } from '@/lib/utils/cn';
 import { Check, Sparkles } from 'lucide-react';
 import { getMarketFormatGuidance } from '@/lib/markets/formatGuidance';
 import { getTemplateUseCase } from '@/lib/markets/templateUseCases';
+
+type FontFamily = NonNullable<CVData['fontFamily']>;
+
+const FONTS: Array<{ id: FontFamily; label: string; preview: string; cssStack: string }> = [
+  { id: 'inter',    label: 'Inter',     preview: 'Aa', cssStack: 'Inter, system-ui, sans-serif' },
+  { id: 'roboto',   label: 'Roboto',    preview: 'Aa', cssStack: 'Roboto, Arial, sans-serif' },
+  { id: 'georgia',  label: 'Georgia',   preview: 'Aa', cssStack: 'Georgia, serif' },
+  { id: 'playfair', label: 'Playfair',  preview: 'Aa', cssStack: '"Playfair Display", Georgia, serif' },
+];
 
 interface Props { market: Market; config: MarketConfig; }
 
@@ -25,7 +34,7 @@ const templatePreviews: Record<string, string> = {
 };
 
 export default function TemplatePickerStep({ config }: Props) {
-  const { cv, setTemplate } = useCVStore();
+  const { cv, setTemplate, setFontFamily } = useCVStore();
   const showATS = config.enableATSSuggestions;
   const guidance = getMarketFormatGuidance(config.market);
 
@@ -103,6 +112,43 @@ export default function TemplatePickerStep({ config }: Props) {
           {config.ui.selectedLabel} <strong>{config.templates.find((t) => t.id === cv.templateId)?.name ?? 'None'}</strong>
           {' — '}{config.templates.find((t) => t.id === cv.templateId)?.description}
         </p>
+      </div>
+
+      {/* Font family picker */}
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+        <p className="text-sm font-medium text-gray-700">Font style</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {FONTS.map((font) => {
+            const active = (cv.fontFamily ?? 'inter') === font.id;
+            return (
+              <button
+                key={font.id}
+                onClick={() => setFontFamily(font.id)}
+                className={cn(
+                  'relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border transition-all',
+                  active ? 'border-current shadow-sm bg-white' : 'border-slate-200 bg-white hover:border-slate-300'
+                )}
+                style={active ? { borderColor: config.color } : undefined}
+              >
+                {active && (
+                  <span
+                    className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-white"
+                    style={{ backgroundColor: config.color }}
+                  >
+                    <Check size={9} strokeWidth={3} />
+                  </span>
+                )}
+                <span className="text-2xl font-bold text-gray-800" style={{ fontFamily: font.cssStack }}>
+                  {font.preview}
+                </span>
+                <span className="text-[11px] font-medium text-gray-600" style={{ fontFamily: font.cssStack }}>
+                  {font.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-xs text-gray-400">Affects the preview and exported PDF.</p>
       </div>
 
       {/* ATS readiness checklist — US only */}

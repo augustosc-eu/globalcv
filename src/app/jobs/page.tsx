@@ -6,8 +6,9 @@ import {
   Search, Briefcase, FileText, ExternalLink, Globe,
   ChevronLeft, ChevronRight, Building2, MapPin,
   RefreshCw, X, DollarSign, Clock, ChevronDown, Check,
-  ChevronUp,
+  ChevronUp, Bookmark, BookmarkCheck,
 } from 'lucide-react';
+import { saveApplication, isJobSaved } from '@/lib/storage/localStorage';
 import TopNav from '@/components/shared/TopNav';
 import { SITE_OWNER_NAME, SITE_OWNER_URL } from '@/lib/site';
 import {
@@ -194,6 +195,7 @@ function FilterDropdown({
 function JobCard({ job }: { job: Job }) {
   const [expanded, setExpanded] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
+  const [saved, setSaved] = useState(() => isJobSaved(job.id));
   const style = CATEGORY_STYLE[job.category] ?? CATEGORY_STYLE['other'];
   const catLabel = JOB_CATEGORIES.find(c => c.id === job.category)?.label ?? job.category;
   const regionFlag = REGION_FLAG[job.region] ?? '🌍';
@@ -205,6 +207,16 @@ function JobCard({ job }: { job: Job }) {
   const typeLabel = JOB_TYPES.find(t => t.id === job.jobType)?.label;
   const recommendedMarket = inferMarketFromJob(job);
   const marketCtaLabel = MARKET_LABEL[recommendedMarket];
+
+  useEffect(() => {
+    const refreshSaved = () => setSaved(isJobSaved(job.id));
+    window.addEventListener('focus', refreshSaved);
+    window.addEventListener('storage', refreshSaved);
+    return () => {
+      window.removeEventListener('focus', refreshSaved);
+      window.removeEventListener('storage', refreshSaved);
+    };
+  }, [job.id]);
 
   const hasDesc = !!job.description && job.description.length > 10;
   const shortDesc = hasDesc && job.description!.length > 200
@@ -326,6 +338,26 @@ function JobCard({ job }: { job: Job }) {
             {job.company} • {regionFlag} {displayLocation}
           </span>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => {
+                if (!saved) {
+                  saveApplication({
+                    jobId: job.id,
+                    jobTitle: job.title,
+                    company: job.company,
+                    jobUrl: job.url,
+                    companyLogo: job.companyLogo,
+                    location: job.location,
+                    status: 'saved',
+                  });
+                  setSaved(true);
+                }
+              }}
+              title={saved ? 'Job saved to tracker' : 'Save to application tracker'}
+              className={`p-2 rounded-xl border transition-all ${saved ? 'text-amber-600 bg-amber-50 border-amber-200' : 'text-gray-400 bg-gray-50 border-gray-200 hover:text-amber-500 hover:border-amber-200 hover:bg-amber-50'}`}
+            >
+              {saved ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+            </button>
             <Link
               href={{
                 pathname: `/${recommendedMarket}`,

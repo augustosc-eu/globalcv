@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Eye, X } from 'lucide-react';
+import { Eye, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Market } from '@/types/cv.types';
 import { getMarketConfig } from '@/lib/markets';
 import { useCVStore } from '@/store/cvStore';
@@ -15,6 +15,7 @@ import CrossTabSyncBanner from '@/components/shared/CrossTabSyncBanner';
 import BuilderInsightsPanel from './BuilderInsightsPanel';
 import { computeStepCompletion } from '@/lib/cv/completeness';
 import { useSearchParams } from 'next/navigation';
+import { usePDFExport } from '@/hooks/usePDFExport';
 
 interface WizardShellProps { market: Market }
 export interface WizardStep { key: string; label: string }
@@ -31,6 +32,7 @@ export default function WizardShell({ market }: WizardShellProps) {
   const [previewWidth, setPreviewWidth] = useState(DEFAULT_PREVIEW_WIDTH);
   const appliedUrlTargeting = useRef(false);
   const resizeState = useRef<{ startX: number; startWidth: number } | null>(null);
+  const { exportPDF, state: pdfState, error: pdfError } = usePDFExport();
   const { initializeMarket, setSteps, wizard, cv, setPersonalInfo, setObjective,
           addWorkExperience, addEducation, addSkill, addLanguage, addCertification,
           addReference, setSelfPromotion, setReasonForApplication, setDesiredConditions,
@@ -215,16 +217,69 @@ export default function WizardShell({ market }: WizardShellProps) {
         </aside>
       </div>
 
-      {/* Mobile preview button — hidden on xl where the sidebar is visible */}
-      <button
-        onClick={() => setShowMobilePreview(true)}
-        className="xl:hidden fixed bottom-20 right-4 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full text-white text-sm font-semibold shadow-lg transition-transform active:scale-95"
-        style={{ backgroundColor: config.color }}
-        aria-label="Preview CV"
-      >
-        <Eye size={16} />
-        <span className="hidden sm:inline">Preview</span>
-      </button>
+      {/* Sticky bottom mobile navigation bar */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center px-4 py-2 gap-3">
+          <button
+            onClick={() => useCVStore.getState().prevStep()}
+            disabled={currentStep === 0}
+            className="flex items-center justify-center gap-1 w-10 h-10 rounded-xl border border-slate-200 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors flex-shrink-0"
+            aria-label="Previous step"
+          >
+            <ArrowLeft size={18} />
+          </button>
+
+          <div className="flex-1 flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1">
+              {steps.map((s, i) => (
+                <span
+                  key={s.key}
+                  className={`rounded-full transition-all duration-200 ${i === currentStep ? 'w-4 h-2' : 'w-2 h-2 opacity-30'}`}
+                  style={{ backgroundColor: config.color }}
+                />
+              ))}
+            </div>
+            <p className="text-[10px] font-medium text-slate-500">{steps[currentStep]?.label}</p>
+          </div>
+
+          <button
+            onClick={() => setShowMobilePreview(true)}
+            className="flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex-shrink-0"
+            aria-label="Preview CV"
+          >
+            <Eye size={18} />
+          </button>
+
+          {currentStep < steps.length - 1 ? (
+            <button
+              onClick={() => useCVStore.getState().nextStep()}
+              className="flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl text-white text-sm font-semibold transition-colors active:scale-95 flex-shrink-0"
+              style={{ backgroundColor: config.color }}
+            >
+              {config.ui.next}
+              <ArrowRight size={16} />
+            </button>
+          ) : (
+            <button
+              onClick={() => exportPDF(cv, config)}
+              disabled={pdfState === 'generating'}
+              className="flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl text-white text-xs font-semibold transition-colors active:scale-95 flex-shrink-0"
+              style={{ backgroundColor: config.color }}
+            >
+              {pdfState === 'generating' ? 'Exporting' : pdfState === 'done' ? 'Done' : 'Export'}
+            </button>
+          )}
+        </div>
+      </nav>
+
+      {pdfState === 'error' && pdfError && (
+        <div className="lg:hidden fixed bottom-16 left-4 right-4 z-40 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 shadow-lg">
+          {pdfError}
+        </div>
+      )}
+
+      {/* Add bottom padding on mobile so content doesn't get hidden behind nav */}
+      <div className="lg:hidden h-16" />
 
       <CrossTabSyncBanner market={market} />
 

@@ -10,6 +10,7 @@ import SkillsStep from './steps/SkillsStep';
 import LanguagesStep from './steps/LanguagesStep';
 import CertificationsStep from './steps/CertificationsStep';
 import ReferencesStep from './steps/ReferencesStep';
+import ProjectsStep from './steps/ProjectsStep';
 import JapanSpecificStep from './steps/JapanSpecificStep';
 import TemplatePickerStep from './steps/TemplatePickerStep';
 
@@ -28,6 +29,7 @@ const stepMap: Record<string, React.ComponentType<{ market: Market; config: Mark
   languages: LanguagesStep,
   certifications: CertificationsStep,
   references: ReferencesStep,
+  projects: ProjectsStep,
   japanSpecific: JapanSpecificStep,
   template: TemplatePickerStep,
 };

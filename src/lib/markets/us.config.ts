@@ -37,6 +37,7 @@ export const usConfig: MarketConfig = {
   sections: {
     objective: { enabled: true, required: false, order: 0, label: 'Professional Summary' },
     workExperience: { enabled: true, required: true, order: 1, label: 'Work Experience' },
+    projects: { enabled: true, required: false, order: 1.5, label: 'Projects' },
     education: { enabled: true, required: true, order: 2, label: 'Education' },
     skills: { enabled: true, required: false, order: 3, label: 'Skills' },
     languages: { enabled: true, required: false, order: 4, label: 'Languages' },

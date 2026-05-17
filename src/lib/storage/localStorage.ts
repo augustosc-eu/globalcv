@@ -1,4 +1,4 @@
-import { CVData, Market } from '@/types/cv.types';
+import { CVData, Market, ApplicationEntry, ApplicationStatus } from '@/types/cv.types';
 import { parseCVData } from '@/lib/cv/schema';
 
 const CURRENT_VERSION = 2;
@@ -58,6 +58,7 @@ function normalizeData(data: CVData): CVData {
     languages: data.languages ?? [],
     certifications: data.certifications ?? [],
     references: data.references ?? [],
+    projects: data.projects ?? [],
     hiddenSections: data.hiddenSections ?? [],
   };
 }
@@ -251,4 +252,60 @@ export function getLastSaved(market: Market, draftId?: string | null): Date | nu
 
 export function hasCorruptedDrafts(market: Market): boolean {
   return Boolean(readMarketIndex(market).corruptedAt);
+}
+
+// ─── Application Tracker ──────────────────────────────────────────────────────
+
+const APPLICATIONS_KEY = 'cv_maker_applications';
+
+function readApplications(): ApplicationEntry[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(APPLICATIONS_KEY);
+    return raw ? (JSON.parse(raw) as ApplicationEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistApplications(entries: ApplicationEntry[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(entries));
+  } catch {
+    // storage quota exceeded — silently ignore
+  }
+}
+
+export function saveApplication(entry: Omit<ApplicationEntry, 'id' | 'savedAt'>): ApplicationEntry {
+  const entries = readApplications();
+  const newEntry: ApplicationEntry = {
+    ...entry,
+    id: `app_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    savedAt: new Date().toISOString(),
+  };
+  persistApplications([newEntry, ...entries]);
+  return newEntry;
+}
+
+export function listApplications(): ApplicationEntry[] {
+  return readApplications();
+}
+
+export function updateApplicationStatus(id: string, status: ApplicationStatus): void {
+  const entries = readApplications().map((e) => (e.id === id ? { ...e, status } : e));
+  persistApplications(entries);
+}
+
+export function updateApplicationNotes(id: string, notes: string): void {
+  const entries = readApplications().map((e) => (e.id === id ? { ...e, notes } : e));
+  persistApplications(entries);
+}
+
+export function deleteApplication(id: string): void {
+  persistApplications(readApplications().filter((e) => e.id !== id));
+}
+
+export function isJobSaved(jobId: string): boolean {
+  return readApplications().some((e) => e.jobId === jobId);
 }

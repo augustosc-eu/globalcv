@@ -34,9 +34,15 @@ export function computeStepCompletion(cv: CVData, config: MarketConfig): Record<
       2,
       'Market-specific details'
     ),
+    projects: summarizeRatio(
+      (cv.projects ?? []).filter((p) => p.name && p.description).length,
+      Math.max((cv.projects ?? []).length, 1),
+      `${(cv.projects ?? []).length} project${(cv.projects ?? []).length !== 1 ? 's' : ''}`
+    ),
     template: summarizeRatio(cv.templateId ? 1 : 0, 1, cv.templateId ? 'Template selected' : 'Choose a template'),
   };
 
+  if (!config.sections.projects?.enabled) delete steps.projects;
   if (!config.sections.languages.enabled) delete steps.languages;
   if (!config.sections.certifications.enabled) delete steps.certifications;
   if (!config.sections.references.enabled) delete steps.references;

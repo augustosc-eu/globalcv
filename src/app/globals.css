@@ -88,6 +88,13 @@
       linear-gradient(180deg, #f8fafc 0%, #ffffff 36%, #f8fafc 100%);
   }
 
+  .dark body {
+    background-image:
+      radial-gradient(circle at 8% 10%, rgba(59, 130, 246, 0.06) 0, transparent 38%),
+      radial-gradient(circle at 92% 8%, rgba(14, 165, 233, 0.05) 0, transparent 32%),
+      linear-gradient(180deg, #0f172a 0%, #0f172a 36%, #0f172a 100%);
+  }
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight;
   }
@@ -180,6 +187,10 @@
     @apply bg-white/90 backdrop-blur-sm border border-slate-200/80 shadow-sm;
   }
 
+  .dark .surface-card {
+    @apply bg-slate-800/90 border-slate-700/60;
+  }
+
   .soft-grid-bg {
     background-size: 36px 36px;
     background-image:
@@ -200,6 +211,127 @@
   .skill-dot.filled {
     @apply bg-current;
   }
+}
+
+/* ─── Dark mode surface overrides ───────────────────────────────────────────
+   Most components use hardcoded Tailwind color classes. These selectors flip
+   the key surfaces so dark mode is visible without touching every component. */
+
+.dark {
+  color-scheme: dark;
+}
+
+/* Backgrounds */
+.dark .bg-white,
+.dark .bg-white\/85,
+.dark .bg-white\/90,
+.dark .bg-white\/95 {
+  background-color: #1e293b !important;
+}
+
+.dark .bg-gray-50,
+.dark .bg-slate-50 {
+  background-color: #0f172a !important;
+}
+
+.dark .bg-gray-100,
+.dark .bg-slate-100 {
+  background-color: #1e293b !important;
+}
+
+.dark .bg-gray-200,
+.dark .bg-slate-200 {
+  background-color: #334155 !important;
+}
+
+/* Text */
+.dark .text-gray-900,
+.dark .text-slate-900 {
+  color: #f1f5f9 !important;
+}
+
+.dark .text-gray-800,
+.dark .text-slate-800 {
+  color: #e2e8f0 !important;
+}
+
+.dark .text-gray-700,
+.dark .text-slate-700 {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-gray-600,
+.dark .text-slate-600 {
+  color: #94a3b8 !important;
+}
+
+.dark .text-gray-500,
+.dark .text-slate-500 {
+  color: #64748b !important;
+}
+
+.dark .text-gray-400,
+.dark .text-slate-400 {
+  color: #475569 !important;
+}
+
+/* Borders */
+.dark .border-gray-100,
+.dark .border-slate-100 {
+  border-color: #1e293b !important;
+}
+
+.dark .border-gray-200,
+.dark .border-slate-200 {
+  border-color: #334155 !important;
+}
+
+.dark .border-gray-300,
+.dark .border-slate-300 {
+  border-color: #475569 !important;
+}
+
+/* Form inputs */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #475569 !important;
+}
+
+/* Cards / modals */
+.dark article,
+.dark [class*="rounded-xl"],
+.dark [class*="rounded-2xl"] {
+  border-color: #334155;
+}
+
+/* Wizard sidebar + main shell */
+.dark .app-shell-bg {
+  background-color: #0f172a;
+  background-image: none;
+}
+
+.dark .surface-card {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+  border-color: #334155 !important;
+}
+
+/* Hover states */
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-slate-50:hover {
+  background-color: #1e293b !important;
+}
+
+.dark .hover\:bg-gray-100:hover,
+.dark .hover\:bg-slate-100:hover {
+  background-color: #334155 !important;
 }
 
 @layer utilities {

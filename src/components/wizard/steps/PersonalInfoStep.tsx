@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function PersonalInfoStep({ config }: Props) {
-  const { cv, setPersonalInfo } = useCVStore();
+  const { cv, setPersonalInfo, setQrCodeEnabled } = useCVStore();
   const guidance = getSensitiveGuidance(config.market);
   const { register, watch, reset, formState: { errors } } = useForm<PersonalInfo>({
     defaultValues: cv.personalInfo,
@@ -133,10 +133,10 @@ export default function PersonalInfoStep({ config }: Props) {
       {/* LinkedIn & Website */}
       <div className="grid grid-cols-2 gap-4">
         <Field label={config.ui.linkedIn}>
-          <input {...register('linkedIn')} className={inputCls} placeholder="linkedin.com/in/username" />
+          <input {...register('linkedIn')} inputMode="url" className={inputCls} placeholder="linkedin.com/in/username" />
         </Field>
         <Field label={config.ui.website}>
-          <input {...register('website')} className={inputCls} placeholder="yoursite.com" />
+          <input {...register('website')} inputMode="url" className={inputCls} placeholder="yoursite.com" />
         </Field>
       </div>
 
@@ -339,6 +339,24 @@ export default function PersonalInfoStep({ config }: Props) {
             {f.personalSeal.helpText && (
               <p className="text-xs text-gray-500">{f.personalSeal.helpText}</p>
             )}
+          </div>
+        </label>
+      )}
+
+      {/* QR code toggle */}
+      {(cv.personalInfo.linkedIn || cv.personalInfo.website) && (
+        <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={cv.qrCodeEnabled ?? false}
+            onChange={(e) => setQrCodeEnabled(e.target.checked)}
+          />
+          <div>
+            <span className="text-sm font-medium text-gray-800">Include QR code in PDF</span>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Generates a scannable QR code linking to your {cv.personalInfo.linkedIn ? 'LinkedIn' : 'website'} in the exported PDF.
+            </p>
           </div>
         </label>
       )}

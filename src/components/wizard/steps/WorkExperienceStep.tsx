@@ -16,6 +16,7 @@ import DateRangePicker from '@/components/form-fields/DateRangePicker';
 import StepHeader from './StepHeader';
 import { cn } from '@/lib/utils/cn';
 import { getBulletSuggestions } from '@/lib/cv/bulletSuggestions';
+import { assessBullet, BulletQuality } from '@/lib/cv/bulletQuality';
 import { getSampleContent } from '@/lib/markets/sampleContent';
 
 interface Props { market: Market; config: MarketConfig; }
@@ -104,9 +105,16 @@ function SortableExperienceCard(props: CardProps) {
   return <div ref={setNodeRef} style={style}><ExperienceCard {...props} dragHandleProps={{ ...attributes, ...listeners }} /></div>;
 }
 
+const QUALITY_STYLE: Record<BulletQuality['score'], { pill: string; dot: string }> = {
+  strong: { pill: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-400' },
+  ok:     { pill: 'bg-amber-50 text-amber-700 border-amber-200',   dot: 'bg-amber-400' },
+  weak:   { pill: 'bg-red-50 text-red-700 border-red-200',         dot: 'bg-red-400' },
+};
+
 function ExperienceCard({ exp, market, config, expanded, onToggle, onUpdate, onRemove, onDuplicate, dragHandleProps }: CardProps & { dragHandleProps?: object }) {
   const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition';
   const suggestions = getBulletSuggestions(exp);
+  const [quality, setQuality] = useState<BulletQuality | null>(null);
 
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
@@ -172,14 +180,26 @@ function ExperienceCard({ exp, market, config, expanded, onToggle, onUpdate, onR
           )}
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
-              {config.ui.workDescription}
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-medium text-gray-600">
+                {config.ui.workDescription}
+              </label>
+              {quality && quality.hint && (
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold ${QUALITY_STYLE[quality.score].pill}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${QUALITY_STYLE[quality.score].dot}`} />
+                  {quality.score === 'strong' ? 'Strong' : quality.score === 'ok' ? 'OK' : 'Weak'}
+                </span>
+              )}
+            </div>
             <textarea
               value={exp.description} onChange={(e) => onUpdate({ description: e.target.value })}
+              onBlur={(e) => setQuality(assessBullet(e.target.value))}
               rows={4} className={cn(inputCls, 'resize-none')}
               placeholder={config.ui.workDescPlaceholder}
             />
+            {quality && quality.hint && (
+              <p className="mt-1 text-[11px] text-slate-500">{quality.hint}</p>
+            )}
             <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 p-3">
               <p className="text-xs font-semibold text-blue-900 mb-2">Guided bullet rewriter</p>
               <div className="space-y-2">
