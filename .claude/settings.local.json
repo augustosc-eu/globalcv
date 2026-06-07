@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__vexp__run_pipeline",
+      "Bash(xargs ls *)",
+      "Bash(npm install *)",
+      "Bash(wait)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}

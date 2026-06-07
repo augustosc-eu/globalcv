@@ -13,6 +13,7 @@ import {
   Reference,
   Project,
   PageSize,
+  RemoteWorkProfile,
 } from '@/types/cv.types';
 import { saveCV, loadCV, setActiveDraft } from '@/lib/storage/localStorage';
 import { getMarketConfig } from '@/lib/markets';
@@ -97,6 +98,7 @@ interface CVStoreActions {
   setReasonForApplication: (text: string) => void;
   setDesiredConditions: (text: string) => void;
   setTargeting: (data: Pick<CVData, 'targetRole' | 'targetCompany' | 'jobDescriptionNotes'>) => void;
+  setRemoteWorkProfile: (profile: RemoteWorkProfile) => void;
 
   setQrCodeEnabled: (enabled: boolean) => void;
 
@@ -541,6 +543,13 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
           state.cv.targetRole = data.targetRole;
           state.cv.targetCompany = data.targetCompany;
           state.cv.jobDescriptionNotes = data.jobDescriptionNotes;
+          state.isDirty = true;
+        });
+      },
+
+      setRemoteWorkProfile: (profile) => {
+        set((state) => {
+          state.cv.remoteWorkProfile = profile;
           state.isDirty = true;
         });
       },

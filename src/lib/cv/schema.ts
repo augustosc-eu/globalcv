@@ -4,6 +4,7 @@ import { CVData, Market } from '@/types/cv.types';
 const marketSchema = z.enum(['us', 'eu', 'latam', 'jp', 'gb', 'au', 'in', 'br']);
 const pageSizeSchema = z.enum(['A4', 'Letter']);
 const employmentTypeSchema = z.enum(['full_time', 'part_time', 'contract', 'freelance', 'internship']);
+const remoteWorkModeSchema = z.enum(['remote_employee', 'freelance', 'both']);
 const skillLevelSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]);
 const languageProficiencySchema = z.enum([
   'A1', 'A2', 'B1', 'B2', 'C1', 'C2',
@@ -112,6 +113,15 @@ const referenceSchema = z.object({
   relationship: z.string().default(''),
 });
 
+const remoteWorkProfileSchema = z.object({
+  workModeTarget: remoteWorkModeSchema.default('both'),
+  preferredTimezoneOverlap: z.string().optional(),
+  collaborationTools: z.array(z.string()).default([]),
+  asyncStrengths: z.array(z.string()).default([]),
+  locationFlexibility: z.string().optional(),
+  portfolioProof: z.array(z.string()).default([]),
+});
+
 export const cvDataSchema = z.object({
   id: z.string(),
   title: z.string().optional(),
@@ -143,6 +153,7 @@ export const cvDataSchema = z.object({
   targetRole: z.string().optional(),
   targetCompany: z.string().optional(),
   jobDescriptionNotes: z.string().optional(),
+  remoteWorkProfile: remoteWorkProfileSchema.optional(),
   hiddenSections: z.array(z.string()).optional(),
   pageSize: pageSizeSchema,
   colorTheme: z.string().optional(),

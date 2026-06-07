@@ -2,6 +2,7 @@ export type Market = 'us' | 'eu' | 'latam' | 'jp' | 'gb' | 'au' | 'in' | 'br';
 export type PageSize = 'A4' | 'Letter';
 export type MaritalStatus = 'single' | 'married' | 'divorced' | 'widowed' | 'prefer_not';
 export type EmploymentType = 'full_time' | 'part_time' | 'contract' | 'freelance' | 'internship';
+export type RemoteWorkMode = 'remote_employee' | 'freelance' | 'both';
 export type SkillLevel = 1 | 2 | 3 | 4 | 5;
 export type CEFRLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 export type JLPTLevel = 'N1' | 'N2' | 'N3' | 'N4' | 'N5';
@@ -119,6 +120,15 @@ export interface Project {
   endDate?: string;
 }
 
+export interface RemoteWorkProfile {
+  workModeTarget: RemoteWorkMode;
+  preferredTimezoneOverlap?: string;
+  collaborationTools: string[];
+  asyncStrengths: string[];
+  locationFlexibility?: string;
+  portfolioProof: string[];
+}
+
 export interface CVData {
   id: string;
   title?: string;
@@ -141,6 +151,7 @@ export interface CVData {
   targetRole?: string;
   targetCompany?: string;
   jobDescriptionNotes?: string;
+  remoteWorkProfile?: RemoteWorkProfile;
   hiddenSections?: string[];
   pageSize: PageSize;
   colorTheme?: string;
