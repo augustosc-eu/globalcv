@@ -142,22 +142,22 @@ function ExperienceCard({ exp, market, config, expanded, onToggle, onUpdate, onR
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.workJobTitle}</label>
-              <input value={exp.title} onChange={(e) => onUpdate({ title: e.target.value })} className={inputCls} placeholder={config.ui.workJobTitlePlaceholder} />
+              <input aria-label={config.ui.workJobTitle} value={exp.title} onChange={(e) => onUpdate({ title: e.target.value })} className={inputCls} placeholder={config.ui.workJobTitlePlaceholder} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.workCompany}</label>
-              <input value={exp.company} onChange={(e) => onUpdate({ company: e.target.value })} className={inputCls} placeholder={config.ui.workCompanyPlaceholder} />
+              <input aria-label={config.ui.workCompany} value={exp.company} onChange={(e) => onUpdate({ company: e.target.value })} className={inputCls} placeholder={config.ui.workCompanyPlaceholder} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.workLocation}</label>
-              <input value={exp.location ?? ''} onChange={(e) => onUpdate({ location: e.target.value })} className={inputCls} placeholder={config.ui.workLocationPlaceholder} />
+              <input aria-label={config.ui.workLocation} value={exp.location ?? ''} onChange={(e) => onUpdate({ location: e.target.value })} className={inputCls} placeholder={config.ui.workLocationPlaceholder} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.workEmploymentType}</label>
-              <select value={exp.employmentType ?? 'full_time'} onChange={(e) => onUpdate({ employmentType: e.target.value as WorkExperience['employmentType'] })} className={inputCls}>
+              <select aria-label={config.ui.workEmploymentType} value={exp.employmentType ?? 'full_time'} onChange={(e) => onUpdate({ employmentType: e.target.value as WorkExperience['employmentType'] })} className={inputCls}>
                 <option value="full_time">{config.ui.employmentTypes.fullTime}</option>
                 <option value="part_time">{config.ui.employmentTypes.partTime}</option>
                 <option value="contract">{config.ui.employmentTypes.contract}</option>
@@ -175,7 +175,7 @@ function ExperienceCard({ exp, market, config, expanded, onToggle, onUpdate, onR
           {market === 'jp' && (
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">部署名 (Department)</label>
-              <input value={exp.departmentName ?? ''} onChange={(e) => onUpdate({ departmentName: e.target.value })} className={inputCls} placeholder="開発部" />
+              <input aria-label="部署名 (Department)" value={exp.departmentName ?? ''} onChange={(e) => onUpdate({ departmentName: e.target.value })} className={inputCls} placeholder="開発部" />
             </div>
           )}
 
@@ -222,7 +222,7 @@ function ExperienceCard({ exp, market, config, expanded, onToggle, onUpdate, onR
           {market === 'jp' && (
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">退職理由 (Reason for Leaving)</label>
-              <input value={exp.reasonForLeaving ?? ''} onChange={(e) => onUpdate({ reasonForLeaving: e.target.value })} className={inputCls} placeholder="一身上の都合により退職" />
+              <input aria-label="退職理由 (Reason for Leaving)" value={exp.reasonForLeaving ?? ''} onChange={(e) => onUpdate({ reasonForLeaving: e.target.value })} className={inputCls} placeholder="一身上の都合により退職" />
             </div>
           )}
         </div>

@@ -1,26 +1,18 @@
 import { CVData } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
-import { format } from 'date-fns';
 import { getActiveTheme } from '@/lib/utils/theme';
+import { formatPartialDate } from '@/lib/utils/partialDate';
 
 interface Props { cv: CVData; config: MarketConfig; }
 
 function fmtDate(ym?: string): string {
-  if (!ym) return '';
-  try { return format(new Date(ym + '-01'), 'MM/yyyy'); }
-  catch { return ym; }
+  return formatPartialDate(ym, 'MM/yyyy');
 }
 
 function dateRange(start: string, end?: string, isPresent?: boolean): string {
   if (!start) return '';
   return `${fmtDate(start)} – ${isPresent ? 'Present' : fmtDate(end)}`;
 }
-
-const cefrDescriptions: Record<string, string> = {
-  A1: 'Basic User', A2: 'Basic User',
-  B1: 'Independent User', B2: 'Independent User',
-  C1: 'Proficient User', C2: 'Proficient User',
-};
 
 export default function EUEuropassRenderer({ cv, config }: Props) {
   const { personalInfo: p } = cv;

@@ -23,13 +23,16 @@ export default function PersonalInfoStep({ config }: Props) {
     mode: 'onBlur',
   });
 
+  // Re-sync the form whenever another draft is loaded (switch, clear, import)
+  // so stale values from the previous draft can never be written back.
   useEffect(() => {
     reset(cv.personalInfo);
-  }, [cv.personalInfo.firstName]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cv.id, cv.personalInfo.firstName]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync form changes to store
+  // Sync user edits to the store (programmatic resets have no field name).
   useEffect(() => {
-    const sub = watch((data) => {
+    const sub = watch((data, { name }) => {
+      if (!name) return;
       setPersonalInfo(data as Partial<PersonalInfo>);
     });
     return () => sub.unsubscribe();
@@ -382,15 +385,19 @@ function Field({
   error?: string;
   children: React.ReactNode;
 }) {
+  // The <label> wraps its control so screen readers associate them implicitly.
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+      <label className="block">
+        <span className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+          {required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
+          {required && <span className="sr-only"> (required)</span>}
+        </span>
+        {helpText && <span className="block text-xs text-gray-500 mb-1">{helpText}</span>}
+        {children}
       </label>
-      {helpText && <p className="text-xs text-gray-500 mb-1">{helpText}</p>}
-      {children}
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
   );
 }

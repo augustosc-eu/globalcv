@@ -1,14 +1,12 @@
 import { CVData, MaritalStatus } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
-import { format } from 'date-fns';
 import { getActiveTheme } from '@/lib/utils/theme';
+import { formatPartialDate } from '@/lib/utils/partialDate';
 
 interface Props { cv: CVData; config: MarketConfig; }
 
 function fmtDate(ym?: string): string {
-  if (!ym) return '';
-  try { return format(new Date(ym + '-01'), 'MM/yyyy'); }
-  catch { return ym; }
+  return formatPartialDate(ym, 'MM/yyyy');
 }
 
 function dateRange(start: string, end?: string, isPresent?: boolean): string {

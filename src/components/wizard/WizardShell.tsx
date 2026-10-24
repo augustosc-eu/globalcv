@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Eye, X, ArrowLeft, ArrowRight } from 'lucide-react';
-import { Market } from '@/types/cv.types';
+import { CVData, Market } from '@/types/cv.types';
 import { getMarketConfig } from '@/lib/markets';
 import { useCVStore } from '@/store/cvStore';
-import { decodeCVFromURL, removeShareParam } from '@/lib/sharing/shareUrl';
+import { removeShareParam, resolveIncomingShare } from '@/lib/sharing/shareUrl';
 import AppHeader from '@/components/shared/AppHeader';
+import StorageStatusBanner from '@/components/shared/StorageStatusBanner';
+import SharedCVPrompt from '@/components/shared/SharedCVPrompt';
 import WizardProgress from './WizardProgress';
 import WizardNavigation from './WizardNavigation';
 import StepRouter from './StepRouter';
@@ -33,10 +35,9 @@ export default function WizardShell({ market }: WizardShellProps) {
   const appliedUrlTargeting = useRef(false);
   const resizeState = useRef<{ startX: number; startWidth: number } | null>(null);
   const { exportPDF, state: pdfState, error: pdfError } = usePDFExport();
-  const { initializeMarket, setSteps, wizard, cv, setPersonalInfo, setObjective,
-          addWorkExperience, addEducation, addSkill, addLanguage, addCertification,
-          addReference, setSelfPromotion, setReasonForApplication, setDesiredConditions,
-          setTemplate, setColorTheme, setPageSize, setTargeting, setCurrentStep } = useCVStore();
+  const { initializeMarket, importAsNewDraft, setSteps, wizard, cv, setTargeting, setCurrentStep } = useCVStore();
+  const [pendingShare, setPendingShare] = useState<{ cv: CVData; legacy: boolean } | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
 
   const steps: WizardStep[] = useMemo(() => {
     const list: WizardStep[] = [{ key: 'personal', label: 'Personal Info' }];
@@ -60,27 +61,17 @@ export default function WizardShell({ market }: WizardShellProps) {
   }, [config]);
 
   useEffect(() => {
-    // Check for shared CV in URL first
-    const shared = decodeCVFromURL();
-    if (shared && shared.market === market) {
-      setPersonalInfo(shared.personalInfo);
-      if (shared.objective) setObjective(shared.objective);
-      shared.workExperience.forEach((e) => addWorkExperience(e));
-      shared.education.forEach((e) => addEducation(e));
-      shared.skills.forEach((s) => addSkill(s));
-      shared.languages.forEach((l) => addLanguage(l));
-      shared.certifications.forEach((c) => addCertification(c));
-      shared.references.forEach((r) => addReference(r));
-      if (shared.selfPromotion) setSelfPromotion(shared.selfPromotion);
-      if (shared.reasonForApplication) setReasonForApplication(shared.reasonForApplication);
-      if (shared.desiredConditions) setDesiredConditions(shared.desiredConditions);
-      if (shared.templateId) setTemplate(shared.templateId);
-      if (shared.colorTheme) setColorTheme(shared.colorTheme);
-      if (shared.pageSize) setPageSize(shared.pageSize);
-      removeShareParam();
-    } else {
-      initializeMarket(market);
+    // A share link never merges into existing data: load the user's own draft,
+    // then offer to open the shared CV as a separate new draft.
+    const incoming = resolveIncomingShare(window.location.href, market);
+    if (incoming.type === 'redirect') {
+      window.location.replace(incoming.href);
+      return;
     }
+    initializeMarket(market);
+    if (incoming.type !== 'none') removeShareParam();
+    if (incoming.type === 'offer') setPendingShare({ cv: incoming.cv, legacy: incoming.legacy });
+    if (incoming.type === 'invalid') setShareError(incoming.message);
     setSteps(steps.map((s) => s.label));
   }, [market]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -164,6 +155,23 @@ export default function WizardShell({ market }: WizardShellProps) {
   return (
     <div className="min-h-screen flex flex-col app-shell-bg">
       <AppHeader market={market} config={config} />
+      <StorageStatusBanner market={market} />
+      {shareError && (
+        <div role="alert" className="flex items-center justify-between gap-3 px-4 py-2 text-xs bg-red-50 border-b border-red-200 text-red-800">
+          <span>{shareError}</span>
+          <button onClick={() => setShareError(null)} className="font-semibold underline">Dismiss</button>
+        </div>
+      )}
+      {pendingShare && (
+        <SharedCVPrompt
+          cv={pendingShare.cv}
+          legacy={pendingShare.legacy}
+          onOpen={() => {
+            if (importAsNewDraft(pendingShare.cv, market)) setPendingShare(null);
+          }}
+          onDismiss={() => setPendingShare(null)}
+        />
+      )}
 
       <div className="flex flex-1 overflow-hidden">
         <aside className="hidden lg:flex flex-col w-72 bg-white/85 backdrop-blur border-r border-slate-200 p-4 overflow-y-auto flex-shrink-0">

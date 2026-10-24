@@ -15,8 +15,25 @@ import {
   PageSize,
   RemoteWorkProfile,
 } from '@/types/cv.types';
-import { saveCV, loadCV, setActiveDraft } from '@/lib/storage/localStorage';
+import {
+  saveCV,
+  loadDraft,
+  setActiveDraft,
+  clearCV,
+  eraseAllLocalData,
+  registerRepairContext,
+  SaveResult,
+  StorageFailureReason,
+  StorageResult,
+  EraseResult,
+} from '@/lib/storage/localStorage';
 import { getMarketConfig } from '@/lib/markets';
+import { MARKETS } from '@/lib/markets/registry';
+
+for (const market of MARKETS) {
+  const config = getMarketConfig(market);
+  registerRepairContext({ market, templateId: config.templates[0]?.id ?? '', pageSize: config.pageSize });
+}
 
 type ImportSectionKey =
   | 'personalInfo'
@@ -46,12 +63,29 @@ interface CVStoreState {
   privacyMode: boolean;
   history: CVData[];
   historyIndex: number;
+  /** Last persistence failure; null when the latest save succeeded. */
+  saveError: { reason: StorageFailureReason; message: string } | null;
+  /** Revision of the current draft as last loaded/saved; null = never persisted. */
+  loadedRevision: number | null;
+  /** Current draft was loaded through automatic repair (original kept for recovery). */
+  loadedFromRepair: boolean;
 }
 
+export type ConflictChoice = 'overwrite' | 'reload' | 'keep-both';
+
 interface CVStoreActions {
-  initializeMarket: (market: Market, draftId?: string | null) => void;
+  /** Loads a market/draft. Returns false (and keeps unsaved edits) if they could not be saved first. */
+  initializeMarket: (market: Market, draftId?: string | null) => boolean;
   resetCV: (market: Market) => void;
-  restoreCV: (data: CVData, options?: { markDirty?: boolean; setActive?: boolean }) => void;
+  restoreCV: (data: CVData, options?: { markDirty?: boolean; setActive?: boolean; revision?: number | null }) => void;
+  /** Opens external data (share link, backup file) as a brand-new draft; never merges or overwrites. */
+  importAsNewDraft: (data: CVData, market: Market) => boolean;
+  /** Permanently deletes the current draft from storage and starts an empty CV. */
+  clearCurrentCV: () => StorageResult;
+  /** Removes all GlobalCV data from this device and resets the editor. */
+  eraseAllData: () => EraseResult;
+  resolveSaveConflict: (choice: ConflictChoice) => SaveResult | boolean;
+  dismissSaveError: () => void;
   setDraftTitle: (title: string) => void;
 
   setPersonalInfo: (info: Partial<PersonalInfo>) => void;
@@ -114,7 +148,7 @@ interface CVStoreActions {
   prevStep: () => void;
   setSteps: (steps: string[]) => void;
 
-  save: () => void;
+  save: (options?: { force?: boolean }) => SaveResult | null;
   markClean: () => void;
   togglePrivacyMode: () => void;
 
@@ -146,7 +180,7 @@ export function createEmptyCVData(market: Market): CVData {
   const config = getMarketConfig(market);
   const now = new Date().toISOString();
   return {
-    id: `cv_${market}_${Date.now()}`,
+    id: `cv_${market}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     title: `${config.name} Draft`,
     market,
     templateId: config.templates[0]?.id ?? '',
@@ -188,30 +222,41 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
       privacyMode: false,
       history: [],
       historyIndex: -1,
+      saveError: null,
+      loadedRevision: null,
+      loadedFromRepair: false,
 
       initializeMarket: (market, draftId) => {
-        const saved = get().privacyMode ? null : loadCV(market, draftId);
-        const nextCV = saved ?? createEmptyCVData(market);
+        if (!flushPendingSave()) return false;
+        const loaded = get().privacyMode ? null : loadDraft(market, draftId);
+        const nextCV = loaded?.cv ?? createEmptyCVData(market);
 
-        if (saved && !get().privacyMode) {
-          setActiveDraft(market, saved.id);
+        if (loaded && !get().privacyMode) {
+          setActiveDraft(market, loaded.cv.id);
         }
 
         set((state) => {
           state.cv = nextCV;
           state.isDirty = false;
-          state.lastSaved = nextCV.lastModified ?? null;
+          state.lastSaved = loaded ? nextCV.lastModified ?? null : null;
+          state.loadedRevision = loaded?.revision ?? null;
+          state.loadedFromRepair = loaded?.repaired ?? false;
+          state.saveError = null;
           state.wizard.currentStep = 0;
           pushSnapshot(state, nextCV);
         });
+        return true;
       },
 
       resetCV: (market) => {
         const nextCV = createEmptyCVData(market);
         set((state) => {
           state.cv = nextCV;
-          state.isDirty = true;
+          state.isDirty = false;
           state.lastSaved = null;
+          state.loadedRevision = null;
+          state.loadedFromRepair = false;
+          state.saveError = null;
           state.wizard.currentStep = 0;
           pushSnapshot(state, nextCV);
         });
@@ -219,14 +264,108 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
 
       restoreCV: (data, options) => {
         const nextCV = clone(data);
-        if (options?.setActive !== false) {
+        if (options?.setActive !== false && !get().privacyMode) {
           setActiveDraft(nextCV.market, nextCV.id);
         }
         set((state) => {
           state.cv = nextCV;
           state.isDirty = options?.markDirty ?? true;
-          state.lastSaved = nextCV.lastModified ?? null;
+          state.lastSaved = options?.markDirty === false ? nextCV.lastModified ?? null : null;
+          state.loadedRevision = options?.revision ?? null;
+          state.loadedFromRepair = false;
+          state.saveError = null;
           pushSnapshot(state, nextCV);
+        });
+      },
+
+      importAsNewDraft: (data, market) => {
+        if (!flushPendingSave()) return false;
+        const config = getMarketConfig(market);
+        const templateIds = config.templates.map((t) => t.id);
+        const nextCV: CVData = {
+          ...clone(data),
+          id: `cv_${market}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          market,
+          templateId: templateIds.includes(data.templateId) ? data.templateId : config.templates[0]?.id ?? '',
+          lastModified: new Date().toISOString(),
+        };
+        set((state) => {
+          state.cv = nextCV;
+          state.isDirty = true;
+          state.lastSaved = null;
+          state.loadedRevision = null;
+          state.loadedFromRepair = false;
+          state.saveError = null;
+          state.wizard.currentStep = 0;
+          pushSnapshot(state, nextCV);
+        });
+        return true;
+      },
+
+      clearCurrentCV: () => {
+        const { cv, privacyMode } = get();
+        cancelPendingAutosave();
+        const result: StorageResult = privacyMode ? { ok: true } : clearCV(cv.market, cv.id);
+        if (!result.ok) {
+          set((state) => {
+            state.saveError = { reason: result.reason, message: result.message };
+          });
+          return result;
+        }
+        const nextCV = createEmptyCVData(cv.market);
+        set((state) => {
+          state.cv = nextCV;
+          state.isDirty = false;
+          state.lastSaved = null;
+          state.loadedRevision = null;
+          state.loadedFromRepair = false;
+          state.saveError = null;
+          state.wizard.currentStep = 0;
+          pushSnapshot(state, nextCV);
+        });
+        return result;
+      },
+
+      eraseAllData: () => {
+        cancelPendingAutosave();
+        const market = get().cv.market;
+        const result = eraseAllLocalData();
+        const nextCV = createEmptyCVData(market);
+        set((state) => {
+          state.cv = nextCV;
+          state.isDirty = false;
+          state.lastSaved = null;
+          state.loadedRevision = null;
+          state.loadedFromRepair = false;
+          state.saveError = null;
+          state.wizard.currentStep = 0;
+          pushSnapshot(state, nextCV);
+        });
+        return result;
+      },
+
+      resolveSaveConflict: (choice) => {
+        const { cv } = get();
+        if (choice === 'overwrite') return get().save({ force: true }) ?? false;
+        if (choice === 'reload') {
+          set((state) => {
+            state.isDirty = false;
+            state.saveError = null;
+          });
+          return get().initializeMarket(cv.market, cv.id);
+        }
+        set((state) => {
+          state.cv.id = `cv_${cv.market}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+          state.cv.title = `${cv.title ?? 'Draft'} (this tab)`;
+          state.loadedRevision = null;
+          state.isDirty = true;
+        });
+        return get().save() ?? false;
+      },
+
+      dismissSaveError: () => {
+        set((state) => {
+          state.saveError = null;
         });
       },
 
@@ -629,28 +768,48 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
         });
       },
 
-      save: () => {
-        const { cv, privacyMode } = get();
-        if (privacyMode) return;
+      save: (options) => {
+        const { cv, privacyMode, loadedRevision } = get();
+        if (privacyMode) return null;
+        cancelPendingAutosave();
 
         set((state) => {
           state.isSaving = true;
         });
 
+        let result: SaveResult;
         try {
-          saveCV(cv);
-          const savedAt = new Date().toISOString();
+          result = saveCV(cv, { expectedRevision: loadedRevision, force: options?.force });
+        } catch (err) {
+          result = {
+            ok: false,
+            reason: 'unavailable',
+            message: `Saving failed unexpectedly (${err instanceof Error ? err.message : 'unknown error'}). Your latest changes are NOT saved.`,
+          };
+        }
+
+        if (result.ok) {
+          const { savedAt, revision } = result;
+          // Only mark clean if nothing changed while saving.
+          const unchanged = get().cv === cv;
           set((state) => {
-            state.isDirty = false;
+            if (unchanged) state.isDirty = false;
             state.lastSaved = savedAt;
             state.isSaving = false;
+            state.saveError = null;
+            state.loadedRevision = revision;
+            state.loadedFromRepair = false;
             state.cv.lastModified = savedAt;
           });
-        } catch {
+        } else {
+          const failed = result;
           set((state) => {
             state.isSaving = false;
+            state.isDirty = true;
+            state.saveError = { reason: failed.reason, message: failed.message };
           });
         }
+        return result;
       },
 
       markClean: () => {
@@ -788,16 +947,39 @@ export const useCVStore = create<CVStoreState & CVStoreActions>()(
 );
 
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
+const AUTOSAVE_DELAY_MS = 1500;
 
+function cancelPendingAutosave() {
+  if (autosaveTimer) clearTimeout(autosaveTimer);
+  autosaveTimer = null;
+}
+
+/**
+ * Save pending edits before the editor switches to another draft/market.
+ * Returns false when the save failed, so callers keep the unsaved edits.
+ */
+function flushPendingSave(): boolean {
+  const state = useCVStore.getState();
+  if (!state.isDirty || state.privacyMode) return true;
+  const result = state.save();
+  return result === null || result.ok;
+}
+
+// Debounced autosave on every CV change (so a failed save is retried on the next edit).
 useCVStore.subscribe(
-  (state) => state.isDirty,
-  (isDirty) => {
+  (state) => [state.cv, state.isDirty] as const,
+  ([, isDirty]) => {
     if (!isDirty) return;
+    const { saveError } = useCVStore.getState();
+    // Conflicts need an explicit user decision; don't retry them automatically.
+    if (saveError && (saveError.reason === 'conflict' || saveError.reason === 'deleted-elsewhere')) return;
     if (autosaveTimer) clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(() => {
+      autosaveTimer = null;
       useCVStore.getState().save();
-    }, 1500);
-  }
+    }, AUTOSAVE_DELAY_MS);
+  },
+  { equalityFn: (a, b) => a[0] === b[0] && a[1] === b[1] }
 );
 
 const MAX_HISTORY = 20;

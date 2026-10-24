@@ -2,7 +2,7 @@
 
 **Free, privacy-first CV and resume builder for the global job market.**
 
-Built by [Bagalinis Consulting](https://bagalinis.com). No account required. No data leaves your browser.
+Built by [Bagalinis Consulting](https://bagalinis.com). No account required. Your CV is stored in your browser, not on our servers.
 
 ---
 
@@ -54,21 +54,24 @@ GlobalCV generates professional CVs and resumes tailored to the conventions of e
 - **Mobile preview** — Full-screen preview modal accessible on small screens via a floating button
 
 ### Import & Backup
-- **CV text import** — Paste any CV text (English or Spanish); the parser detects sections, dates, name, email, phone, and LinkedIn automatically
+- **CV text / PDF import** — Paste CV text or upload a PDF (≤ 10 MB, ≤ 15 pages); the parser detects sections, dates (year-only dates stay year-only), name, email, phone, LinkedIn and languages
 - **Import warnings** — Shows which fields weren't detected and warns if the 30-skill cap is hit
-- **JSON backup** — Download your full CV as a `.json` file; restore it later with the Restore button
+- **JSON backup** — Download your full CV as a `.json` file; restoring always creates a new draft (in the backup's market) and never overwrites an existing one
 - **Copy to market** — Copy all CV content to a different market's slot (preserves target market's template and theme defaults)
 
 ### Sharing & Sync
-- **Share link** — Generates a compressed URL with your full CV data (photo excluded) — share or bookmark it
-- **Long-URL warning** — Warns before copying a link over 2,000 characters with a character count and privacy notice
-- **Cross-tab sync** — If another browser tab saves the same market's CV, a banner prompts you to reload
+- **Share link** — Generates a compressed link with your CV in the URL *fragment* (after `#`, not sent to servers). Photo and ID number are never included; other sensitive fields (DOB, nationality, marital status, gender, emergency contact, street address, references' contacts) only on explicit opt-in. Not encrypted — anyone with the link can read it
+- **Shared CVs open as new drafts** — after confirmation, in the link's own market; existing drafts are never overwritten
+- **Cross-tab safety** — per-draft revisions stop one tab from silently overwriting another tab's newer save; you choose which version to keep
 
 ### Privacy & Safety
-- **Privacy Mode** — Blurs all PII fields in the UI; toggle in the header
-- **Photo compression** — Uploaded photos are automatically resized to 800 px max (JPEG 85%) before storage; files over 8 MB are rejected
+- **Privacy Mode** — Nothing is written to localStorage while it is on
+- **Delete this CV / Erase all data on this device** — permanently remove one draft, or every GlobalCV entry in this browser (other sites' data untouched)
+- **Download all my data** — JSON export of everything GlobalCV stores locally (also restorable)
+- **Never silently loses data** — unreadable or outdated saved data is repaired or kept as a recovery copy, never deleted; failed saves (e.g. storage full) are shown as "Not saved"
+- **Photo compression** — Uploaded photos are automatically resized to 800 px max (JPEG 85%) before storage; files over 8 MB are rejected; identical photos are stored once
 - **Error boundary** — Catches render crashes with a "Reload page" fallback so a broken CV doesn't leave you stuck
-- **No backend** — All data stays in your browser (localStorage + URL state). Nothing is sent to a server
+- **No CV backend** — CV data stays in your browser. The only server routes are the optional jobs feed and the optional post-a-job form
 - **No account** — Open the app, fill in your details, export your PDF
 
 ### ATS (US market)
@@ -84,7 +87,7 @@ GlobalCV is a fully client-side app. No data is collected, stored on a server, o
 
 Hosting is provided by [Vercel](https://vercel.com). No analytics or tracking scripts are used.
 
-The share link embeds CV content (except photos) as LZ-compressed plain text in the URL — anyone with the link can read your data. You are warned before copying.
+The share link embeds CV content as LZ-compressed plain text in the URL fragment — anyone with the link can read it. A privacy notice is shown before every copy.
 
 ---
 
@@ -112,12 +115,20 @@ cd globalcv
 npm install
 npm run dev      # http://localhost:3000
 npm run build    # production build
-npm run lint     # ESLint
+npm run lint       # ESLint (eslint.config.mjs)
+npm run typecheck  # TypeScript
+npm test           # unit + integration tests (node:test via tsx)
+npm run verify:pdf # render every market/template/export-mode PDF fixture
+npm run test:e2e   # browser smoke tests against a production build (needs Playwright + Chromium)
 ```
 
 Open [http://localhost:3000](http://localhost:3000) and select a market to begin.
 
-**Requirements:** Node.js 18+
+**Requirements:** Node.js 22.13+ (see `.nvmrc`; required by pdfjs-dist 6 and Next.js 16)
+
+CI (`.github/workflows/ci.yml`) runs typecheck, lint, tests, `npm audit --omit=dev --audit-level=high`, build, PDF fixtures and the browser smoke tests on every pull request.
+
+After upgrading `pdfjs-dist`, run `npm run sync:pdf-worker` (a test fails if `public/pdf.worker.min.mjs` is out of sync).
 
 ---
 
@@ -222,19 +233,19 @@ Every market's wizard steps, fields, validation rules, UI labels, and PDF layout
 `CVData` is a single flat object shared across all markets. Market-specific optional fields (`nearestStation`, `commuteTime`, `selfPromotion`, `reasonForApplication`, etc.) are declared as optional on the shared type. The config controls which fields are rendered.
 
 ### Storage
-CV data is stored in `localStorage` under versioned keys (`cv_maker_v1_{market}`). A migration function handles schema upgrades. The store autosaves on every change (debounced) and tracks `lastSaved`.
+CV drafts are stored in `localStorage` under `cv_maker_v2_{market}` (legacy `cv_maker_v1_{market}` is migrated on first save). Reads never modify storage. Drafts that no longer match the schema are repaired in memory, and their original is copied to a `cv_maker_quarantine_*` key before it is replaced; unparseable data is quarantined, never overwritten. Every save reports success or a typed failure (`quota`, `unavailable`, `conflict`, …) and the header shows "Not saved" on failure. Each draft carries a revision so concurrent tabs cannot overwrite each other silently. See [docs/remediation/GLOBALCV_REMEDIATION_SUMMARY.md](docs/remediation/GLOBALCV_REMEDIATION_SUMMARY.md) for recovery and troubleshooting.
 
 ### Undo / Redo
 A Zustand subscriber (outside React) captures CV snapshots every 2 seconds when the store is dirty. History is capped at 20 entries. The redo future is dropped on any new edit.
 
 ### PDF generation
-`@react-pdf/renderer` v4 runs in a Web Worker. `wrap={false}` on entry `<View>`s prevents mid-entry page breaks. The ModernPDF sidebar uses `minHeight: '100%'` on the outer flex row with `backgroundColor` directly on the sidebar `<View>` so it extends correctly across multiple pages.
+`@react-pdf/renderer` v4 is lazy-loaded and renders on the main thread when you export. `wrap={false}` on entry `<View>`s prevents mid-entry page breaks. The ModernPDF sidebar uses `minHeight: '100%'` on the outer flex row with `backgroundColor` directly on the sidebar `<View>` so it extends correctly across multiple pages.
 
 ### Import parser
 `parseRawCV(text, market)` returns `{ data: Partial<CVData>, warnings: string[] }`. It detects sections by heading patterns, extracts contact info from the first 15 lines, and parses date ranges in many formats: ISO `YYYY-MM`, `MMM YYYY`, `MMM-YYYY`, `MM/YYYY`, Spanish month names, and plain year. Skills are capped at 30 with a warning.
 
 ### Share URL
-CV data (minus the photo) is JSON-serialized, LZ-compressed, and base64-encoded into the URL query string. URLs over 2,000 characters trigger a warning modal before copying.
+CV data (minus never-shared and, by default, sensitive fields) is JSON-serialized, LZ-compressed and placed in the URL fragment (`/{market}#cv=2.<payload>`). Payloads are size-limited and schema-validated on open. Legacy `?share=` links still open (sensitive fields dropped) and are removed from the address bar immediately.
 
 ---
 
@@ -242,10 +253,9 @@ CV data (minus the photo) is JSON-serialized, LZ-compressed, and base64-encoded 
 
 1. Create `src/lib/markets/{market}.config.ts` implementing `MarketConfig`
 2. Register it in `src/lib/markets/index.ts`
-3. Add the market to the `Market` union in `src/types/cv.types.ts`
+3. Add the market to the `Market` union in `src/types/cv.types.ts` and to `MARKETS` in `src/lib/markets/registry.ts` (a compile-time check fails if they differ; routes, schema and storage all read this list)
 4. Add HTML preview renderers to `src/components/preview/renderers/`
 5. Add PDF components to `src/lib/pdf/CVPDFDocument.tsx`
-6. Add the market to `validMarkets` in `src/app/[market]/layout.tsx`
 
 ---
 
@@ -272,14 +282,17 @@ For Jobs source compliance hardening, you can optionally gate higher-risk provid
 
 By default, safe mode is ON and uncertain sources stay disabled.
 
+The jobs API never forwards the free-text search to providers: each provider is fetched at most once per 5 minutes per server instance (single-flight, max 4 concurrent, 6 s timeout per request) and filtered locally. Requests are validated (search ≤ 100 chars, known filter values only) and rate-limited per client per instance (60/min). For a global limit across serverless instances, add a platform rule (e.g. a Vercel Firewall rate-limit rule on `/api/*`). Demo listings are served only outside production, or with `ENABLE_DEMO_JOBS=true`.
+
 ---
 
 ## Security
 
 - CV builder data is not sent to a server; optional `/post-job` submissions are sent to the backend and emailed via Resend
-- All CV data is stored in `localStorage` and/or encoded in the share URL (LZ-compressed)
+- CV data is stored in `localStorage` and, when you share, in the URL fragment (LZ-compressed, not encrypted)
 - **Privacy Mode** keeps everything in memory — nothing written to disk
-- Security headers enforced via `next.config.mjs`: `X-Frame-Options`, `X-Content-Type-Options`, `Strict-Transport-Security`, `Permissions-Policy`, and a Content Security Policy
+- Security headers enforced via `next.config.mjs`: CSP (no `unsafe-eval` in production, `object-src 'none'`, logo hosts allow-listed), `X-Frame-Options: DENY`, `X-Content-Type-Options`, `Strict-Transport-Security`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`; `X-Powered-By` disabled
+- See [docs/remediation/GLOBALCV_SECURITY_FIXES.md](docs/remediation/GLOBALCV_SECURITY_FIXES.md) for the remaining CSP exceptions and why they exist
 - See [SECURITY.md](SECURITY.md) for the full security policy and vulnerability reporting
 
 ---

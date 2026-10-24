@@ -9,6 +9,7 @@ import {
   ChevronUp, Bookmark, BookmarkCheck,
 } from 'lucide-react';
 import { saveApplication, isJobSaved } from '@/lib/storage/localStorage';
+import { safeHttpUrl } from '@/lib/utils/safeUrl';
 import TopNav from '@/components/shared/TopNav';
 import { SITE_OWNER_NAME, SITE_OWNER_URL } from '@/lib/site';
 import {
@@ -341,7 +342,7 @@ function JobCard({ job }: { job: Job }) {
             <button
               onClick={() => {
                 if (!saved) {
-                  saveApplication({
+                  const entry = saveApplication({
                     jobId: job.id,
                     jobTitle: job.title,
                     company: job.company,
@@ -350,7 +351,8 @@ function JobCard({ job }: { job: Job }) {
                     location: job.location,
                     status: 'saved',
                   });
-                  setSaved(true);
+                  if (entry) setSaved(true);
+                  else window.alert('Could not save this job: browser storage is full or unavailable.');
                 }
               }}
               title={saved ? 'Job saved to tracker' : 'Save to application tracker'}
@@ -374,14 +376,16 @@ function JobCard({ job }: { job: Job }) {
               <FileText size={11} />
               Build {marketCtaLabel}
             </Link>
-            <a
-              href={job.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 active:scale-95 transition-all shadow-sm"
-            >
-              Open listing <ExternalLink size={11} />
-            </a>
+            {safeHttpUrl(job.url) && (
+              <a
+                href={safeHttpUrl(job.url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 active:scale-95 transition-all shadow-sm"
+              >
+                Open listing <ExternalLink size={11} />
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -468,6 +472,7 @@ export default function JobsPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [unavailableSources, setUnavailableSources] = useState<string[]>([]);
 
   const [filters, setFilters] = useState<Filters>(DEFAULT);
   const [searchInput, setSearchInput] = useState('');
@@ -493,13 +498,17 @@ export default function JobsPage() {
       if (filters.sort !== 'newest')  p.set('sort', filters.sort);
 
       const res = await fetch(`/api/jobs?${p}`);
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const body = await res.json().catch(() => null) as { error?: string } | null;
+        throw new Error(body?.error ?? 'Could not load jobs — please try again.');
+      }
       const data: JobsResponse = await res.json();
       setJobs(data.jobs);
       setTotal(data.total);
       setTotalPages(data.totalPages);
-    } catch {
-      setError('Could not load jobs — please try again.');
+      setUnavailableSources((data.sources ?? []).filter((s) => !s.ok).map((s) => s.id));
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : 'Could not load jobs — please try again.');
     } finally {
       setLoading(false);
     }
@@ -562,6 +571,8 @@ export default function JobsPage() {
               <input
                 type="text"
                 value={searchInput}
+                maxLength={100}
+                aria-label="Search jobs"
                 onChange={e => setSearchInput(e.target.value)}
                 placeholder="Job title, company, or skill — e.g. React, Stripe, Product Manager…"
                 className="w-full pl-10 pr-4 py-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
@@ -692,6 +703,12 @@ export default function JobsPage() {
         {loading && (
           <div className="space-y-3">
             {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        )}
+
+        {!loading && !error && unavailableSources.length > 0 && (
+          <div role="status" className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-800">
+            Some job sources are temporarily unavailable ({unavailableSources.join(', ')}), so results may be incomplete.
           </div>
         )}
 

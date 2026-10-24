@@ -1,23 +1,12 @@
 import { CVData } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
+import { formatPartialDate } from '@/lib/utils/partialDate';
 
 interface Props { cv: CVData; config: MarketConfig; }
 
 // Format YYYY-MM to Japanese era + year + month
 function toJapaneseDate(ym?: string): string {
-  if (!ym) return '';
-  const [y, m] = ym.split('-').map(Number);
-  if (!y) return '';
-
-  // Reiwa starts 2019-05-01
-  if (y > 2019 || (y === 2019 && m >= 5)) {
-    return `令和${y - 2018}年${m}月`;
-  }
-  // Heisei 1989-01-08 to 2019-04-30
-  if (y > 1989 || (y === 1989 && m >= 1)) {
-    return `平成${y - 1988}年${m}月`;
-  }
-  return `${y}年${m}月`;
+  return formatPartialDate(ym, 'jp-era');
 }
 
 export default function JapanRirekishoRenderer({ cv }: Props) {
@@ -234,7 +223,7 @@ export default function JapanRirekishoRenderer({ cv }: Props) {
   );
 }
 
-function TableRow({ label, children, cols = 2 }: { label: string; children: React.ReactNode; cols?: number }) {
+function TableRow({ label, children }: { label: string; children: React.ReactNode; cols?: number }) {
   return (
     <div className="flex border-b border-black">
       <div className={`w-20 px-2 py-1 border-r border-black bg-gray-50 text-[8px] text-gray-600 flex items-center`}>

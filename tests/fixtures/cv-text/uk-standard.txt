@@ -1,0 +1,26 @@
+Jane Doe
+jane.doe@example.com | +44 20 7946 0958 | linkedin.com/in/janedoe
+London, UK
+
+PROFESSIONAL SUMMARY
+Product engineer with 8 years of experience.
+
+EXPERIENCE
+Senior Engineer — Acme Ltd
+Jan 2020 – Present
+- Led migration to TypeScript, cutting bugs by 30%
+- Mentored four engineers
+
+Engineer, Beta GmbH
+03/2016 - 12/2019
+Built APIs.
+
+EDUCATION
+BSc Computer Science, University of Leeds
+2012 - 2016
+
+SKILLS
+TypeScript, React, Node.js, SQL
+
+LANGUAGES
+English (Native), German (B2)

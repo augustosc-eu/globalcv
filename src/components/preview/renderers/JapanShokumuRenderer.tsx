@@ -1,15 +1,11 @@
 import { CVData } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
+import { formatPartialDate } from '@/lib/utils/partialDate';
 
 interface Props { cv: CVData; config: MarketConfig; }
 
 function toJpDate(ym?: string): string {
-  if (!ym) return '';
-  const [y, m] = ym.split('-').map(Number);
-  if (!y) return '';
-  if (y > 2019 || (y === 2019 && m >= 5)) return `令和${y - 2018}年${m}月`;
-  if (y > 1989 || (y === 1989 && m >= 1)) return `平成${y - 1988}年${m}月`;
-  return `${y}年${m}月`;
+  return formatPartialDate(ym, 'jp-era');
 }
 
 const sectionTitle = 'text-[9px] font-bold tracking-wider text-gray-500 border-b border-gray-300 pb-1 mb-2 uppercase';

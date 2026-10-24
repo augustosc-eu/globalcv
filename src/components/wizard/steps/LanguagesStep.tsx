@@ -119,7 +119,7 @@ export default function LanguagesStep({ market, config }: Props) {
   );
 }
 
-function LanguageRow({ lang, system, nativeLabel, certLabel, certPlaceholder, onUpdate, onRemove }: {
+function LanguageRow({ lang, system, nativeLabel, certPlaceholder, onUpdate, onRemove }: {
   lang: Language;
   system: 'cefr' | 'jlpt' | 'generic';
   nativeLabel: string;

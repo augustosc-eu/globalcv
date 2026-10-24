@@ -201,7 +201,7 @@ function parseNormalizedLines(
         result.objective = sectionText.replace(/\n{2,}/g, '\n').trim();
         break;
       case 'workExperience':
-        result.workExperience.push(...parseExperienceSection(section.lines));
+        result.workExperience.push(...parseExperienceSection(section.lines, warnings));
         if (format === 'markdown' && section.lines.length > 0 && result.workExperience.length === 0) {
           warnings.push('Markdown experience section was found, but no dated roles were recognized. Keep role and date lines close together.');
         }
@@ -216,7 +216,7 @@ function parseNormalizedLines(
         allSkills.push(...parseSkillsSection(sectionText));
         break;
       case 'languages':
-        result.languages = parseLanguagesSection(section.lines);
+        result.languages = parseLanguagesSection(section.lines, warnings);
         break;
       case 'certifications':
         result.certifications = parseCertificationsSection(section.lines);
@@ -351,23 +351,30 @@ function parseDateToYM(str: string): string {
   if (slash) return `${slash[2]}-${slash[1].padStart(2, '0')}`;
   const isoYM = s.match(/^(\d{4})-(\d{2})$/);
   if (isoYM) return `${isoYM[1]}-${isoYM[2]}`;
-  const monthYear = s.match(/^([a-záéíóúñ]+)[.\s\-]+(\d{4})$/);
-  if (monthYear) return `${monthYear[2]}-${MONTH_MAP[monthYear[1]] ?? '01'}`;
+  const monthYear = s.match(/^([a-záéíóúñ]+)[.,\s\-]+(\d{4})$/);
+  if (monthYear) return MONTH_MAP[monthYear[1]] ? `${monthYear[2]}-${MONTH_MAP[monthYear[1]]}` : monthYear[2];
   const yearMonth = s.match(/^(\d{4})[.\s\-]+([a-záéíóúñ]+)$/);
-  if (yearMonth) return `${yearMonth[1]}-${MONTH_MAP[yearMonth[2]] ?? '01'}`;
+  if (yearMonth) return MONTH_MAP[yearMonth[2]] ? `${yearMonth[1]}-${MONTH_MAP[yearMonth[2]]}` : yearMonth[1];
+  // Year only: keep year precision — never invent a month.
   const year = s.match(/^(\d{4})$/);
-  if (year) return `${year[1]}-01`;
+  if (year) return year[1];
   return '';
 }
 
+const PRESENT_RE = /^(?:present|current|now|today|actualidad|actual|hoy|presente|atual|atualmente|現在)$/i;
+const DATE_PIECE_RE = new RegExp(
+  `(\\d{4}-\\d{2}|\\d{1,2}\\/\\d{4}|(?:${MONTH_NAMES}|sept)\\.?[\\s,\\-]+\\d{4}|\\d{4}|present|current|now|today|actualidad|actual|hoy|presente|atualmente|atual|現在)`,
+  'gi'
+);
+
+/** Extract start/end from strings like "Jan 2020 – Present", "2020-01 - 2021-03", "03/2016 - 12/2019", "2012 - 2016". */
 function parseDateRange(str: string): { startDate: string; endDate: string; isPresent: boolean } {
-  const parts = str.split(/\s*(?:–|—| to )\s*|-(?=\s*\d)/i).map((s) => s.trim()).filter(Boolean);
-  if (parts.length < 2) return { startDate: parseDateToYM(str), endDate: '', isPresent: false };
-  const [left, right] = parts;
-  const isPresent = /present|current|now|actualidad|actual/i.test(right ?? '');
+  const pieces = (str.match(DATE_PIECE_RE) ?? []).map((piece) => piece.trim());
+  const [left = '', right = ''] = pieces;
+  const isPresent = PRESENT_RE.test(right);
   return {
-    startDate: parseDateToYM(left ?? ''),
-    endDate: isPresent ? '' : parseDateToYM(right ?? ''),
+    startDate: parseDateToYM(left),
+    endDate: isPresent ? '' : parseDateToYM(right),
     isPresent,
   };
 }
@@ -377,30 +384,136 @@ function genId(): string {
 }
 
 function cleanText(s: string): string {
-  return normalizeLine(stripLeadingSymbols(s)).replace(/^[|\s·,–\-]+/, '').replace(/[|\s]+$/, '').trim();
+  return normalizeLine(stripLeadingSymbols(s)).replace(/^[|\s·•▪▸✔✓*,–\-]+/, '').replace(/[|\s]+$/, '').trim();
 }
 
-function parseExperienceSection(lines: string[]): WorkExperience[] {
-  const nonEmpty = lines.map((line) => cleanText(line)).filter(Boolean);
-  const dateIndices = nonEmpty
-    .map((line, i) => ({ i, line }))
+interface ParsedLine {
+  text: string;
+  bullet: boolean;
+}
+
+const BULLET_RE = /^\s*(?:[-*+•·▪▸✔✓]|\d+[.)])\s+/;
+
+function toParsedLines(lines: string[]): ParsedLine[] {
+  return lines
+    .map((line) => ({ text: cleanText(line), bullet: BULLET_RE.test(normalizeLine(line)) }))
+    .filter((line) => Boolean(line.text));
+}
+
+const COMPANY_HINT_RE = /\b(ltd|limited|inc|llc|llp|plc|gmbh|ag|s\.?a\.?|s\.?l\.?|b\.?v\.?|pty|corp|corporation|company|co\.|group|holdings|bank|university|universidad|universidade|college|school|hospital|agency|studio|labs?|technologies|solutions|consulting|partners|foundation|ministry|council|nhs)\b/i;
+const TITLE_HINT_RE = /\b(engineer|developer|manager|director|analyst|designer|consultant|lead|head|officer|specialist|intern|assistant|associate|coordinator|architect|scientist|administrator|advisor|adviser|executive|representative|technician|accountant|teacher|nurse|editor|writer|researcher|programmer|tester|owner|founder|president|vp|cto|ceo|cfo|chief|supervisor|clerk|trainee|apprentice|ingeniero|desarrollador|gerente|analista|diseñador|desenvolvedor|engenheiro)\b/i;
+
+/** Split "Title — Company", "Company | Title", "Title at Company", "Title, Company". */
+export function splitTitleCompany(value: string): { title: string; company: string } | null {
+  const text = value.replace(/[•]/g, '|').trim();
+  if (!text) return null;
+  let parts: string[] | null = null;
+  const strong = text.split(/\s+[|—–]\s+|\s+-\s+|\s*\|\s*/).map((p) => cleanText(p)).filter(Boolean);
+  if (strong.length >= 2) parts = strong;
+  if (!parts) {
+    const at = text.match(/^(.+?)\s+(?:at|@|en|na|no)\s+(.+)$/i);
+    if (at && TITLE_HINT_RE.test(at[1])) parts = [at[1], at[2]];
+  }
+  if (!parts && (text.match(/,/g) ?? []).length === 1) {
+    const [left, right] = text.split(',').map((p) => cleanText(p));
+    if (left && right) parts = [left, right];
+  }
+  if (!parts) return null;
+  const [first, second, ...rest] = parts;
+  const restText = rest.join(', ');
+  const firstLooksCompany = COMPANY_HINT_RE.test(first) && !TITLE_HINT_RE.test(first);
+  const secondLooksTitle = TITLE_HINT_RE.test(second) && !COMPANY_HINT_RE.test(second);
+  if (firstLooksCompany || (secondLooksTitle && !TITLE_HINT_RE.test(first))) {
+    return { title: second, company: [first, restText].filter(Boolean).join(', ') };
+  }
+  return { title: first, company: [second, restText].filter(Boolean).join(', ') };
+}
+
+function looksLikeHeader(line: ParsedLine | undefined): boolean {
+  if (!line || line.bullet) return false;
+  const t = line.text;
+  if (t.length > 90) return false;
+  if (/\s[|—–]\s|\s-\s|\|/.test(t)) return true;
+  if (/[.!?]$/.test(t) && t.split(/\s+/).length > 8) return false;
+  return true;
+}
+
+interface EntryHeader {
+  title: string;
+  company: string;
+  /** Number of lines before the date line that belong to this entry's header. */
+  consumedBefore: number;
+}
+
+function inferEntryHeader(lines: ParsedLine[], dateIdx: number, withoutDate: string, minIdx: number): EntryHeader {
+  const prev = dateIdx - 1 >= minIdx && looksLikeHeader(lines[dateIdx - 1]) ? lines[dateIdx - 1].text : '';
+  const prevPrev = prev && dateIdx - 2 >= minIdx && looksLikeHeader(lines[dateIdx - 2]) ? lines[dateIdx - 2].text : '';
+
+  // Date line itself carries "Title — Company".
+  if (withoutDate) {
+    const split = splitTitleCompany(withoutDate);
+    if (split) return { ...split, consumedBefore: 0 };
+    if (prev) {
+      const prevSplit = splitTitleCompany(prev);
+      if (prevSplit) return { ...prevSplit, consumedBefore: 1 };
+      // Two separate lines: one is the title, one the company.
+      return COMPANY_HINT_RE.test(prev) && !TITLE_HINT_RE.test(prev)
+        ? { title: withoutDate, company: prev, consumedBefore: 1 }
+        : { title: prev, company: withoutDate, consumedBefore: 1 };
+    }
+    return { title: withoutDate, company: '', consumedBefore: 0 };
+  }
+
+  if (prev) {
+    const split = splitTitleCompany(prev);
+    if (split) return { ...split, consumedBefore: 1 };
+    if (prevPrev) {
+      const prevPrevIsCompany = COMPANY_HINT_RE.test(prevPrev) && !COMPANY_HINT_RE.test(prev);
+      const prevIsTitle = TITLE_HINT_RE.test(prev) && !TITLE_HINT_RE.test(prevPrev);
+      if (prevPrevIsCompany || prevIsTitle) return { title: prev, company: prevPrev, consumedBefore: 2 };
+      return { title: prevPrev, company: prev, consumedBefore: 2 };
+    }
+    return { title: prev, company: '', consumedBefore: 1 };
+  }
+  return { title: '', company: '', consumedBefore: 0 };
+}
+
+function parseExperienceSection(lines: string[], warnings: string[] = []): WorkExperience[] {
+  const parsed = toParsedLines(lines);
+  const dateIndices = parsed
+    .map((line, i) => ({ i, line: line.text }))
     .filter(({ line }) => DATE_RANGE_RE.test(line));
 
   if (dateIndices.length === 0) return [];
 
-  const entries: WorkExperience[] = [];
+  // First pass: headers (so each description stops where the next header starts).
+  const headers: EntryHeader[] = [];
+  for (let d = 0; d < dateIndices.length; d += 1) {
+    const { i: dateIdx, line: dateLine } = dateIndices[d];
+    const dateMatch = dateLine.match(DATE_RANGE_RE);
+    const withoutDate = dateMatch ? cleanText(dateLine.replace(dateMatch[1], '')) : '';
+    const minIdx = d === 0 ? 0 : dateIndices[d - 1].i + 1;
+    headers.push(inferEntryHeader(parsed, dateIdx, withoutDate, minIdx));
+  }
 
+  const firstHeaderStart = dateIndices[0].i - headers[0].consumedBefore;
+  if (firstHeaderStart > 0) {
+    warnings.push(`${firstHeaderStart} line(s) before the first dated role in Experience were not imported.`);
+  }
+
+  const entries: WorkExperience[] = [];
   for (let d = 0; d < dateIndices.length; d += 1) {
     const { i: dateIdx, line: dateLine } = dateIndices[d];
     const dateMatch = dateLine.match(DATE_RANGE_RE);
     if (!dateMatch) continue;
 
     const { startDate, endDate, isPresent } = parseDateRange(dateMatch[1]);
-    const withoutDate = cleanText(dateLine.replace(dateMatch[1], ''));
-    const context = inferRoleAndOrg(nonEmpty, dateIdx, withoutDate);
-    const nextEntryIdx = dateIndices[d + 1]?.i ?? nonEmpty.length;
+    const context = headers[d];
+    const nextStart = d + 1 < dateIndices.length
+      ? dateIndices[d + 1].i - headers[d + 1].consumedBefore
+      : parsed.length;
     const description = cleanDescriptionLines(
-      nonEmpty.slice(dateIdx + 1, nextEntryIdx),
+      parsed.slice(dateIdx + 1, Math.max(dateIdx + 1, nextStart)).map((line) => line.text),
       context
     ).join('\n');
 
@@ -419,42 +532,6 @@ function parseExperienceSection(lines: string[]): WorkExperience[] {
   }
 
   return entries;
-}
-
-function inferRoleAndOrg(lines: string[], dateIdx: number, withoutDate: string): { title: string; company: string } {
-  const prev = dateIdx > 0 ? lines[dateIdx - 1] : '';
-  const prevPrev = dateIdx > 1 ? lines[dateIdx - 2] : '';
-
-  const splitCombined = (value: string) =>
-    value.replace(/[•]/g, '|').split(/[|]/).map((part) => cleanText(part)).filter(Boolean);
-
-  if (prev && withoutDate) {
-    const prevParts = splitCombined(prev);
-    const dateParts = splitCombined(withoutDate);
-    if (prevParts.length >= 2) {
-      return { title: prevParts[0] ?? '', company: prevParts[1] ?? dateParts[0] ?? '' };
-    }
-    return { title: prev, company: dateParts[0] ?? '' };
-  }
-
-  if (withoutDate) {
-    const dateParts = splitCombined(withoutDate);
-    if (dateParts.length >= 2) {
-      return { title: dateParts[0] ?? '', company: dateParts[1] ?? '' };
-    }
-    if (prevPrev) {
-      return { title: prevPrev, company: dateParts[0] ?? '' };
-    }
-    return { title: dateParts[0] ?? '', company: '' };
-  }
-
-  if (prev) {
-    const prevParts = splitCombined(prev);
-    if (prevParts.length >= 2) return { title: prevParts[0] ?? '', company: prevParts[1] ?? '' };
-    return { title: prev, company: prevPrev };
-  }
-
-  return { title: '', company: '' };
 }
 
 function cleanDescriptionLines(
@@ -575,37 +652,79 @@ function parseSkillsSection(text: string): Skill[] {
   }));
 }
 
-function parseLanguagesSection(lines: string[]): Language[] {
+const LANGUAGE_NAME = `[A-Za-zÀ-ÿ\\u3040-\\u30FF\\u4E00-\\u9FFF][A-Za-zÀ-ÿ\\u3040-\\u30FF\\u4E00-\\u9FFF\\s'.]{0,40}`;
+const LANGUAGE_PATTERNS = [
+  new RegExp(`^(${LANGUAGE_NAME}?)\\s*\\(([^)]*)\\)\\s*$`),
+  new RegExp(`^(${LANGUAGE_NAME}?)\\s*[:\\-–—]\\s*(.+)$`),
+  new RegExp(`^(${LANGUAGE_NAME})$`),
+];
+
+function matchLanguageItem(item: string): { name: string; level: string } | null {
+  for (const re of LANGUAGE_PATTERNS) {
+    const m = item.match(re);
+    if (m && m[1]?.trim()) return { name: m[1].trim(), level: (m[2] ?? '').trim() };
+  }
+  return null;
+}
+
+/** Split "English (Native), German (B2); French – A2" into items, ignoring commas inside parentheses. */
+function splitLanguageItems(line: string): string[] {
+  const items: string[] = [];
+  let depth = 0;
+  let current = '';
+  for (const ch of line) {
+    if (ch === '(') depth += 1;
+    if (ch === ')') depth = Math.max(0, depth - 1);
+    if (depth === 0 && /[,;|•·\/]/.test(ch)) {
+      items.push(current);
+      current = '';
+      continue;
+    }
+    current += ch;
+  }
+  items.push(current);
+  return items.map((item) => item.trim()).filter(Boolean);
+}
+
+function parseLanguagesSection(lines: string[], warnings: string[] = []): Language[] {
   const languages: Language[] = [];
   for (const line of lines) {
     const trimmed = cleanText(line);
     if (!trimmed) continue;
-    const match = trimmed.match(/^([A-Za-zÀ-ÿ\u3040-\u30FF\u4E00-\u9FFF\s]+)[:\-–—()\s]+(.+)/);
-    if (!match) continue;
-
-    const languageName = match[1].trim();
-    const level = match[2].replace(/[\[\]()]/g, '').trim();
-    const isNative = /native|nativo|母語|fluent/i.test(level);
-    languages.push({
-      id: genId(),
-      language: languageName,
-      proficiency: mapProficiency(level),
-      isNative,
-    });
+    for (const item of splitLanguageItems(trimmed)) {
+      const match = matchLanguageItem(item);
+      if (!match) {
+        warnings.push(`Language not recognised and skipped: "${item}".`);
+        continue;
+      }
+      const languageName = match.name;
+      const level = match.level.replace(/[\[\]()]/g, '').trim();
+      const isNative = /native|nativo|nativa|mother tongue|lengua materna|língua materna|母語|ネイティブ/i.test(level);
+      const proficiency = level ? mapProficiency(level) : 'professional';
+      if (!level) warnings.push(`No level found for ${languageName} — set to "professional"; please review.`);
+      languages.push({ id: genId(), language: languageName, proficiency, isNative });
+    }
   }
+  if (languages.length > 10) warnings.push(`${languages.length} languages found — only the first 10 were imported.`);
   return languages.slice(0, 10);
 }
 
 function mapProficiency(raw: string): Language['proficiency'] {
-  const s = raw.toLowerCase();
-  if (/native|nativo|母語/i.test(s)) return 'native';
-  if (/básico|basico|basic|a1|a2/i.test(s)) return 'A2';
-  if (/intermedio|intermediate|b1/i.test(s)) return 'B1';
-  if (/upper.inter|b2/i.test(s)) return 'B2';
-  if (/avanzado|advanced|c1/i.test(s)) return 'C1';
-  if (/maestría|mastery|profici|c2/i.test(s)) return 'C2';
-  if (/^[abcABC][12]$/.test(s.trim())) return s.trim().toUpperCase() as Language['proficiency'];
-  return 'B1';
+  const s = raw.toLowerCase().trim();
+  const cefr = s.match(/\b([abc][12])\b/i);
+  if (cefr) return cefr[1].toUpperCase() as Language['proficiency'];
+  const jlpt = s.match(/\b(n[1-5])\b/i);
+  if (jlpt) return jlpt[1].toUpperCase() as Language['proficiency'];
+  if (/native|nativo|nativa|mother tongue|materna|母語|ネイティブ/i.test(s)) return 'native';
+  if (/fluent|fluido|fluente|fluida|bilingual|bilingüe|bilíngue|流暢/i.test(s)) return 'fluent';
+  if (/profici|professional|profesional|profissional|business|negocios|ビジネス/i.test(s)) return 'professional';
+  if (/conversational|conversacional|日常会話/i.test(s)) return 'conversational';
+  if (/upper.?inter/i.test(s)) return 'B2';
+  if (/avanzado|avançado|advanced|上級/i.test(s)) return 'C1';
+  if (/intermedio|intermediário|intermediate|中級/i.test(s)) return 'B1';
+  if (/básico|basico|basic|elementary|beginner|初級/i.test(s)) return 'basic';
+  if (/maestría|mastery/i.test(s)) return 'C2';
+  return 'professional';
 }
 
 function parseCertificationsSection(lines: string[]) {

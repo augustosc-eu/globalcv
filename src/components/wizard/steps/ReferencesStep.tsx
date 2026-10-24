@@ -44,31 +44,31 @@ export default function ReferencesStep({ config }: Props) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.refName}</label>
-                    <input value={ref.name} onChange={(e) => updateReference(ref.id, { name: e.target.value })} className={inputCls} placeholder={config.ui.refNamePlaceholder} />
+                    <input aria-label={config.ui.refName} value={ref.name} onChange={(e) => updateReference(ref.id, { name: e.target.value })} className={inputCls} placeholder={config.ui.refNamePlaceholder} />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.refJobTitle}</label>
-                    <input value={ref.title} onChange={(e) => updateReference(ref.id, { title: e.target.value })} className={inputCls} placeholder={config.ui.refJobTitlePlaceholder} />
+                    <input aria-label={config.ui.refJobTitle} value={ref.title} onChange={(e) => updateReference(ref.id, { title: e.target.value })} className={inputCls} placeholder={config.ui.refJobTitlePlaceholder} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.refCompany}</label>
-                    <input value={ref.company} onChange={(e) => updateReference(ref.id, { company: e.target.value })} className={inputCls} placeholder={config.ui.refCompanyPlaceholder} />
+                    <input aria-label={config.ui.refCompany} value={ref.company} onChange={(e) => updateReference(ref.id, { company: e.target.value })} className={inputCls} placeholder={config.ui.refCompanyPlaceholder} />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.refRelationship}</label>
-                    <input value={ref.relationship} onChange={(e) => updateReference(ref.id, { relationship: e.target.value })} className={inputCls} placeholder={config.ui.refRelationshipPlaceholder} />
+                    <input aria-label={config.ui.refRelationship} value={ref.relationship} onChange={(e) => updateReference(ref.id, { relationship: e.target.value })} className={inputCls} placeholder={config.ui.refRelationshipPlaceholder} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.email}</label>
-                    <input type="email" value={ref.email ?? ''} onChange={(e) => updateReference(ref.id, { email: e.target.value })} className={inputCls} placeholder={config.ui.emailPlaceholder} />
+                    <input aria-label={config.ui.email} type="email" value={ref.email ?? ''} onChange={(e) => updateReference(ref.id, { email: e.target.value })} className={inputCls} placeholder={config.ui.emailPlaceholder} />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.phone}</label>
-                    <input value={ref.phone ?? ''} onChange={(e) => updateReference(ref.id, { phone: e.target.value })} className={inputCls} placeholder={config.ui.phonePlaceholder} />
+                    <input aria-label={config.ui.phone} value={ref.phone ?? ''} onChange={(e) => updateReference(ref.id, { phone: e.target.value })} className={inputCls} placeholder={config.ui.phonePlaceholder} />
                   </div>
                 </div>
               </div>

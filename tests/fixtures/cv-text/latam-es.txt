@@ -1,0 +1,20 @@
+María López
+maria.lopez@example.com
+Bogotá, Colombia
+
+PERFIL
+Analista de datos con experiencia en banca.
+
+EXPERIENCIA
+Analista de Datos — Banco Ejemplo S.A.
+Marzo 2019 – Actualidad
+- Automaticé reportes semanales
+
+Asistente de Investigación
+Universidad Nacional
+2016 – 2018
+- Apoyo en encuestas
+
+IDIOMAS
+Español (Nativo)
+Inglés: Avanzado

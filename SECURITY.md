@@ -4,10 +4,10 @@
 
 | Version | Supported |
 |---|---|
-| 1.x (latest) | ✅ |
-| < 1.0 | ❌ |
+| `main` (latest) | ✅ |
+| Older commits / forks | ❌ |
 
-Only the latest release receives security fixes.
+Only the latest version on `main` receives security fixes.
 
 ---
 
@@ -31,7 +31,7 @@ You will receive a response within **72 hours**. If the issue is confirmed, a fi
 
 ## Security Model
 
-GlobalCV is a fully client-side application. Understanding the security model helps clarify what is and is not in scope.
+The GlobalCV CV builder runs client-side. Two optional server routes exist: `GET /api/jobs` (aggregates public job feeds) and `POST /api/post-job` (feature-flagged; emails a job-posting request via Resend). Understanding the security model helps clarify what is and is not in scope.
 
 **What we control:**
 - All code that runs in the browser
@@ -44,10 +44,11 @@ GlobalCV is a fully client-side application. Understanding the security model he
 
 ### Data handling
 
-- No user data is ever transmitted to a server
-- CV data is stored exclusively in `localStorage` and/or encoded in the share URL
-- Share URLs use LZ-string compression — they are not encrypted. Treat them as you would any URL: anyone with the link can read the CV data it contains
-- No analytics, tracking scripts, or third-party data collection of any kind
+- CV data is not transmitted to our servers by the CV editor
+- CV data is stored in `localStorage` in the user's browser (not encrypted at rest)
+- Share links put the CV in the URL fragment (`#cv=…`), which browsers do not send to servers. They are LZ-compressed, **not encrypted**: anyone with the link can read it. Photo and ID number are never included; other sensitive fields only on explicit opt-in
+- Post-a-job submissions (when enabled) send the submitted business contact details to our inbox via Resend
+- No analytics, tracking scripts, or third-party data collection
 
 ### HTTP security headers
 
@@ -55,16 +56,17 @@ The following headers are set on every response:
 
 | Header | Value |
 |---|---|
-| `X-Frame-Options` | `SAMEORIGIN` |
+| `X-Frame-Options` | `DENY` |
 | `X-Content-Type-Options` | `nosniff` |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` |
-| `Content-Security-Policy` | Restricts scripts, styles, fonts, and connections to trusted origins |
+| `Cross-Origin-Opener-Policy` | `same-origin` |
+| `Content-Security-Policy` | Self-hosted scripts/styles/fonts; no `unsafe-eval` in production; `object-src 'none'`; images only from self and allow-listed job-logo hosts. `'unsafe-inline'` scripts remain (Next.js static pages) — see `docs/remediation/GLOBALCV_SECURITY_FIXES.md` |
 
 ### Dependencies
 
-Dependencies are kept up to date and audited with `npm audit` on every release. The project targets zero known vulnerabilities at time of release.
+CI runs `npm audit --omit=dev --audit-level=high` on every pull request and fails on high or critical advisories in production dependencies. Known, accepted lower-severity findings are listed in `docs/remediation/GLOBALCV_REMAINING_RISKS.md`.
 
 ---
 
@@ -75,6 +77,8 @@ The following are considered in scope for vulnerability reports:
 - Cross-site scripting (XSS) via CV input fields or imported text
 - Content Security Policy bypasses
 - Malicious share URL payloads that execute code or exfiltrate data
+- Malicious PDF or JSON files that execute code or corrupt stored data when imported
+- Abuse of `/api/jobs` or `/api/post-job` (rate-limit bypass, upstream amplification, email injection)
 - Dependency vulnerabilities with direct exploitability in this app
 
 The following are considered out of scope:

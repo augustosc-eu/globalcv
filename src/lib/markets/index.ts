@@ -8,6 +8,7 @@ import { inConfig } from './in.config';
 import { brConfig } from './br.config';
 import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
+import { isMarket } from './registry';
 
 const configs: Record<Market, MarketConfig> = {
   us: usConfig,
@@ -25,7 +26,7 @@ export function getMarketConfig(market: Market): MarketConfig {
 }
 
 export function isValidMarket(value: string): value is Market {
-  return ['us', 'eu', 'latam', 'jp', 'gb', 'au', 'in', 'br'].includes(value);
+  return isMarket(value);
 }
 
 export { usConfig, euConfig, latamConfig, jpConfig, gbConfig, auConfig, inConfig, brConfig };

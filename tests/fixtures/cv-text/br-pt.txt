@@ -1,0 +1,11 @@
+João Silva
+joao.silva@example.com
+São Paulo, Brasil
+
+EXPERIENCE
+Desenvolvedor Backend | Empresa Exemplo Ltda
+01/2020 - 06/2023
+- APIs em Go
+
+LANGUAGES
+Português (nativo); Inglês (fluente)

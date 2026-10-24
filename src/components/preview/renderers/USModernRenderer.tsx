@@ -1,14 +1,12 @@
 import { CVData } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
-import { format } from 'date-fns';
 import { getActiveTheme } from '@/lib/utils/theme';
+import { formatPartialDate } from '@/lib/utils/partialDate';
 
 interface Props { cv: CVData; config: MarketConfig; }
 
 function fmtDate(ym?: string): string {
-  if (!ym) return '';
-  try { return format(new Date(ym + '-01'), 'MMM yyyy'); }
-  catch { return ym; }
+  return formatPartialDate(ym, 'MMM yyyy');
 }
 
 function dateRange(start: string, end?: string, isPresent?: boolean): string {
@@ -154,7 +152,7 @@ function SideSection({ title, children }: { title: string; children: React.React
   );
 }
 
-function MainSection({ title, accent, light, children }: { title: string; accent: string; light: string; children: React.ReactNode }) {
+function MainSection({ title, accent, children }: { title: string; accent: string; light: string; children: React.ReactNode }) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">

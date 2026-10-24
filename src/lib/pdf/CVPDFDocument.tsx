@@ -19,16 +19,14 @@ Font.register({
 import { CVData } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 import { getActiveTheme } from '@/lib/utils/theme';
+import { formatPartialDate } from '@/lib/utils/partialDate';
 
 type PdfExportMode = 'designed' | 'ats' | 'privacy' | 'compact';
 
 interface Props { cv: CVData; config: MarketConfig; exportMode?: PdfExportMode; qrDataUrl?: string; }
 
 function fmtDate(ym?: string): string {
-  if (!ym) return '';
-  const [y, m] = ym.split('-');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${months[parseInt(m) - 1] ?? ''} ${y}`;
+  return formatPartialDate(ym, 'MMM yyyy');
 }
 
 function dr(start: string, end?: string, isPresent?: boolean): string {
@@ -753,12 +751,7 @@ export function EuropassPDF({ cv, accent, compact = false }: { cv: CVData; accen
 // ─── Japan 履歴書 (JIS standard Rirekisho) ────────────────────────────────────
 
 function toJpDate(ym?: string): string {
-  if (!ym) return '';
-  const [y, m] = ym.split('-').map(Number);
-  if (!y) return '';
-  if (y > 2019 || (y === 2019 && m >= 5)) return `令和${y - 2018}年${m}月`;
-  if (y > 1989 || (y === 1989 && m >= 1)) return `平成${y - 1988}年${m}月`;
-  return `${y}年${m}月`;
+  return formatPartialDate(ym, 'jp-era');
 }
 
 // Module-level style constants (must not be inside component functions)
@@ -988,17 +981,17 @@ export function JapanRirekishoPDF({ cv }: { cv: CVData }) {
         {/* 希望条件 */}
         <View style={{ ...jpBorderB, ...jpCell, ...jpRow }}>
           <Text style={{ fontFamily: 'JP', fontWeight: 'bold', fontSize: 7, marginRight: 8 }}>希望条件</Text>
-          <Text style={{ color: '#333' }}>{(cv as any).desiredConditions ?? '貴社の規定に従います。'}</Text>
+          <Text style={{ color: '#333' }}>{cv.desiredConditions ?? '貴社の規定に従います。'}</Text>
         </View>
 
         {/* 緊急連絡先 + 捺印 */}
         <View style={{ ...jpRow }}>
           <View style={{ flex: 1, ...jpBorderR, ...jpCell, minHeight: 50 }}>
             <Text style={{ fontFamily: 'JP', fontWeight: 'bold', fontSize: 7, marginBottom: 4 }}>緊急連絡先</Text>
-            {(p as any).emergencyContact ? (
+            {p.emergencyContact ? (
               <>
-                <Text>{(p as any).emergencyContact.name}（{(p as any).emergencyContact.relationship}）</Text>
-                <Text>{(p as any).emergencyContact.phone}</Text>
+                <Text>{p.emergencyContact.name}（{p.emergencyContact.relationship}）</Text>
+                <Text>{p.emergencyContact.phone}</Text>
               </>
             ) : (
               <Text style={{ color: '#aaa' }}>氏名：{'\n'}続柄：{'\n'}電話：</Text>
@@ -1007,7 +1000,7 @@ export function JapanRirekishoPDF({ cv }: { cv: CVData }) {
           <View style={{ width: 60, alignItems: 'center', justifyContent: 'center', paddingVertical: 8 }}>
             <Text style={{ fontSize: 7, color: JP_GRAY, marginBottom: 4 }}>捺印</Text>
             <View style={{ width: 36, height: 36, borderWidth: 0.75, borderColor: '#aaa', borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 7, color: '#ccc' }}>{(p as any).personalSeal ? '印' : ''}</Text>
+              <Text style={{ fontSize: 7, color: '#ccc' }}>{p.personalSeal ? '印' : ''}</Text>
             </View>
           </View>
         </View>

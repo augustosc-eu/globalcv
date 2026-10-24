@@ -121,28 +121,28 @@ function EducationCard({ edu, market, config, expanded, onToggle, onUpdate, onRe
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.degree}</label>
-              <input value={edu.degree} onChange={(e) => onUpdate({ degree: e.target.value })} className={inputCls} placeholder={config.ui.degreePlaceholder} />
+              <input aria-label={config.ui.degree} value={edu.degree} onChange={(e) => onUpdate({ degree: e.target.value })} className={inputCls} placeholder={config.ui.degreePlaceholder} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.fieldOfStudy}</label>
-              <input value={edu.fieldOfStudy ?? ''} onChange={(e) => onUpdate({ fieldOfStudy: e.target.value })} className={inputCls} placeholder={config.ui.fieldOfStudyPlaceholder} />
+              <input aria-label={config.ui.fieldOfStudy} value={edu.fieldOfStudy ?? ''} onChange={(e) => onUpdate({ fieldOfStudy: e.target.value })} className={inputCls} placeholder={config.ui.fieldOfStudyPlaceholder} />
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.institution}</label>
-            <input value={edu.institution} onChange={(e) => onUpdate({ institution: e.target.value })} className={inputCls} placeholder={config.ui.institutionPlaceholder} />
+            <input aria-label={config.ui.institution} value={edu.institution} onChange={(e) => onUpdate({ institution: e.target.value })} className={inputCls} placeholder={config.ui.institutionPlaceholder} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.location}</label>
-              <input value={edu.location ?? ''} onChange={(e) => onUpdate({ location: e.target.value })} className={inputCls} placeholder={config.ui.locationPlaceholder} />
+              <input aria-label={config.ui.location} value={edu.location ?? ''} onChange={(e) => onUpdate({ location: e.target.value })} className={inputCls} placeholder={config.ui.locationPlaceholder} />
             </div>
             {market !== 'jp' && (
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.gpa}</label>
-                <input value={edu.gpa ?? ''} onChange={(e) => onUpdate({ gpa: e.target.value })} className={inputCls} placeholder="3.8/4.0" />
+                <input aria-label={config.ui.gpa} value={edu.gpa ?? ''} onChange={(e) => onUpdate({ gpa: e.target.value })} className={inputCls} placeholder="3.8/4.0" />
               </div>
             )}
           </div>
@@ -153,7 +153,7 @@ function EducationCard({ edu, market, config, expanded, onToggle, onUpdate, onRe
           {market !== 'jp' && (
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.honors}</label>
-              <input value={edu.honors ?? ''} onChange={(e) => onUpdate({ honors: e.target.value })} className={cn(inputCls)} placeholder="Magna Cum Laude, Dean's List" />
+              <input aria-label={config.ui.honors} value={edu.honors ?? ''} onChange={(e) => onUpdate({ honors: e.target.value })} className={cn(inputCls)} placeholder="Magna Cum Laude, Dean's List" />
             </div>
           )}
         </div>

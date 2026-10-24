@@ -9,6 +9,9 @@ export interface Job {
   jobType: string;       // full-time | part-time | contract | freelance | internship | other
   tags: string[];
   salary?: string;
+  /** Lowest annual salary as a number (in salaryCurrency), for sorting. */
+  salaryMin?: number;
+  salaryCurrency?: string;
   url: string;
   postedAt: string;      // ISO string
   source:
@@ -25,11 +28,23 @@ export interface Job {
   description?: string;  // plaintext excerpt, max ~500 chars
 }
 
+export interface JobSourceStatus {
+  id: Job['source'];
+  ok: boolean;
+  count: number;
+  /** Served from the in-process cache (not refetched for this request). */
+  cached: boolean;
+}
+
 export interface JobsResponse {
   jobs: Job[];
   total: number;
   page: number;
   totalPages: number;
+  /** Per-source availability; a failing provider never fails the whole response. */
+  sources: JobSourceStatus[];
+  /** True when at least one requested source failed. */
+  degraded: boolean;
 }
 
 export const JOB_CATEGORIES = [

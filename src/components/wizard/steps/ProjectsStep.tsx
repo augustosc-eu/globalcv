@@ -13,6 +13,7 @@ import { useCVStore } from '@/store/cvStore';
 import { Project, Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 import StepHeader from './StepHeader';
+import { safeHttpUrl } from '@/lib/utils/safeUrl';
 
 interface Props { market: Market; config: MarketConfig; }
 
@@ -116,8 +117,8 @@ function ProjectCard({ project, expanded, onToggle, onUpdate, onRemove, onDuplic
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          {project.url && (
-            <a href={project.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-1 text-gray-400 hover:text-blue-500 transition-colors rounded">
+          {safeHttpUrl(project.url) && (
+            <a href={safeHttpUrl(project.url)} aria-label="Open project link" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-1 text-gray-400 hover:text-blue-500 transition-colors rounded">
               <Link size={13} />
             </a>
           )}
@@ -136,22 +137,22 @@ function ProjectCard({ project, expanded, onToggle, onUpdate, onRemove, onDuplic
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Project name</label>
-              <input value={project.name} onChange={(e) => onUpdate({ name: e.target.value })} className={inputCls} placeholder="My Awesome App" />
+              <input aria-label="Project name" value={project.name} onChange={(e) => onUpdate({ name: e.target.value })} className={inputCls} placeholder="My Awesome App" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Your role</label>
-              <input value={project.role ?? ''} onChange={(e) => onUpdate({ role: e.target.value })} className={inputCls} placeholder="Lead Developer" />
+              <input aria-label="Your role" value={project.role ?? ''} onChange={(e) => onUpdate({ role: e.target.value })} className={inputCls} placeholder="Lead Developer" />
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">URL (optional)</label>
-            <input value={project.url ?? ''} onChange={(e) => onUpdate({ url: e.target.value })} type="url" className={inputCls} placeholder="https://github.com/you/project" />
+            <input aria-label="URL (optional)" value={project.url ?? ''} onChange={(e) => onUpdate({ url: e.target.value })} type="url" className={inputCls} placeholder="https://github.com/you/project" />
           </div>
 
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Tech stack (comma-separated)</label>
-            <input
+            <input aria-label="Tech stack (comma-separated)"
               value={(project.techStack ?? []).join(', ')}
               onChange={(e) => handleTechStack(e.target.value)}
               className={inputCls}
@@ -161,7 +162,7 @@ function ProjectCard({ project, expanded, onToggle, onUpdate, onRemove, onDuplic
 
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
-            <textarea
+            <textarea aria-label="Description"
               value={project.description}
               onChange={(e) => onUpdate({ description: e.target.value })}
               rows={3}
