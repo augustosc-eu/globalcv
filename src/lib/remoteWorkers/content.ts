@@ -32,56 +32,68 @@ export const remotePathDescriptions: Record<RemotePath, string> = {
   both: 'Create a flexible remote profile that works for job applications, retainers, and project-based opportunities.',
 };
 
+const GUIDE_UPDATED = 'Curated guidance updated Oct 2026';
+
 export const remoteGuideCards: RemoteGuideCard[] = [
   {
     title: 'Remote hiring expectations',
-    summary: 'In 2026, remote hiring signals are less about where you work and more about how reliably you create visibility, momentum, and handoffs.',
+    summary: 'Late 2026 remote demand is steady rather than growing: fully remote roles are a minority of postings, skew toward senior and specialist profiles, and draw large applicant pools.',
     checklist: [
-      'Show async ownership, not just "remote experience".',
-      'Name collaboration rhythms such as written updates, decision logs, demos, and handoffs.',
-      'Tie remote work to measurable outcomes, delivery speed, retention, revenue, or quality.',
+      'Lead with outcomes and seniority signals; junior remote roles are scarce, so show independent ownership early.',
+      'Widen the search to hybrid, "remote within country", and regional-remote roles instead of fully remote only.',
+      'Show async ownership, not just "remote experience": written updates, decision logs, demos, and handoffs.',
     ],
-    updated: 'Curated guidance updated Jan 2026',
+    updated: GUIDE_UPDATED,
   },
   {
-    title: 'Proof of async communication',
-    summary: 'Recruiters and clients look for evidence that you can reduce meetings and keep teams aligned across time zones.',
+    title: 'Async proof and AI fluency',
+    summary: 'Teams expect remote hires to reduce meetings and use AI tools responsibly. Show the judgment, not the tool list.',
     checklist: [
-      'Mention concise specs, status notes, Loom-style walkthroughs, RFCs, or issue hygiene.',
-      'Include examples of cross-functional work with product, design, engineering, support, or clients.',
-      'Avoid vague claims like "great communicator" unless the bullet proves the behavior.',
+      'Mention concise specs, status notes, recorded walkthroughs, RFCs, or issue hygiene that kept teams aligned.',
+      'Describe AI-assisted work with a result and a review step, e.g. "cut reporting time 40% with AI drafts I verified".',
+      'Avoid vague claims like "great communicator" or "AI expert" unless the bullet proves the behavior.',
     ],
-    updated: 'Curated guidance updated Jan 2026',
+    updated: GUIDE_UPDATED,
+  },
+  {
+    title: 'Identity and trust signals',
+    summary: 'AI-generated applications and fake-candidate fraud have pushed remote employers toward ID checks, camera-on interviews, and sometimes an in-person step.',
+    checklist: [
+      'Keep your name, titles, and dates consistent across your CV, LinkedIn, GitHub, and portfolio.',
+      'Have references and verifiable proof ready, and expect live video or identity verification before an offer.',
+      'Protect yourself too: never pay to apply, and confirm recruiter emails match the company domain.',
+    ],
+    updated: GUIDE_UPDATED,
   },
   {
     title: 'Portfolio and case-study evidence',
     summary: 'A remote-ready portfolio should prove trust: scope, context, constraints, your role, outcome, and how collaboration happened.',
     checklist: [
-      'Add two or three proof links: case study, GitHub, writing sample, dashboard, shipped product, or client result.',
+      'Add two or three verifiable proof links: case study, GitHub, writing sample, dashboard, shipped product, or client result.',
       'Frame projects around outcomes and decision quality rather than screenshots alone.',
       'For confidential work, summarize the problem, role, and anonymized result.',
     ],
-    updated: 'Curated guidance updated Jan 2026',
+    updated: GUIDE_UPDATED,
   },
   {
-    title: 'Time-zone and availability positioning',
-    summary: 'A useful CV sets expectations without sounding unavailable. State overlap windows and communication norms plainly.',
+    title: 'Location and availability positioning',
+    summary: 'Most remote roles are restricted to a country or region for payroll and compliance. State overlap windows and hiring-eligible regions plainly.',
     checklist: [
       'Use overlap windows such as "4+ hours with US Eastern" or "EU mornings to US East mid-day".',
+      'Match listings like "Remote, EMEA" or "Remote, US only" to where you can actually be hired, directly or via an employer of record.',
       'Mention travel cadence only when it affects availability or client confidence.',
-      'Avoid over-sharing personal logistics that do not help hiring decisions.',
     ],
-    updated: 'Curated guidance updated Jan 2026',
+    updated: GUIDE_UPDATED,
   },
   {
     title: 'Digital nomad cautions',
-    summary: 'Keep legal, tax, immigration, and employment-status claims off the CV unless the employer specifically requests them.',
+    summary: 'Enforcement is tightening: digital border records such as the EU Entry/Exit System, stricter tax-residency checks, and employers asking where you physically work.',
     checklist: [
       'Do not imply work authorization, visa status, or tax residency unless it is accurate and relevant.',
-      'Use neutral phrasing such as "location-flexible" or "available for agreed overlap hours".',
+      'Use neutral phrasing such as "location-flexible" or "available for agreed overlap hours", and answer location questions honestly.',
       'This hub provides career guidance only, not legal, tax, immigration, or labor-law advice.',
     ],
-    updated: 'Curated guidance updated Jan 2026',
+    updated: GUIDE_UPDATED,
   },
 ];
 

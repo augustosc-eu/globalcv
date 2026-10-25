@@ -177,7 +177,7 @@ export default function RemoteWorkersPage() {
               <div className="max-w-2xl">
                 <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Nomads & Remote Workers</h1>
                 <p className="mt-2 text-sm md:text-base text-slate-600">
-                  Build a remote-ready CV workflow for 2026 hiring: async proof, portfolio evidence, time-zone clarity, and insert-ready sections for jobs or client work.
+                  Build a remote-ready CV workflow for late-2026 hiring: async proof, verifiable portfolio evidence, location clarity, and insert-ready sections for jobs or client work.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -389,7 +389,7 @@ export default function RemoteWorkersPage() {
             <h2 className="text-lg font-bold text-slate-900">Curated 2026 guidance</h2>
             <p className="hidden sm:block text-xs font-medium text-slate-500">Career guidance only. Not legal, tax, immigration, or labor-law advice.</p>
           </div>
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {remoteGuideCards.map((card) => (
               <article key={card.title} className="surface-card rounded-2xl p-4">
                 <h3 className="text-sm font-bold text-slate-900">{card.title}</h3>
