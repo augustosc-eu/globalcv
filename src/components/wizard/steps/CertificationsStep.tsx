@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronUp, CopyPlus } from 'lucide-react';
 import { useCVStore } from '@/store/cvStore';
-import { Certification, Market } from '@/types/cv.types';
+import { Market } from '@/types/cv.types';
 import { MarketConfig } from '@/types/market.types';
 import StepHeader from './StepHeader';
 
@@ -66,13 +66,13 @@ export default function CertificationsStep({ market, config }: Props) {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.certExpiry}</label>
-                    <input type="month" value={cert.expiryDate ?? ''} onChange={(e) => updateCertification(cert.id, { expiryDate: e.target.value })} className={inputCls} />
+                    <input aria-label={config.ui.certExpiry} type="month" value={cert.expiryDate ?? ''} onChange={(e) => updateCertification(cert.id, { expiryDate: e.target.value })} className={inputCls} />
                   </div>
                 </div>
                 {market !== 'jp' && (
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">{config.ui.certCredential}</label>
-                    <input value={cert.credentialId ?? ''} onChange={(e) => updateCertification(cert.id, { credentialId: e.target.value })} className={inputCls} placeholder={config.ui.certCredentialPlaceholder} />
+                    <input aria-label={config.ui.certCredential} value={cert.credentialId ?? ''} onChange={(e) => updateCertification(cert.id, { credentialId: e.target.value })} className={inputCls} placeholder={config.ui.certCredentialPlaceholder} />
                   </div>
                 )}
               </div>

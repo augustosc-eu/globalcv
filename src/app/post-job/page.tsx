@@ -53,8 +53,13 @@ export default function PostJobPage() {
     );
   }
 
+  return <PostJobForm />;
+}
+
+function PostJobForm() {
   const [form, setForm] = useState<JobPostFormState>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -82,7 +87,7 @@ export default function PostJobPage() {
     fetch('/api/post-job', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, website2: honeypot }),
     })
       .then(async (res) => {
         if (!res.ok) {
@@ -152,13 +157,16 @@ export default function PostJobPage() {
                   </p>
                 </div>
 
+                <div aria-hidden="true" className="absolute -left-[10000px] w-px h-px overflow-hidden">
+                  <label>Leave this field empty<input tabIndex={-1} autoComplete="off" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} /></label>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input value={form.companyName} onChange={(e) => setField('companyName', e.target.value)} placeholder="Company name *" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <input value={form.companyWebsite} onChange={(e) => setField('companyWebsite', e.target.value)} placeholder="Company website" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <input value={form.contactName} onChange={(e) => setField('contactName', e.target.value)} placeholder="Contact name *" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <input type="email" value={form.contactEmail} onChange={(e) => setField('contactEmail', e.target.value)} placeholder="Contact email *" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <input value={form.jobTitle} onChange={(e) => setField('jobTitle', e.target.value)} placeholder="Job title *" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <input value={form.location} onChange={(e) => setField('location', e.target.value)} placeholder="Location (e.g. Remote, UK, São Paulo)" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input value={form.companyName} onChange={(e) => setField('companyName', e.target.value)} aria-label="Company name" placeholder="Company name *" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input value={form.companyWebsite} onChange={(e) => setField('companyWebsite', e.target.value)} aria-label="Company website" placeholder="Company website" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input value={form.contactName} onChange={(e) => setField('contactName', e.target.value)} aria-label="Contact name" placeholder="Contact name *" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="email" value={form.contactEmail} onChange={(e) => setField('contactEmail', e.target.value)} aria-label="Contact email" placeholder="Contact email *" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input value={form.jobTitle} onChange={(e) => setField('jobTitle', e.target.value)} aria-label="Job title" placeholder="Job title *" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input value={form.location} onChange={(e) => setField('location', e.target.value)} aria-label="Location (e.g. Remote, UK, São Paulo)" placeholder="Location (e.g. Remote, UK, São Paulo)" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
                   <select value={form.employmentType} onChange={(e) => setField('employmentType', e.target.value)} className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option>Full-time</option>
                     <option>Part-time</option>
@@ -166,8 +174,8 @@ export default function PostJobPage() {
                     <option>Freelance</option>
                     <option>Internship</option>
                   </select>
-                  <input value={form.salary} onChange={(e) => setField('salary', e.target.value)} placeholder="Salary (optional)" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <input value={form.applicationUrl} onChange={(e) => setField('applicationUrl', e.target.value)} placeholder="Application URL *" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 md:col-span-2" />
+                  <input value={form.salary} onChange={(e) => setField('salary', e.target.value)} aria-label="Salary (optional)" placeholder="Salary (optional)" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input value={form.applicationUrl} onChange={(e) => setField('applicationUrl', e.target.value)} aria-label="Application URL" placeholder="Application URL *" className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 md:col-span-2" />
                   <select value={form.regionFocus} onChange={(e) => setField('regionFocus', e.target.value)} className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 md:col-span-2">
                     <option>Global</option>
                     <option>United States</option>
@@ -178,7 +186,7 @@ export default function PostJobPage() {
                     <option>India</option>
                     <option>Japan</option>
                   </select>
-                  <textarea value={form.description} onChange={(e) => setField('description', e.target.value)} placeholder="Short job description / notes" rows={5} className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 md:col-span-2" />
+                  <textarea value={form.description} onChange={(e) => setField('description', e.target.value)} aria-label="Short job description / notes" placeholder="Short job description / notes" rows={5} className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 md:col-span-2" />
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">

@@ -1,12 +1,13 @@
 import { Job } from './types';
 
 /**
- * Internal jobs managed directly in-code.
+ * Demo listings for local development only.
  *
- * Add new entries to this array and they will appear in `/jobs`
- * through the `globalcv` source.
+ * Served through the `globalcv` source when NODE_ENV !== 'production', or in
+ * production only when ENABLE_DEMO_JOBS=true. Never add real postings here
+ * without also removing the demo entry below.
  */
-export const INTERNAL_JOBS: Job[] = [
+export const DEMO_JOBS: Job[] = [
   {
     id: 'globalcv-example-1',
     title: 'Senior Full-Stack Engineer',

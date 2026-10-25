@@ -53,9 +53,11 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">What data we collect</h2>
             <p className="font-medium text-gray-900 mb-2">For CV building: none.</p>
             <p>
-              GlobalCV is a fully client-side application. Everything you type — your name, work history,
-              education, skills — is processed entirely within your own browser. No data is ever
-              transmitted to our servers or any third party.
+              The CV builder runs in your browser. Everything you type — your name, work history,
+              education, skills — is processed and stored on your own device. The CV editor does not send
+              your CV to our servers or to any third party. (Share links are described below: they keep
+              the CV in the part of the link after <code className="text-xs bg-gray-100 px-1 rounded">#</code>,
+              which browsers do not send to our server.)
             </p>
             <p className="mt-3">
               For the optional <strong>Post a Job</strong> form, we process business contact details and listing
@@ -68,7 +70,8 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Browser storage used</h2>
             <p className="mb-4">
               The app uses browser <strong>localStorage</strong> only — no cookies of any kind are set.
-              localStorage is private to your device and never transmitted over the network.
+              localStorage stays in this browser on this device and is not transmitted over the network.
+              Nothing is encrypted at rest: anyone with access to this browser profile can read it.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-xs border border-gray-200 rounded-lg overflow-hidden">
@@ -82,29 +85,54 @@ export default function PrivacyPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   <tr>
-                    <td className="px-3 py-2 font-mono text-gray-600">cv_maker_v1_{'{market}'}</td>
-                    <td className="px-3 py-2">Saves your CV progress so you can resume later</td>
+                    <td className="px-3 py-2 font-mono text-gray-600">cv_maker_v2_{'{market}'}</td>
+                    <td className="px-3 py-2">Your saved CV drafts for each market (older versions used <code>cv_maker_v1_…</code>)</td>
                     <td className="px-3 py-2">Strictly necessary</td>
-                    <td className="px-3 py-2">Until you clear it</td>
+                    <td className="px-3 py-2">Until you delete it</td>
                   </tr>
                   <tr className="bg-gray-50">
-                    <td className="px-3 py-2 font-mono text-gray-600">globalcv_privacy_notice_dismissed</td>
-                    <td className="px-3 py-2">Remembers that you dismissed the privacy banner</td>
+                    <td className="px-3 py-2 font-mono text-gray-600">cv_maker_photo_…</td>
+                    <td className="px-3 py-2">Your CV photo, stored once and shared by drafts that use it</td>
                     <td className="px-3 py-2">Strictly necessary</td>
-                    <td className="px-3 py-2">Until you clear browser data</td>
+                    <td className="px-3 py-2">Removed when no draft uses it</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 font-mono text-gray-600">cv_maker_quarantine_…</td>
+                    <td className="px-3 py-2">Recovery copies of saved data that could not be read or had to be repaired, so nothing is lost silently</td>
+                    <td className="px-3 py-2">Strictly necessary</td>
+                    <td className="px-3 py-2">Until you erase all data</td>
+                  </tr>
+                  <tr className="bg-gray-50">
+                    <td className="px-3 py-2 font-mono text-gray-600">cv_maker_applications</td>
+                    <td className="px-3 py-2">Jobs you saved to the application tracker</td>
+                    <td className="px-3 py-2">Strictly necessary</td>
+                    <td className="px-3 py-2">Until you delete it</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 font-mono text-gray-600">globalcv_…</td>
+                    <td className="px-3 py-2">Preferences (dark mode, export mode, preview width, banner dismissed) and readiness-score history per draft</td>
+                    <td className="px-3 py-2">Strictly necessary</td>
+                    <td className="px-3 py-2">Until you erase all data</td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <p className="mt-3 text-xs text-gray-500">
-              Both entries are <strong>strictly necessary</strong> for the app to function — no consent is required
-              under the ePrivacy Directive. You can delete them at any time using the &quot;Clear Data&quot; button
-              or your browser&apos;s developer tools.
+              All entries are <strong>strictly necessary</strong> for the app to function — no consent is required
+              under the ePrivacy Directive. In the editor&apos;s <strong>Tools</strong> menu you can:
+            </p>
+            <ul className="list-disc list-inside space-y-1 pl-2 mt-2 text-xs text-gray-600">
+              <li><strong>Delete this CV</strong> — permanently removes the current draft (and its readiness history) from this device. Other drafts are kept.</li>
+              <li><strong>Erase all data on this device</strong> — permanently removes every GlobalCV entry listed above (all drafts in every market, photos, recovery copies, the application tracker and preferences). Data of other websites is not touched.</li>
+              <li><strong>Download all my data</strong> — saves a JSON file with everything GlobalCV stores in this browser.</li>
+            </ul>
+            <p className="mt-2 text-xs text-gray-500">
+              Copies you exported yourself (PDFs, JSON backups) or links you shared are outside the app and are not deleted.
             </p>
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mt-3 text-sm text-amber-800">
               <strong>Shared computers:</strong> If you are using a public or shared device, your CV data
-              may be accessible to other users. Use the &quot;Clear Data&quot; button before leaving, or enable
-              Privacy Mode to disable localStorage entirely.
+              may be accessible to other users. Use <strong>Erase all data on this device</strong> before leaving, or enable
+              Privacy Mode so nothing is written to localStorage.
             </div>
           </section>
 
@@ -154,14 +182,16 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Share links</h2>
             <p className="mb-2">
-              The optional &quot;Share&quot; feature generates a URL containing your CV data compressed and
-              encoded in the query string. This data is <strong>not encrypted</strong>.
+              The optional &quot;Share&quot; feature creates a link that contains your CV, compressed, after the
+              <code className="text-xs bg-gray-100 px-1 rounded">#</code> in the URL. This data is
+              <strong> not encrypted</strong> — compression is not protection.
             </p>
             <ul className="list-disc list-inside space-y-1 pl-2">
-              <li>Anyone with the link can read your CV data.</li>
-              <li>Share links are generated on demand — we never store or log them.</li>
-              <li>Search engine crawlers are blocked from indexing share URLs via <code className="text-xs bg-gray-100 px-1 rounded">robots.txt</code>.</li>
-              <li>Photos are excluded from share links.</li>
+              <li>Anyone who has the link can read the CV in it.</li>
+              <li>Browsers do not send the part after <code className="text-xs bg-gray-100 px-1 rounded">#</code> to web servers, so opening a link does not transmit the CV to us or our host during normal use. The link can still be kept in browser history, bookmarks, chat or email apps, link previews and screenshots.</li>
+              <li>Your photo and ID number are never included. Date of birth, nationality, marital status, gender, emergency contact, street address, commute details and your references&apos; contact details are excluded unless you tick the option to include them.</li>
+              <li>Opening a link adds the CV as a new draft only after the recipient confirms; it never overwrites existing drafts.</li>
+              <li>Older links that used <code className="text-xs bg-gray-100 px-1 rounded">?share=</code> still open, but that format was sent to the server when opened; the app removes it from the address bar immediately and does not import sensitive fields from it.</li>
             </ul>
           </section>
 
@@ -201,8 +231,8 @@ export default function PrivacyPage() {
               so most rights are exercised directly by you in the app:
             </p>
             <ul className="list-disc list-inside space-y-1.5 pl-2">
-              <li><strong>Right of access / portability:</strong> Export your CV as a PDF at any time.</li>
-              <li><strong>Right to erasure:</strong> Click &quot;Clear Data&quot; to permanently delete all CV data from your browser.</li>
+              <li><strong>Right of access / portability:</strong> Export your CV as a PDF or JSON, or use &quot;Download all my data&quot; for everything stored in this browser.</li>
+              <li><strong>Right to erasure:</strong> Use &quot;Delete this CV&quot; for one draft or &quot;Erase all data on this device&quot; to remove all GlobalCV data from this browser.</li>
               <li><strong>Right to restrict processing:</strong> Enable Privacy Mode — no data is written to localStorage.</li>
               <li><strong>No consent required:</strong> All storage is strictly necessary for the service to function.</li>
             </ul>

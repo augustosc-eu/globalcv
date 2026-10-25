@@ -15,6 +15,7 @@ import {
   deleteApplication,
 } from '@/lib/storage/localStorage';
 import { SITE_OWNER_NAME, SITE_OWNER_URL } from '@/lib/site';
+import { safeHttpUrl } from '@/lib/utils/safeUrl';
 
 const COLUMNS: Array<{ id: ApplicationStatus; label: string; color: string; dot: string }> = [
   { id: 'saved',     label: 'Saved',     color: 'bg-gray-100 border-gray-300',   dot: 'bg-gray-400' },
@@ -214,9 +215,9 @@ function ApplicationCard({ entry, expanded, onToggle, onStatusChange, onDelete, 
           {/* Actions */}
           <div className="flex items-center justify-between gap-2 pt-1">
             <div className="flex gap-2">
-              {entry.jobUrl && (
+              {safeHttpUrl(entry.jobUrl) && (
                 <a
-                  href={entry.jobUrl}
+                  href={safeHttpUrl(entry.jobUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800"

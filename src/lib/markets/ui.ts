@@ -2,8 +2,11 @@ import { MarketUI } from '@/types/market.types';
 
 export const enUI: MarketUI = {
   back: 'Back', next: 'Next', save: 'Save', saving: 'Saving…', saved: 'Saved',
-  clear: 'Clear', clearConfirmTitle: 'Clear all data?',
-  clearConfirmBody: 'This will erase everything on this CV. This action cannot be undone.',
+  clear: 'Delete this CV', clearConfirmTitle: 'Delete this CV?',
+  clearConfirmBody: 'This permanently deletes the current draft from this device. Your other drafts are not affected. This cannot be undone — download a backup first if you may need it.',
+  eraseAll: 'Erase all data on this device', eraseAllConfirmTitle: 'Erase all GlobalCV data on this device?',
+  eraseAllConfirmBody: 'This permanently removes every GlobalCV draft in every market, saved photos, your job application tracker, recovery copies and preferences from this browser. Other websites are not affected. This cannot be undone.',
+  eraseAllConfirmWord: 'ERASE', exportAll: 'Download all my data', notSaved: 'Not saved',
   import: 'Import', exportPDF: 'Export PDF', generating: 'Generating…',
   done: 'Done!', failed: 'Failed', cancel: 'Cancel', add: 'Add', apply: 'Apply',
   markets: '← Markets', privacyOn: 'Private', privacyOff: 'Privacy',
@@ -124,8 +127,11 @@ export const euUI: MarketUI = {
 
 export const esUI: MarketUI = {
   back: 'Atrás', next: 'Siguiente', save: 'Guardar', saving: 'Guardando…', saved: 'Guardado',
-  clear: 'Limpiar', clearConfirmTitle: '¿Limpiar todos los datos?',
-  clearConfirmBody: 'Esto borrará todo en este CV. Esta acción no se puede deshacer.',
+  clear: 'Eliminar este CV', clearConfirmTitle: '¿Eliminar este CV?',
+  clearConfirmBody: 'Esto elimina de forma permanente el borrador actual de este dispositivo. Tus otros borradores no se ven afectados. No se puede deshacer: descarga una copia antes si la necesitas.',
+  eraseAll: 'Borrar todos los datos de este dispositivo', eraseAllConfirmTitle: '¿Borrar todos los datos de GlobalCV de este dispositivo?',
+  eraseAllConfirmBody: 'Esto elimina de este navegador todos los borradores de GlobalCV de todos los mercados, las fotos guardadas, el seguimiento de postulaciones, las copias de recuperación y las preferencias. Otros sitios web no se ven afectados. No se puede deshacer.',
+  eraseAllConfirmWord: 'BORRAR', exportAll: 'Descargar todos mis datos', notSaved: 'No guardado',
   import: 'Importar', exportPDF: 'Exportar PDF', generating: 'Generando…',
   done: '¡Listo!', failed: 'Error', cancel: 'Cancelar', add: 'Añadir', apply: 'Aplicar',
   markets: '← Mercados', privacyOn: 'Privado', privacyOff: 'Privacidad',
@@ -275,8 +281,11 @@ export const inUI: MarketUI = {
 // PT-BR — Brazilian Portuguese
 export const ptBrUI: MarketUI = {
   back: 'Voltar', next: 'Próximo', save: 'Salvar', saving: 'Salvando…', saved: 'Salvo',
-  clear: 'Limpar', clearConfirmTitle: 'Limpar todos os dados?',
-  clearConfirmBody: 'Isso apagará todo o conteúdo deste currículo. Esta ação não pode ser desfeita.',
+  clear: 'Excluir este currículo', clearConfirmTitle: 'Excluir este currículo?',
+  clearConfirmBody: 'Isso exclui permanentemente o rascunho atual deste dispositivo. Seus outros rascunhos não são afetados. Não pode ser desfeito — baixe um backup antes, se precisar.',
+  eraseAll: 'Apagar todos os dados deste dispositivo', eraseAllConfirmTitle: 'Apagar todos os dados do GlobalCV deste dispositivo?',
+  eraseAllConfirmBody: 'Isso remove deste navegador todos os rascunhos do GlobalCV em todos os mercados, fotos salvas, o acompanhamento de candidaturas, cópias de recuperação e preferências. Outros sites não são afetados. Não pode ser desfeito.',
+  eraseAllConfirmWord: 'APAGAR', exportAll: 'Baixar todos os meus dados', notSaved: 'Não salvo',
   import: 'Importar', exportPDF: 'Exportar PDF', generating: 'Gerando…',
   done: 'Pronto!', failed: 'Erro', cancel: 'Cancelar', add: 'Adicionar', apply: 'Aplicar',
   markets: '← Mercados', privacyOn: 'Privado', privacyOff: 'Privacidade',
@@ -366,8 +375,11 @@ export const ptBrUI: MarketUI = {
 
 export const jaUI: MarketUI = {
   back: '戻る', next: '次へ', save: '保存', saving: '保存中…', saved: '保存済み',
-  clear: 'クリア', clearConfirmTitle: 'すべてのデータをクリアしますか？',
-  clearConfirmBody: 'この履歴書のすべての内容が削除されます。この操作は元に戻せません。',
+  clear: 'この履歴書を削除', clearConfirmTitle: 'この履歴書を削除しますか？',
+  clearConfirmBody: '現在の下書きをこの端末から完全に削除します。他の下書きには影響しません。元に戻せないため、必要な場合は先にバックアップをダウンロードしてください。',
+  eraseAll: 'この端末の全データを消去', eraseAllConfirmTitle: 'この端末の GlobalCV データをすべて消去しますか？',
+  eraseAllConfirmBody: 'すべての市場の下書き、保存した写真、応募管理、復元用コピー、設定をこのブラウザから完全に削除します。他のウェブサイトには影響しません。元に戻せません。',
+  eraseAllConfirmWord: 'ERASE', exportAll: '全データをダウンロード', notSaved: '未保存',
   import: 'インポート', exportPDF: 'PDF 出力', generating: '生成中…',
   done: '完了！', failed: '失敗', cancel: 'キャンセル', add: '追加', apply: '適用',
   markets: '← マーケット', privacyOn: 'プライベート', privacyOff: 'プライバシー',

@@ -3,8 +3,7 @@ import type { Metadata } from 'next';
 import { Market } from '@/types/cv.types';
 import PrivacyBanner from '@/components/shared/PrivacyBanner';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
-
-const validMarkets: Market[] = ['us', 'eu', 'latam', 'jp', 'gb', 'au', 'in', 'br'];
+import { isMarket } from '@/lib/markets/registry';
 
 const marketMeta: Record<Market, { title: string; description: string }> = {
   us: {
@@ -47,7 +46,7 @@ export async function generateMetadata({
   params: Promise<{ market: string }>;
 }): Promise<Metadata> {
   const { market } = await params;
-  if (!validMarkets.includes(market as Market)) return {};
+  if (!isMarket(market)) return {};
   return marketMeta[market as Market];
 }
 
@@ -59,7 +58,7 @@ export default async function MarketLayout({
   params: Promise<{ market: string }>;
 }) {
   const { market } = await params;
-  if (!validMarkets.includes(market as Market)) {
+  if (!isMarket(market)) {
     notFound();
   }
   return (

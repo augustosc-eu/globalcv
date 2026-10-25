@@ -1,7 +1,12 @@
 import { z } from 'zod';
 import { CVData, Market } from '@/types/cv.types';
+import { MARKETS, isMarket as isRegisteredMarket } from '@/lib/markets/registry';
 
-const marketSchema = z.enum(['us', 'eu', 'latam', 'jp', 'gb', 'au', 'in', 'br']);
+// Our CSP forbids eval; jitless mode stops zod from probing `new Function`
+// (which would otherwise be reported as a CSP violation on every page).
+z.config({ jitless: true });
+
+const marketSchema = z.enum(MARKETS);
 const pageSizeSchema = z.enum(['A4', 'Letter']);
 const employmentTypeSchema = z.enum(['full_time', 'part_time', 'contract', 'freelance', 'internship']);
 const remoteWorkModeSchema = z.enum(['remote_employee', 'freelance', 'both']);
@@ -182,5 +187,121 @@ export function parsePartialCVData(input: unknown): Partial<CVData> | null {
 }
 
 export function isMarket(value: string): value is Market {
-  return marketSchema.safeParse(value).success;
+  return isRegisteredMarket(value);
+}
+
+// ─── Non-destructive repair ──────────────────────────────────────────────────
+
+export interface RepairContext {
+  market: Market;
+  templateId: string;
+  pageSize: 'A4' | 'Letter';
+}
+
+type PathKey = string | number;
+
+function clonePlain<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function getAt(root: unknown, path: PathKey[]): unknown {
+  let node: unknown = root;
+  for (const key of path) {
+    if (node === null || typeof node !== 'object') return undefined;
+    node = (node as Record<PathKey, unknown>)[key];
+  }
+  return node;
+}
+
+function setAt(root: unknown, path: PathKey[], value: unknown): boolean {
+  let node: unknown = root;
+  for (const key of path.slice(0, -1)) {
+    if (node === null || typeof node !== 'object') return false;
+    node = (node as Record<PathKey, unknown>)[key];
+  }
+  if (node === null || typeof node !== 'object') return false;
+  const leaf = path[path.length - 1];
+  if (value === undefined && !Array.isArray(node)) {
+    delete (node as Record<PathKey, unknown>)[leaf];
+  } else {
+    (node as Record<PathKey, unknown>)[leaf] = value;
+  }
+  return true;
+}
+
+function namedFallback(leaf: string, ctx: RepairContext): unknown {
+  switch (leaf) {
+    case 'market': return ctx.market;
+    case 'templateId': return ctx.templateId;
+    case 'pageSize': return ctx.pageSize;
+    case 'lastModified': return new Date().toISOString();
+    case 'version': return 2;
+    case 'proficiency': return 'professional';
+    case 'id': return `repaired_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    default: return undefined;
+  }
+}
+
+function typedFallback(expected: unknown): unknown {
+  switch (expected) {
+    case 'string': return '';
+    case 'boolean': return false;
+    case 'array': return [];
+    case 'object': return {};
+    default: return undefined;
+  }
+}
+
+/**
+ * Attempt to turn a stored CV that no longer matches the schema into a valid
+ * CVData *without discarding user-entered text*. Strategy, per failing field:
+ *   1. coerce obvious type slips (number ↔ string),
+ *   2. drop an invalid optional value (e.g. an unknown enum literal),
+ *   3. fall back to a neutral default for required fields.
+ * Returns null when the input is not recognisably a CV. Callers must keep the
+ * original payload (quarantine) before persisting the repaired version.
+ */
+export function repairCVData(input: unknown, ctx: RepairContext): CVData | null {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+  const draft = clonePlain(input) as Record<string, unknown>;
+  if (!isRegisteredMarket(draft.market)) draft.market = ctx.market;
+  const attempted = new Map<string, number>();
+
+  for (let pass = 0; pass < 40; pass += 1) {
+    const result = cvDataSchema.safeParse(draft);
+    if (result.success) return result.data as CVData;
+
+    let progressed = false;
+    for (const issue of result.error.issues) {
+      const path = issue.path.filter((k): k is PathKey => typeof k === 'string' || typeof k === 'number');
+      if (path.length === 0) return null;
+      const key = path.join('.');
+      const step = attempted.get(key) ?? 0;
+      attempted.set(key, step + 1);
+      const current = getAt(draft, path);
+      const expected = (issue as { expected?: unknown }).expected;
+
+      if (step === 0) {
+        if (expected === 'string' && (typeof current === 'number' || typeof current === 'boolean')) {
+          progressed = setAt(draft, path, String(current)) || progressed;
+          continue;
+        }
+        if (expected === 'number' && typeof current === 'string' && current.trim() && Number.isFinite(Number(current))) {
+          progressed = setAt(draft, path, Number(current)) || progressed;
+          continue;
+        }
+      }
+      if (step <= 1 && current !== undefined && typeof path[path.length - 1] === 'string') {
+        // Remove the invalid value; optional fields/defaults then take over.
+        progressed = setAt(draft, path, undefined) || progressed;
+        continue;
+      }
+      const leaf = String(path[path.length - 1]);
+      const fallback = namedFallback(leaf, ctx) ?? typedFallback(expected);
+      if (fallback === undefined || step > 3) return null;
+      progressed = setAt(draft, path, fallback) || progressed;
+    }
+    if (!progressed) return null;
+  }
+  return null;
 }

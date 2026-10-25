@@ -42,6 +42,12 @@ export interface MarketUI {
   clear: string;
   clearConfirmTitle: string;
   clearConfirmBody: string;
+  eraseAll: string;
+  eraseAllConfirmTitle: string;
+  eraseAllConfirmBody: string;
+  eraseAllConfirmWord: string;
+  exportAll: string;
+  notSaved: string;
   import: string;
   exportPDF: string;
   generating: string;

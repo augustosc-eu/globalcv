@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2, ShieldCheck, Undo2, Redo2, HardDriveDownload, FolderOpen, Copy, ChevronDown, Wrench, Files, FilePlus2, ScrollText, Keyboard, Moon, Sun } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Save, CheckCircle, Download, Sparkles, Loader2, AlertCircle, Trash2, ShieldCheck, Undo2, Redo2, HardDriveDownload, FolderOpen, Copy, ChevronDown, Wrench, Files, FilePlus2, ScrollText, Keyboard, Moon, Sun, ShieldX, Archive } from 'lucide-react';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
@@ -16,8 +17,9 @@ import BrandLink from './BrandLink';
 import DraftManagerModal from './DraftManagerModal';
 import CoverLetterModal from './CoverLetterModal';
 import KeyboardShortcutsModal from './KeyboardShortcutsModal';
-import { clearCV, listSavedDrafts, saveCV } from '@/lib/storage/localStorage';
-import { parseCVData } from '@/lib/cv/schema';
+import { clearCV as clearDraft, listSavedDrafts, saveCV, restoreFullLocalExport } from '@/lib/storage/localStorage';
+import { parseBackupFile, MAX_BACKUP_BYTES } from '@/lib/cv/backupImport';
+import { downloadCurrentCV, downloadFullLocalExport } from '@/lib/storage/downloads';
 
 const marketFlags: Record<Market, string> = {
   us: '🇺🇸', eu: '🇪🇺', latam: '🌎', jp: '🇯🇵',
@@ -34,7 +36,12 @@ const exportModeLabels: Record<ExportMode, string> = {
 interface Props { market: Market; config: MarketConfig }
 
 export default function AppHeader({ market, config }: Props) {
-  const { isDirty, isSaving, lastSaved, save, cv, resetCV, restoreCV, initializeMarket, privacyMode, togglePrivacyMode, undo, redo, history, historyIndex } = useCVStore();
+  const { isDirty, isSaving, lastSaved, save, cv, restoreCV, initializeMarket, privacyMode, togglePrivacyMode, undo, redo, history, historyIndex,
+          clearCurrentCV, eraseAllData, importAsNewDraft, saveError } = useCVStore();
+  const router = useRouter();
+  const [confirmErase, setConfirmErase] = useState(false);
+  const [eraseWord, setEraseWord] = useState('');
+  const [notice, setNotice] = useState<{ tone: 'info' | 'error'; text: string } | null>(null);
   const { dark, toggle: toggleDarkMode } = useDarkMode();
   const { exportPDF, state: pdfState, error: pdfError } = usePDFExport();
   const [importOpen, setImportOpen] = useState(false);
@@ -103,8 +110,22 @@ export default function AppHeader({ market, config }: Props) {
   }, []);
 
   function handleClear() {
-    resetCV(market);
+    const result = clearCurrentCV();
     setConfirmClear(false);
+    refreshDrafts();
+    setNotice(result.ok
+      ? { tone: 'info', text: 'The CV was deleted from this device.' }
+      : { tone: 'error', text: result.message });
+  }
+
+  function handleEraseAll() {
+    const result = eraseAllData();
+    setConfirmErase(false);
+    setEraseWord('');
+    refreshDrafts();
+    setNotice(result.remaining.length === 0
+      ? { tone: 'info', text: `All GlobalCV data was erased from this browser (${result.removed} item(s) removed).` }
+      : { tone: 'error', text: `Some data could not be removed (${result.remaining.length} item(s)). Clear this site's data in your browser settings.` });
   }
 
   function refreshDrafts() {
@@ -112,32 +133,49 @@ export default function AppHeader({ market, config }: Props) {
   }
 
   function handleBackupJSON() {
-    const blob = new Blob([JSON.stringify(cv, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `cv-backup-${market}-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadCurrentCV(cv);
   }
 
   function handleRestoreJSON(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    if (file.size > MAX_BACKUP_BYTES) {
+      setNotice({ tone: 'error', text: 'This file is too large to be a GlobalCV backup (limit 10 MB).' });
+      return;
+    }
     const reader = new FileReader();
+    reader.onerror = () => setNotice({ tone: 'error', text: 'The file could not be read.' });
     reader.onload = (ev) => {
-      try {
-        const data = parseCVData(JSON.parse(ev.target?.result as string));
-        if (data) {
-          restoreCV(data, { markDirty: true, setActive: true });
-          refreshDrafts();
-        }
-      } catch {
-        // silently ignore corrupt files
+      const parsed = parseBackupFile(String(ev.target?.result ?? ''), market);
+      if (parsed.kind === 'error') {
+        setNotice({ tone: 'error', text: parsed.message });
+        return;
       }
+      if (parsed.kind === 'full-export') {
+        const restored = restoreFullLocalExport(parsed.data);
+        refreshDrafts();
+        setNotice({
+          tone: restored.failed ? 'error' : 'info',
+          text: `Restored ${restored.restoredDrafts} draft(s) and ${restored.restoredKeys} item(s). ${restored.skippedExisting} existing item(s) were kept unchanged${restored.failed ? `; ${restored.failed} could not be written (storage full?)` : ''}.`,
+        });
+        return;
+      }
+      // Always restore as a new draft: never overwrite an existing one.
+      if (!importAsNewDraft(parsed.cv, parsed.cv.market)) {
+        setNotice({ tone: 'error', text: 'Your current changes could not be saved, so the backup was not opened. Download a backup of the current CV first.' });
+        return;
+      }
+      const repairedNote = parsed.repaired ? ' Some invalid fields were reset to defaults.' : '';
+      if (parsed.marketMismatch) {
+        setNotice({ tone: 'info', text: `This backup is for the ${parsed.cv.market.toUpperCase()} market and was opened there as a new draft.${repairedNote}` });
+        router.push(`/${parsed.cv.market}`);
+      } else {
+        setNotice({ tone: 'info', text: `Backup restored as a new draft.${repairedNote}` });
+      }
+      refreshDrafts();
     };
     reader.readAsText(file);
-    e.target.value = '';
   }
 
   const savedTime = lastSaved
@@ -163,9 +201,13 @@ export default function AppHeader({ market, config }: Props) {
   }
 
   function handleDeleteDraft(draftId: string) {
-    clearCV(market, draftId);
     if (draftId === cv.id) {
-      initializeMarket(market);
+      const result = clearCurrentCV();
+      if (!result.ok) setNotice({ tone: 'error', text: result.message });
+      else initializeMarket(market);
+    } else {
+      const result = clearDraft(market, draftId);
+      if (!result.ok) setNotice({ tone: 'error', text: result.message });
     }
     refreshDrafts();
   }
@@ -174,12 +216,16 @@ export default function AppHeader({ market, config }: Props) {
     const nextTitle = `${cv.title ?? `${config.name} Draft`} Copy`;
     const duplicated = {
       ...cv,
-      id: `cv_${market}_${Date.now()}`,
+      id: `cv_${market}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       title: nextTitle,
       lastModified: new Date().toISOString(),
     };
-    saveCV(duplicated);
-    restoreCV(duplicated, { markDirty: false, setActive: true });
+    const result = saveCV(duplicated, { expectedRevision: null });
+    if (!result.ok) {
+      setNotice({ tone: 'error', text: result.message });
+      return;
+    }
+    restoreCV({ ...duplicated, lastModified: result.savedAt }, { markDirty: false, setActive: true, revision: result.revision });
     refreshDrafts();
   }
 
@@ -196,8 +242,12 @@ export default function AppHeader({ market, config }: Props) {
         <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-500">
           {isSaving ? (
             <span>{config.ui.saving}</span>
+          ) : saveError ? (
+            <button onClick={() => save()} className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition-colors">
+              <AlertCircle size={12} /> {config.ui.notSaved}
+            </button>
           ) : isDirty ? (
-            <button onClick={save} className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
+            <button onClick={() => save()} className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
               <Save size={12} /> {config.ui.save}
             </button>
           ) : savedTime ? (
@@ -306,8 +356,15 @@ export default function AppHeader({ market, config }: Props) {
                 <label className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
                   <FolderOpen size={14} />
                   Restore JSON
-                  <input type="file" accept=".json" className="sr-only" onChange={handleRestoreJSON} />
+                  <input type="file" accept=".json,application/json" className="sr-only" onChange={handleRestoreJSON} />
                 </label>
+                <button
+                  onClick={() => { downloadFullLocalExport(); setToolsOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <Archive size={14} />
+                  {config.ui.exportAll}
+                </button>
                 <button
                   onClick={() => { setCoverLetterOpen(true); setToolsOpen(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
@@ -369,6 +426,13 @@ export default function AppHeader({ market, config }: Props) {
                   <Trash2 size={14} />
                   {config.ui.clear}
                 </button>
+                <button
+                  onClick={() => { setConfirmErase(true); setEraseWord(''); setToolsOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  <ShieldX size={14} />
+                  {config.ui.eraseAll}
+                </button>
                 <Link
                   href="/"
                   onClick={() => setToolsOpen(false)}
@@ -401,11 +465,63 @@ export default function AppHeader({ market, config }: Props) {
       <CoverLetterModal open={coverLetterOpen} cv={cv} onClose={() => setCoverLetterOpen(false)} />
       <KeyboardShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
 
+      {notice && (
+        <div
+          role={notice.tone === 'error' ? 'alert' : 'status'}
+          className={`fixed top-20 left-1/2 -translate-x-1/2 z-[95] flex items-start gap-3 max-w-md w-[calc(100%-2rem)] px-4 py-3 rounded-xl shadow-lg text-xs ${
+            notice.tone === 'error' ? 'bg-red-50 border border-red-200 text-red-800' : 'bg-slate-900 text-white'
+          }`}
+        >
+          <span className="flex-1">{notice.text}</span>
+          <button onClick={() => setNotice(null)} className="font-semibold underline">OK</button>
+        </div>
+      )}
+
+      {confirmErase && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div role="alertdialog" aria-modal="true" aria-labelledby="erase-all-title" aria-describedby="erase-all-body" className="bg-white rounded-xl shadow-xl p-6 w-96 max-w-[calc(100vw-2rem)] mx-4">
+            <h2 id="erase-all-title" className="text-sm font-semibold text-gray-900 mb-2">{config.ui.eraseAllConfirmTitle}</h2>
+            <p id="erase-all-body" className="text-xs text-gray-600 mb-3">{config.ui.eraseAllConfirmBody}</p>
+            <button onClick={() => downloadFullLocalExport()} className="mb-3 text-xs font-medium text-blue-700 underline">
+              {config.ui.exportAll}
+            </button>
+            <label htmlFor="erase-all-word" className="block text-xs text-gray-700 mb-1">
+              Type <strong>{config.ui.eraseAllConfirmWord}</strong> to confirm
+            </label>
+            <input
+              id="erase-all-word"
+              value={eraseWord}
+              onChange={(e) => setEraseWord(e.target.value)}
+              autoComplete="off"
+              className="w-full mb-4 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400"
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => { setConfirmErase(false); setEraseWord(''); }}
+                className="px-4 py-2 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                {config.ui.cancel}
+              </button>
+              <button
+                onClick={handleEraseAll}
+                disabled={eraseWord.trim().toUpperCase() !== config.ui.eraseAllConfirmWord.toUpperCase()}
+                className="px-4 py-2 text-xs font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {config.ui.eraseAll}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {confirmClear && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-80 mx-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-2">{config.ui.clearConfirmTitle}</h2>
-            <p className="text-xs text-gray-500 mb-5">{config.ui.clearConfirmBody}</p>
+          <div role="alertdialog" aria-modal="true" aria-labelledby="clear-cv-title" aria-describedby="clear-cv-body" className="bg-white rounded-xl shadow-xl p-6 w-80 mx-4">
+            <h2 id="clear-cv-title" className="text-sm font-semibold text-gray-900 mb-2">{config.ui.clearConfirmTitle}</h2>
+            <p id="clear-cv-body" className="text-xs text-gray-500 mb-3">{config.ui.clearConfirmBody}</p>
+            <button onClick={() => downloadCurrentCV(cv)} className="mb-4 text-xs font-medium text-blue-700 underline">
+              Download a backup of this CV first
+            </button>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setConfirmClear(false)}

@@ -164,7 +164,7 @@ async function main() {
         const cv = applyMode(baseCV(market, config, template.id), config, mode);
         const file = path.join(outDir, `${market}-${template.id}-${mode}.pdf`);
         const doc = React.createElement(CVPDFDocument, { cv, config, exportMode: mode });
-        await renderToFile(doc as any, file);
+        await renderToFile(doc as Parameters<typeof renderToFile>[0], file);
         const fileStat = await stat(file);
         rendered.push({ market, template: template.id, mode, bytes: fileStat.size });
       }

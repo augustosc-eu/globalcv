@@ -32,10 +32,9 @@ export default function PrivacyBanner() {
     <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center gap-2 text-xs text-blue-800">
       <Shield size={13} className="flex-shrink-0 text-blue-500" />
       <p className="flex-1 min-w-0">
-        <strong>Your data never leaves your browser.</strong>
+        <strong>Your CV is stored in this browser, not on our servers.</strong>
         <span className="hidden sm:inline">
-          {' '}CV data is saved in localStorage on this device only. On a shared computer,
-          use <strong>Clear Data</strong> before leaving.{' '}
+          {' '}On a shared computer, use <strong>Tools → Erase all data on this device</strong> before leaving.{' '}
         </span>
         {' '}
         <Link href="/privacy" className="underline hover:text-blue-900 whitespace-nowrap">Privacy Policy</Link>

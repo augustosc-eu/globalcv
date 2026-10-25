@@ -6,7 +6,7 @@ import { useCVStore } from '@/store/cvStore';
 import { Market } from '@/types/cv.types';
 import { parseCVInput, ParseResult } from '@/lib/parser/cvParser';
 import { getMarketConfig } from '@/lib/markets';
-import { extractTextFromPdf } from '@/lib/pdf/extractPdfText';
+import { extractTextFromPdf, MAX_PDF_BYTES, PDF_ERROR_MESSAGES, PdfImportError } from '@/lib/pdf/extractPdfText';
 
 interface Props {
   market: Market;
@@ -63,6 +63,12 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
       resetPdfInput();
       return;
     }
+    if (file.size > MAX_PDF_BYTES) {
+      setPdfError(PDF_ERROR_MESSAGES['too-large']);
+      setPdfFile(null);
+      resetPdfInput();
+      return;
+    }
     setPdfFile(file);
     setPdfError(null);
     setPdfLoading(true);
@@ -80,8 +86,8 @@ export default function PasteImportModal({ market, open, onClose }: Props) {
       setResult(parsed);
       setSelectedSections(buildSectionSelection(parsed));
       setStep('preview');
-    } catch {
-      setPdfError('Could not read this PDF. Try copying the text manually.');
+    } catch (err) {
+      setPdfError(err instanceof PdfImportError ? err.message : PDF_ERROR_MESSAGES.failed);
       setResult(null);
       resetPdfInput();
     } finally {

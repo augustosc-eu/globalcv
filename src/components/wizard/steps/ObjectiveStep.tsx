@@ -60,7 +60,7 @@ export default function ObjectiveStep({ config }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Target role</label>
-            <input
+            <input aria-label="Target role"
               value={cv.targetRole ?? ''}
               onChange={(e) => setTargeting({ targetRole: e.target.value, targetCompany: cv.targetCompany, jobDescriptionNotes: cv.jobDescriptionNotes })}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
@@ -69,7 +69,7 @@ export default function ObjectiveStep({ config }: Props) {
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Target company</label>
-            <input
+            <input aria-label="Target company"
               value={cv.targetCompany ?? ''}
               onChange={(e) => setTargeting({ targetRole: cv.targetRole, targetCompany: e.target.value, jobDescriptionNotes: cv.jobDescriptionNotes })}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
@@ -80,7 +80,7 @@ export default function ObjectiveStep({ config }: Props) {
 
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Job description notes</label>
-          <textarea
+          <textarea aria-label="Job description notes"
             value={cv.jobDescriptionNotes ?? ''}
             onChange={(e) => setTargeting({ targetRole: cv.targetRole, targetCompany: cv.targetCompany, jobDescriptionNotes: e.target.value })}
             rows={6}

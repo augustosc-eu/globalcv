@@ -1,0 +1,20 @@
+John Smith
+john.smith@example.org
+(555) 010-2000
+
+Experience
+Acme Inc | Software Developer | Jun 2021 - Present
+• Shipped billing service
+• Reduced latency 40%
+Data Analyst at Northwind Corp
+2018 – 2021
+• Built dashboards
+
+Education
+Example State University
+B.S. Mathematics
+2014 - 2018
+
+Languages
+Spanish: Conversational
+French - A2

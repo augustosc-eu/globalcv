@@ -1,6 +1,7 @@
 import { format, parseISO, isValid } from 'date-fns';
 import { Market } from '@/types/cv.types';
 import { getMarketConfig } from '@/lib/markets';
+import { formatPartialDate } from '@/lib/utils/partialDate';
 
 /**
  * Japanese wareki era table
@@ -19,6 +20,7 @@ const WAREKI_ERAS = [
  * e.g. 2024-03 → "令和6年3月"
  */
 export function toWareki(dateStr: string): string {
+  if (/^\d{4}$/.test(dateStr)) return formatPartialDate(dateStr, 'jp-era');
   const date = safeParseDate(dateStr);
   if (!date) return dateStr;
 
@@ -66,6 +68,9 @@ function safeParseDate(dateStr: string): Date | null {
  */
 export function formatDate(dateStr: string, market: Market): string {
   if (!dateStr) return '';
+
+  // Year-only dates keep year precision (never invent a month).
+  if (/^\d{4}$/.test(dateStr)) return formatPartialDate(dateStr, market === 'jp' ? 'jp-era' : 'MMM yyyy');
 
   if (market === 'jp') {
     return toWareki(dateStr);
